@@ -1,0 +1,38 @@
+@code __init {
+	dpma
+	
+	; SUBI test 1
+	ldui  r1,#1
+	subi  r1,r1,#1
+	store r1,r0,#200
+
+	; SUBI test 2
+	subi  r1,r1,#1
+	store r1,r0,#201
+
+	; SUB test
+	ldi   r2,#100
+	sub   r1,r2,r1
+	store r1,r0,#202
+
+	; LDI test
+	ldi   r2,#-200
+	store r2,r0,#203
+
+	; ADD test
+	add   r1,r1,r2
+	store r1,r0,#204
+
+	; MUL test
+	ldi   r1,#300
+	ldi   r2,#-100
+	mul   r1,r1,r2
+	store r1,r0,#205
+
+	; MULI test
+	muli  r1,r1,#-2
+	store r1,r0,#206
+
+forever:
+	jmp #forever		; wait forever
+@}

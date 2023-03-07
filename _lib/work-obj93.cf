@@ -1,0 +1,28 @@
+v 4
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/pmemory_tb.vhd" "ddba9e1cb53278b7a9b6704853e94e174d9c8d0a" "20230307215206.110":
+  entity pmemory_tb at 11( 339) + 0 on 27;
+  architecture tb_architecture of pmemory_tb at 27( 757) + 0 on 28;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/irqreceiver.vhd" "48caf6d8d35c10aa177cf9bd2e2c5ea2d53bf0bf" "20230307215055.584":
+  entity irqreceiver at 21( 823) + 0 on 23;
+  architecture fsm of irqreceiver at 35( 1059) + 0 on 24;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_shift.vhd" "844006ab0a10032959680aa9e55ff2f2a9912d92" "20230307215055.531":
+  entity hades_shift at 1( 0) + 0 on 19;
+  architecture rtl of hades_shift at 28( 536) + 0 on 20;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_compare.vhd" "4bfcd920e74deba75a33fc730ec48797c509bc05" "20230307215055.473":
+  entity hades_compare at 1( 0) + 0 on 15;
+  architecture rtl of hades_compare at 23( 407) + 0 on 16;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hadescomponents.vhd" "e4b521719350bfbba37e18f8c651729927b70a03" "20230307215055.138":
+  package hadescomponents at 1( 0) + 0 on 11 body;
+  package body hadescomponents at 190( 4717) + 0 on 12;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_addsub.vhd" "6aed069bbd3b6d48f05fe3e6e2fc7bfe66e38ebb" "20230307215055.446":
+  entity hades_addsub at 1( 0) + 0 on 13;
+  architecture rtl of hades_addsub at 25( 438) + 0 on 14;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_mul.vhd" "f3b02c9a6299904f235c34f8be19721129c388b7" "20230307215055.498":
+  entity hades_mul at 1( 0) + 0 on 17;
+  architecture rtl of hades_mul at 25( 431) + 0 on 18;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_ram_dp.vhd" "db31ccf1574cfbc7ef7e2ad3d1965cffa419e862" "20230307215055.559":
+  entity hades_ram32_dp at 1( 0) + 0 on 21;
+  architecture rtl of hades_ram32_dp at 32( 720) + 0 on 22;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/pmemory.vhd" "574d4783a37263057804c3d4385826ae60170b10" "20230307215128.411":
+  entity pmemory at 9( 300) + 0 on 25;
+  architecture rtl of pmemory at 37( 885) + 0 on 26;

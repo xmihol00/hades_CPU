@@ -1,0 +1,100 @@
+
+@code __init {
+
+	nop
+	dpma
+
+	; direct memory access (mem[201]=1)
+	ldui  r1,#1
+	ldui  r2,#1
+	store r1,r2,#200
+	inc   r2
+
+	; test JAL (mem[202]=2)
+	ldui  r1,#2
+	jal   r3,#save
+
+	; test BNEZ,BEQZ (mem[203-205]=3)
+	ldui  r4,#3
+	ldui  r1,#3
+neq: 
+	seq   r7,r4,r0
+	bnez  r7,#eq
+	dec   r4
+	jal   r3,#save
+	beqz  r0,#neq
+
+	; test JAL (mem[206]=6)
+eq: 
+	ldui  r1,#6
+	jal   r3,#save
+
+	; test SGT (mem[207]=7)
+	sgt   r7,r4,r1
+	bnez  r7,#gt
+	ldui  r1,#7
+gt: 
+	jal   r3,#save
+
+	; test SLT (mem[208]=8)
+	ldi   r4,#-100
+	ldi   r5,#1000
+	ldui  r1,#8
+	slt   r7,r4,r5
+	bnez  r7,#lt
+	ldui  r1,#0
+lt: 
+	jal   r3,#save
+
+	; test SGE (mem[209]=9)
+	ldui  r1,#9
+	sge   r7,r1,r1
+	bnez  r7,#ge
+	ldui  r1,#0
+ge:
+	jal   r3,#save
+
+	; test SLE (mem[210]=10)
+	sle   r7,r5,r4
+	bnez  r7,#le
+	ldui  r1,#10
+le:
+	jal   r3,#save
+
+	; test BOV (mem[211]=11)
+	ldui  r1,#11
+	ldui  r4,#1
+	cshri r4,r4,#1
+	ld    r5,r4
+	add   r5,r5,r4
+	bov   #ov
+	ldui  r1,#0
+ov: 
+	jal   r3,#save
+	
+	; test SETOV (mem[212]=12)
+	ldui  r1,#12
+	setovi #1
+	bov   #ov2
+	ldui  r1,#0
+ov2: 
+	jal   r3,#save
+
+	; test GETOV (r5=0)
+	getov r5
+
+	; test GETOV (r6=1)
+	ldi   r1,#-1
+	shri  r1,r1,#1
+	addi  r1,r1,#1
+	getov r6
+
+	; done
+loop:
+	jmp #loop
+
+save:
+	store r1,r2,#200
+	inc   r2
+	jreg  r3
+@}

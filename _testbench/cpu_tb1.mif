@@ -1,0 +1,40 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test1 for HaDes-processor:
+%   load/store
+%
+% runtime @50MHz: 1100ns
+%
+% to observe:
+%   mem[100, 110, 200, 210]
+%   Reg1-5
+%
+% post condition:
+%   mem[200] = 0x0000000a
+%   mem[210] = 0xffffffd6
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+DEPTH         = 4096;    % Memory depth (number of words)  %
+WIDTH         = 32;      % Memory width (length of a word) %
+ADDRESS_RADIX = HEX;
+DATA_RADIX    = HEX;
+
+CONTENT
+  BEGIN
+[0..0fff] : 0;           % Initialize Memory %
+                         % __init: %
+0000: E0000000;          % DPMA                      ; disable pmemory access
+0001: 0491000A;          % LDUI r1, #10              ; Reg1=10
+0002: 04A10064;          % LDUI r2, #100             ; Reg2=100
+0003: 08B1FFD6;          % LDI r3, #-42              ; Reg3=-42
+0004: 98950000;          % STORE r1, r2, #0          ; mem[100]=10
+0005: 98B5000A;          % STORE r3, r2, #10         ; mem[110]=-42
+0006: 88C10064;          % LOAD r4, r0, #0x00064     ; Reg4=mem[100]=10
+0007: 04A100C8;          % LDUI r2, #200             ; Reg2=200
+0008: 88D1006E;          % LOAD r5, r0, #0x0006E     ; Reg5=mem[110]=-42
+0009: 98C50000;          % STORE r4, r2, #0          ; mem[200]=Reg4=10
+000A: 98D5000A;          % STORE r5, r2, #10         ; mem[210]=Reg5=-42
+000B: 6681FFFF;          % JMP #0xFFFF               ; wait forever
+END;
+

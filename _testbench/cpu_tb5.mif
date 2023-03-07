@@ -1,0 +1,126 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test5 for the HaDes processor:
+%   Interrupts
+%
+% pre-condition:
+%   Test1 (load/store) correct
+%   Test2 (shift)      correct
+%   Test3 (Arithmetik) correct
+%   Test4 (Sprünge)    correct
+%
+% runtime @50MHz: 14000ns
+%
+% to observe:
+%   ISRA[1-4]
+%   ISRR[1-4]
+%   INTR, RETI, CURLVL
+%   SWINTR   + Latch
+%   XPERINTR
+%   XNAINTR  + Latch
+%   SMEMINTR + Latch
+%
+% conditions:
+%       0ns: CURLVL = 0  
+%
+%     250ns: ISRA1  = 51
+%     330ns: ISRA2  = 36
+%     410ns: ISRA3  = 23
+%     490ns: ISRA4  = 13
+%
+%    1010ns: SWINTR   -> CURLVL = 1
+%    1350ns: RETI     -> CURLVL = 0
+%    1910ns: XPERINTR -> CURLVL = 2
+%    2590ns: RETI     -> CURLVL = 0
+%    3550ns: XPERINTR -> CURLVL = 2
+%    4230ns: XNAINTR  -> CURLVL = 3
+%    4730ns: RETI     -> CURLVL = 2
+%    5630ns: XPERINTR -> ---
+%    6490ns: RETI     -> CURLVL = 2 (XPERINTR re-activated)
+%    7170ns: XNAINTR  -> CURLVL = 3
+%    7830ns: XMEMINTR -> CURLVL = 4
+%    7990ns: XNAINTR  -> XNA-Latch = 1
+%    8330ns: SWINTR   -> SWI-Latch = 1
+%    9170ns: XPERINTR -> ---
+%   10110ns: RETI     -> CURLVL = 3
+%   10190ns: RETI     -> CURLVL = 3 (latched XNAINTR is executed)
+%   10670ns: RETI     -> CURLVL = 2
+%   12430ns: RETI     -> CURLVL = 2 (XPERINTR re-activated)
+%   13090ns: RETI     -> CURLVL = 1 (latched SWINTR is executed)
+%   13430ns: RETI     -> CURLVL = 0
+%
+% post-condition:
+%   mem[200] = 0x000003E8 (=> GETSWI correct)
+%   mem[201] = 0x000003E9 (=> GETSWI correct)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+DEPTH         = 4096;    % Memory depth (number of words)  %
+WIDTH         = 32;      % Memory width (length of a word) %
+ADDRESS_RADIX = HEX;
+DATA_RADIX    = HEX;
+
+CONTENT
+  BEGIN
+[0..0fff] : 0;           % Initialize Memory %
+                         % __init: %
+0000: E0000000;          % DPMA                      ; 
+0001: 04A10000;          % LDUI r2, #0               ; set IRQ counter to 0
+0002: D7010030;          % SISA #0, #0x0030          ; set entry addresses
+0003: D7014020;          % SISA #1, #0x0020          ; 
+0004: D7018012;          % SISA #2, #0x0012          ; 
+0005: D701C007;          % SISA #3, #0x0007          ; 
+0006: 04910001;          % LDUI r1, #1               ; start XTimer (1us)
+0007: 04E10003;          % LDUI r6, #3               ; 
+0008: 37110010;          % OUT r1, #16               ; set Xtimer to 1us %
+0009: 37610011;          % OUT r6, #17               ; start Xtimer with IRQ
+000A: 04F103E8;          % LDUI r7, #1000            ; raise a Software Interrupt
+000B: 017F00C8;          % SWI r7, #200              ; 
+000C: 6681FFFF;          % JMP #0xFFFF               ; done
+                         % isr_mem: %
+000D: 08A50001;          % ADDI r2, r2, #1           ; increment interrupt counter
+000E: 37710025;          % OUT r7, #37               ; raise NA-interrupt
+000F: 04F10007;          % LDUI r7, #7               ; 
+0010: 37710011;          % OUT r7, #17               ; 
+0011: 04F103E9;          % LDUI r7, #1001            ; raise a Software Interrupt
+0012: 017F00C9;          % SWI r7, #201              ; 
+0013: 04E1000A;          % LDUI r6, #10              ; wait some cycles
+0014: 086D0001;          % SUBI r6, r6, #1           ; 
+0015: 560DFFFE;          % BNEZ r6, #0xFFFE          ; 
+0016: C0000000;          % RETI                      ; 
+                         % isr_na: %
+0017: 08A50001;          % ADDI r2, r2, #1           ; increment interrupt counter
+0018: 0CF50003;          % SEQI r7, r2, #3           ; if counter=3 => start timer
+0019: 560F0003;          % BNEZ r7, #0x0003          ; 
+001A: 0CF50005;          % SEQI r7, r2, #5           ; if counter=5 => raise MEM IRQ
+001B: 560F0004;          % BNEZ r7, #0x0004          ; 
+001C: C0000000;          % RETI                      ; 
+001D: 04F10003;          % LDUI r7, #3               ; 
+001E: 37710011;          % OUT r7, #17               ; 
+001F: C0000000;          % RETI                      ; 
+0020: 04B10001;          % LDUI r3, #1               ; 
+0021: 02370012;          % SHLI r3, r3, #18          ; 
+0022: 88C70000;          % LOAD r4, r3, #0           ; 
+0023: C0000000;          % RETI                      ; 
+                         % isr_per: %
+0024: 08A50001;          % ADDI r2, r2, #1           ; 
+0025: 04F10004;          % LDUI r7, #4               ; ack interrupt 
+0026: 37710011;          % OUT r7, #17               ; 
+0027: 0CF50001;          % SEQI r7, r2, #1           ; if counter=1 => start timer
+0028: 560F0007;          % BNEZ r7, #0x0007          ; 
+0029: 0CF50008;          % SEQI r7, r2, #8           ; if counter=8 => leave IRQ
+002A: 560F0007;          % BNEZ r7, #0x0007          ; 
+002B: 37710025;          % OUT r7, #37               ; else => raise NA-interrupt
+002C: 04E1000A;          % LDUI r6, #10              ; wait some cycles
+002D: 086D0001;          % SUBI r6, r6, #1           ; 
+002E: 560DFFFE;          % BNEZ r6, #0xFFFE          ; 
+002F: C0000000;          % RETI                      ; 
+0030: 04F10003;          % LDUI r7, #3               ; 
+0031: 37710011;          % OUT r7, #17               ; 
+0032: C0000000;          % RETI                      ; 
+                         % isr_swi: %
+0033: 01C10000;          % GETSWI r4, #0             ; 
+0034: 01D10001;          % GETSWI r5, #1             ; 
+0035: 98D90000;          % STORE r5, r4, #0          ; 
+0036: C0000000;          % RETI                      ; 
+END;

@@ -1,0 +1,56 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test3 for the HaDes processor:
+%   arithmetic
+%
+% pre-condition:
+%   Test1 (load/store) correct
+%   Test2 (shift)      correct
+%
+% runtime @50MHz: 1800ns
+%
+% to observe:
+%   mem[200-206]
+%   reg1, reg2
+% 
+% post-condition:
+%   mem[200] = 0x00000000
+%   mem[201] = 0xffffffff
+%   mem[202] = 0x00000065
+%   mem[203] = 0xffffff38
+%   mem[204] = 0xffffff9d
+%   mem[205] = 0xffff8ad0
+%   mem[206] = 0x0000ea60
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+DEPTH         = 4096;    % Memory depth (number of words)  %
+WIDTH         = 32;      % Memory width (length of a word) %
+ADDRESS_RADIX = HEX;
+DATA_RADIX    = HEX;
+
+CONTENT
+  BEGIN
+[0..0fff] : 0;           % Initialize Memory %
+                         % __init: %
+0000: E0000000;          % DPMA                      ; 
+0001: 04910001;          % LDUI r1, #1               ; SUBI test 1
+0002: 08130001;          % SUBI r1, r1, #1           ; 
+0003: 989100C8;          % STORE r1, r0, #0x000C8    ; 
+0004: 08130001;          % SUBI r1, r1, #1           ; SUBI test 2
+0005: 989100C9;          % STORE r1, r0, #0x000C9    ; 
+0006: 08A10064;          % LDI r2, #100              ; SUB test
+0007: 08142000;          % SUB r1, r2, r1            ; 
+0008: 989100CA;          % STORE r1, r0, #0x000CA    ; 
+0009: 08A1FF38;          % LDI r2, #-200             ; LDI test
+000A: 98A100CB;          % STORE r2, r0, #0x000CB    ; 
+000B: 08924000;          % ADD r1, r1, r2            ; ADD test
+000C: 989100CC;          % STORE r1, r0, #0x000CC    ; 
+000D: 0891012C;          % LDI r1, #300              ; MUL test
+000E: 08A1FF9C;          % LDI r2, #-100             ; 
+000F: 0A124000;          % MUL r1, r1, r2            ; 
+0010: 989100CD;          % STORE r1, r0, #0x000CD    ; 
+0011: 0A13FFFE;          % MULI r1, r1, #-2          ; MULI test
+0012: 989100CE;          % STORE r1, r0, #0x000CE    ; 
+0013: 6681FFFF;          % JMP #0xFFFF               ; wait forever
+END;

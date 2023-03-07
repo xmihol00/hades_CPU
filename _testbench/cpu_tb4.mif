@@ -1,0 +1,103 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test4 for the HaDes processor:
+%   jumps and branches
+%
+% pre-condition:
+%   Test1 (load/store) correct
+%   Test2 (shift)      correct
+%   Test3 (arithmetic) correct
+%
+% runtime @50MHz: 8100ns
+%
+% to observe:
+%   mem[201-212]
+%   reg1-reg7
+% 
+% post-condition:
+%   mem[201] = 1
+%   mem[202] = 2
+%   mem[203] = 3
+%   mem[204] = 3
+%   mem[205] = 3
+%   mem[206] = 6
+%   mem[207] = 7
+%   mem[208] = 8
+%   mem[209] = 9
+%   mem[210] = 10
+%   mem[211] = 11
+%   mem[212] = 12
+%   reg5     = 0
+%   reg6     = 1
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+DEPTH         = 4096;    % Memory depth (number of words)  %
+WIDTH         = 32;      % Memory width (length of a word) %
+ADDRESS_RADIX = HEX;
+DATA_RADIX    = HEX;
+
+
+CONTENT
+  BEGIN
+[0..0fff] : 0;           % Initialize Memory %
+                         % __init: %
+0000: 00000000;          % NOP                       ; 
+0001: E0000000;          % DPMA                      ; 
+0002: 04910001;          % LDUI r1, #1               ; direct memory access (mem[201]=1)
+0003: 04A10001;          % LDUI r2, #1               ; 
+0004: 989500C8;          % STORE r1, r2, #200        ; 
+0005: 08A50001;          % ADDI r2, r2, #1           ; 
+0006: 04910002;          % LDUI r1, #2               ; test JAL (mem[202]=2)
+0007: A7310030;          % JAL r3, #0x0030           ; 
+0008: 04C10003;          % LDUI r4, #3               ; test BNEZ,BEQZ (mem[203-205]=3)
+0009: 04910003;          % LDUI r1, #3               ; 
+000A: 0CF80000;          % SEQ r7, r4, r0            ; 
+000B: 560F0003;          % BNEZ r7, #0x0003          ; 
+000C: 08490001;          % SUBI r4, r4, #1           ; 
+000D: A731002A;          % JAL r3, #0x002A           ; 
+000E: 6681FFFB;          % JMP #0xFFFB               ; 
+000F: 04910006;          % LDUI r1, #6               ; test JAL (mem[206]=6)
+0010: A7310027;          % JAL r3, #0x0027           ; 
+0011: 0D782000;          % SGT r7, r4, r1            ; test SGT (mem[207]=7)
+0012: 560F0001;          % BNEZ r7, #0x0001          ; 
+0013: 04910007;          % LDUI r1, #7               ; 
+0014: A7310023;          % JAL r3, #0x0023           ; 
+0015: 08C1FF9C;          % LDI r4, #-100             ; test SLT (mem[208]=8)
+0016: 08D103E8;          % LDI r5, #1000             ; 
+0017: 04910008;          % LDUI r1, #8               ; 
+0018: 0E78A000;          % SLT r7, r4, r5            ; 
+0019: 560F0001;          % BNEZ r7, #0x0001          ; 
+001A: 04910000;          % LDUI r1, #0               ; 
+001B: A731001C;          % JAL r3, #0x001C           ; 
+001C: 04910009;          % LDUI r1, #9               ; test SGE (mem[209]=9)
+001D: 0DF22000;          % SGE r7, r1, r1            ; 
+001E: 560F0001;          % BNEZ r7, #0x0001          ; 
+001F: 04910000;          % LDUI r1, #0               ; 
+0020: A7310017;          % JAL r3, #0x0017           ; 
+0021: 0EFA8000;          % SLE r7, r5, r4            ; test SLE (mem[210]=10)
+0022: 560F0001;          % BNEZ r7, #0x0001          ; 
+0023: 0491000A;          % LDUI r1, #10              ; 
+0024: A7310013;          % JAL r3, #0x0013           ; 
+0025: 0491000B;          % LDUI r1, #11              ; test BOV (mem[211]=11)
+0026: 04C10001;          % LDUI r4, #1               ; 
+0027: 03C90001;          % CSHRI r4, r4, #1          ; 
+0028: 08D90000;          % ADDI r5, r4, #0           ; 
+0029: 08DA8000;          % ADD r5, r5, r4            ; 
+002A: 77010001;          % BOV #0x0001               ; 
+002B: 04910000;          % LDUI r1, #0               ; 
+002C: A731000B;          % JAL r3, #0x000B           ; 
+002D: 0491000C;          % LDUI r1, #12              ; test SETOV (mem[212]=12)
+002E: 09010001;          % SETOVI #1                 ; 
+002F: 77010001;          % BOV #0x0001               ; 
+0030: 04910000;          % LDUI r1, #0               ; 
+0031: A7310006;          % JAL r3, #0x0006           ; 
+0032: 09D00000;          % GETOV r5                  ; test GETOV (r5=0)
+0033: 0891FFFF;          % LDI r1, #-1               ; test GETOV (r6=1)
+0034: 02930001;          % SHRI r1, r1, #1           ; 
+0035: 08930001;          % ADDI r1, r1, #1           ; 
+0036: 09E00000;          % GETOV r6                  ; 
+0037: 6681FFFF;          % JMP #0xFFFF               ; done
+0038: 989500C8;          % STORE r1, r2, #200        ; 
+0039: 08A50001;          % ADDI r2, r2, #1           ; 
+003A: B3060000;          % JREG r3                   ; 
+END;

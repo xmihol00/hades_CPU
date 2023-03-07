@@ -1,0 +1,26 @@
+[size] 1412 826
+[pos] -1 -1
+*-24,488888 470000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+@28
+top.indec_tb.ivalid
+top.indec_tb.epma
+top.indec_tb.dpma
+top.indec_tb.dmemop
+top.indec_tb.selxres
+top.indec_tb.storeop
+top.indec_tb.loadop
+top.indec_tb.outop
+top.indec_tb.inop
+@22
+#pccontr[10:0] top.indec_tb.pccontr[10] top.indec_tb.pccontr[9] top.indec_tb.pccontr[8] top.indec_tb.pccontr[7] top.indec_tb.pccontr[6] top.indec_tb.pccontr[5] top.indec_tb.pccontr[4] top.indec_tb.pccontr[3] top.indec_tb.pccontr[2] top.indec_tb.pccontr[1] top.indec_tb.pccontr[0]
+#iword[31:0] top.indec_tb.iword[31] top.indec_tb.iword[30] top.indec_tb.iword[29] top.indec_tb.iword[28] top.indec_tb.iword[27] top.indec_tb.iword[26] top.indec_tb.iword[25] top.indec_tb.iword[24] top.indec_tb.iword[23] top.indec_tb.iword[22] top.indec_tb.iword[21] top.indec_tb.iword[20] top.indec_tb.iword[19] top.indec_tb.iword[18] top.indec_tb.iword[17] top.indec_tb.iword[16] top.indec_tb.iword[15] top.indec_tb.iword[14] top.indec_tb.iword[13] top.indec_tb.iword[12] top.indec_tb.iword[11] top.indec_tb.iword[10] top.indec_tb.iword[9] top.indec_tb.iword[8] top.indec_tb.iword[7] top.indec_tb.iword[6] top.indec_tb.iword[5] top.indec_tb.iword[4] top.indec_tb.iword[3] top.indec_tb.iword[2] top.indec_tb.iword[1] top.indec_tb.iword[0]
+@28
+#wopadr_slv[2:0] top.indec_tb.wopadr_slv[2] top.indec_tb.wopadr_slv[1] top.indec_tb.wopadr_slv[0]
+#bopadr_slv[2:0] top.indec_tb.bopadr_slv[2] top.indec_tb.bopadr_slv[1] top.indec_tb.bopadr_slv[0]
+#aopadr_slv[2:0] top.indec_tb.aopadr_slv[2] top.indec_tb.aopadr_slv[1] top.indec_tb.aopadr_slv[0]
+@22
+#iop[15:0] top.indec_tb.iop[15] top.indec_tb.iop[14] top.indec_tb.iop[13] top.indec_tb.iop[12] top.indec_tb.iop[11] top.indec_tb.iop[10] top.indec_tb.iop[9] top.indec_tb.iop[8] top.indec_tb.iop[7] top.indec_tb.iop[6] top.indec_tb.iop[5] top.indec_tb.iop[4] top.indec_tb.iop[3] top.indec_tb.iop[2] top.indec_tb.iop[1] top.indec_tb.iop[0]
+#opc[4:0] top.indec_tb.opc[4] top.indec_tb.opc[3] top.indec_tb.opc[2] top.indec_tb.opc[1] top.indec_tb.opc[0]
+@2029
+^2 C:\hadesX\HaDes\_testbench\opcodes.txt
+#OPC top.indec_tb.opc[4] top.indec_tb.opc[3] top.indec_tb.opc[2] top.indec_tb.opc[1] top.indec_tb.opc[0]

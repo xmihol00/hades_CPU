@@ -1,0 +1,12 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Global Defs!                                                               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Register.
+@def NULL "r0"            ; Nullregister.
+@DEF RA   "r6"
+@DEF SP   "r7"
+
+; Portadressen.
+@def VGAADR "#160"       ; Adressport des Bildschirms.
+@def VGACOLOR "#161"     ; Datenport des Bildschirms.

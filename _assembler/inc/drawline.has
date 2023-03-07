@@ -1,0 +1,232 @@
+
+;--------------------------------------------------------------------------------------
+; GrafikSpeicherAdresse fr Position x,y berechnen ------------------------------------
+;--------------------------------------------------------------------------------------
+;IN	@1 = x
+;	@2 = y				(!Wert bleibt nicht erhalten)
+;OUT	@3 = gsa = x+640*y
+@mac getGSA {	
+	shli  @3, @2, #9		;512*y
+	shli  @2, #7			;128*y
+	add   @3, @2			;640*y	
+	add   @3, @1			;x+640y
+@}
+
+
+;--------------------------------------------------------------------------------------
+; Pixel an Position x,y mit angegebener Farbe zeichnen --------------------------------
+;--------------------------------------------------------------------------------------
+
+;Funktion
+;IN	@SP-1  = x
+;	@SP-2 = y
+;	@SP-3 = color
+;OUT	-
+@code drawPixel {
+	
+   @ldef x 		"r1"		;Parameter x
+   @ldef y		"r2"		;Parameter y
+   @ldef gsa		"r3"		;GrafikSpeicherAdresse = x+640*y
+   @ldef color		"r1"		;Paramter color
+   @ldef t 		"r3"		;Zwischenspeicher
+   
+  ADDI @sp, @sp, #6   ;register 1-6 auf dem Stack gespeichert: Offest -6 fuer Parameter
+  STORE r1, @sp, #-1
+  STORE r2, @sp, #-2
+  STORE r3, @sp, #-3
+  STORE r4, @sp, #-4
+  STORE r5, @sp, #-5
+  STORE r6, @sp, #-6       
+
+	load  @x, @SP, #-7		;Position laden
+	load  @y, @SP, #-8		
+		
+	sgei  @t, @x, #2		;Abbruch, wenn Pixel nicht in 640*480
+	beqz  @t, #RET
+	sgei  @t, @y, #2
+	beqz  @t, #RET
+	slti  @t, @x, #638
+	beqz  @t, #RET
+	slti  @t, @y, #478
+	beqz  @t, #RET
+
+	@call getGSA @x @y @gsa		;GSA berechnen
+
+	load @color,@SP,#-9
+
+	out   @gsa, @VGAADR		;Pixel zeichnen
+	out   @color, @VGACOLOR
+ ret:
+  LOAD r6, @sp, #-6  ;Register werden wieder hergestellt	
+  LOAD r5, @sp, #-5
+  LOAD r4, @sp, #-4
+  LOAD r3, @sp, #-3
+  LOAD r2, @sp, #-2
+  LOAD r1, @sp, #-1
+  SUBI @sp, @sp, #6   
+  jreg @ra
+@}
+;--------------------------------------------------------------------------------------
+; Linie von (x1,y1) nach (x2,y2) mit angegebener Farbe zeichnen -----------------------
+;--------------------------------------------------------------------------------------
+
+;Funktion
+;IN	@SP-1  = x1
+;	@SP-2 = y1
+;	@SP-3 = x2
+;	@SP-4 = y2
+;	@SP-5 = color
+@code drawLine {
+     ; die lokalen Definitionen muessen an die globale Definition des RA und SP angepasst werden
+     ; derzeit SP = R7 und RA = R6
+     ; 
+     ; Zwischenspeicher von Temp vars:
+     ; @SP-4    TwoDx 
+     ; @SP-5    TwoDy
+     ; @SP-6    Xinc
+     ; @SP-7    Yinc 
+     
+     
+    @ldef x		"r1"		;CurrentX
+    @ldef y		"r2"		;CurrentY
+    @ldef dx		"r3"		;x2-x1
+    @ldef dy		"r4"		;y2-y1
+    @ldef xinc 		"r2"		;Vorzeichen des Anstiegs in xRichtung
+    @ldef yinc 		"r5"		;Vorzeichen des Anstiegs in yRichtung
+    @ldef color		"r5"		;Zeichenfarbe
+    @ldef xaerror	"r4"		;XAccError
+    @ldef yaerror	"r3"		;YAccError
+    @ldef t		"r5"		;Zwischenspeicher
+
+  ADDI @sp, @sp, #6     ; register 1-6 gespeichert: offset -6 fuer Stack  
+  STORE r1, @sp, #-1
+  STORE r2, @sp, #-2
+  STORE r3, @sp, #-3
+  STORE r4, @sp, #-4
+  STORE r5, @sp, #-5
+  STORE r6, @sp, #-6 
+         
+	ADDI @sp, @sp, #7   ; 4 TEMP STORES, 3 PARAMS: offset -13 fuern Stack
+startdraw:
+	; Setze Dx, Xinc
+	load  @x, @SP, #-14 		; CurrentX=x1
+	load  @t, @SP, #-16		; temp=x2
+	sub   @dx, @t, @x		; Dx=x2-x1
+	ldui  @xinc, #1			; Xinc=1
+	slti  @t, @dx, #0		; If (Dx<0)
+	beqz  @t, #storexvals		; dann
+	ldi  @xinc, #-1		; Xinc=-1
+	sub   @dx, r0, @dx		; Dx=-Dx
+
+storexvals:
+	store @xinc, @SP, #-6		; Xinc auf Stack
+	add   @t, @dx, @dx		; Temp=2*dx
+	store @t, @SP, #-4		; TwoDx auf Stack	
+	
+	; Setze Dy, Yinc
+	load  @y, @SP, #-15		; CurrentY=y1
+	load  @t, @SP, #-17		; temp=y2
+	sub   @dy, @t, @y		; Dy=y2-y1
+	
+	sgei  @t, @dy, #0		; Falls Dy>=0 -> Yinc=1 (Trick ;-)
+	bnez  @t, #storeyvals		; speichere Werte
+	ldi  @yinc, #-1		; Yinc=-1
+	sub   @dy, r0, @dy		; Dy=-Dy
+
+storeyvals:
+	store @yinc, @SP, #-7		; Yinc auf Stack
+	add   @t, @dy, @dy		; Temp=2*dy
+	store @t, @SP, #-5		; TwoDy auf Stack
+	
+	
+drawfirstpix:
+	; Zeichne ersten Pixel an x1,y1
+	load  @color, @SP, #-18		; Lade Farbe vom Stack
+	store @x, @SP, #-1
+	store @y, @SP, #-2
+  store @color, @SP, #-3
+	
+	jal @RA, *drawPixel  ; zeichne Pixel
+	
+	or    @t, @dx, @dy		; temp=dx or dy
+	beqz  @t, #zeichnenfertig	; if (dx=0 und dy=0) dann fertig
+	
+	sle   @t, @dy, @dx		; if (dy>dx)
+	beqz  @t, #largeslope		; then large slope => reverse Roles of x and y
+
+
+	; Es darf gezeichnet werden
+	; Werte sind berechnet und auf Stack gespeichert
+	; Registerbelegung: CurrentX(R3), CurrentY(R4), Dx(R5), Dy(R6), TwoDy(Temp)
+	
+	ld    @xaerror, r0		; XAccError=0
+	
+xloop1:					; REPEAT
+	load  @t, @SP, #-6		;   temp=Xinc
+	add   @x, @t			;   CurrentX+=Xinc
+	load  @t, @SP, #-5		;   temp=dy*2
+	add   @xaerror, @t		;   XAccError+=2*dy
+	sgt   @t, @xaerror, @dx		;   If XAccError>dx
+	beqz  @t, #loopdrawx		;   then
+	load  @t, @SP, #-7		
+	add   @y, @t			;     CurrentY+=Yinc
+	load  @t, @SP, #-4		
+	sub   @xaerror, @t		;     XAccerror-=TwoDx
+	
+loopdrawx:
+	load  @color, @SP, #-18		; Lade Farbe vom Stack
+	store @x, @SP, #-1
+	store @y, @SP, #-2
+  store @color, @SP, #-3
+	
+	jal @RA, *drawPixel  ; zeichne Pixel
+
+	load  @t, @SP, #-16	;   Lade X2 in TEMP		
+	seq   @t, @x
+	bnez  @t,#zeichnenfertig	; UNTIL CurrentX=X2
+
+	jmp   #xloop1
+
+
+largeslope:
+	ld    @yaerror, r0		; YAccError=0
+	
+yloop1:					; REPEAT
+	load  @t, @SP, #-7		;   
+	add   @y, @t			;   CurrentY+=Yinc
+	load  @t, @SP, #-4		;   
+	add   @yaerror, @t		;   YAccError+=2*dx
+	sgt   @t, @yaerror, @dy		;   If YAccError>dy
+	beqz  @t, #loopdrawy		;   then
+	load  @t, @SP, #-6
+	add   @x, @t			;     CurrentX+=Xinc
+	load  @t ,@SP, #-5		
+	sub   @yaerror, @t		;     XAccerror-=TwoDy
+	
+loopdrawy:
+	load  @color, @SP, #-18		; Lade Farbe vom Stack
+	store @x, @SP, #-1
+	store @y, @SP, #-2
+  store @color, @SP, #-3
+	
+	jal @RA, *drawPixel  ; zeichne Pixel
+	
+	load  @t, @SP, #-17		;   Lade Y2 in TEMP		
+	seq   @t, @y
+	bnez  @t, #zeichnenfertig	; UNTIL CurrentY=Y2
+	jmp   #yloop1	
+
+zeichnenfertig:
+; todo rueckwaerts speichern
+  SUBI @sp, @sp, #7
+  
+  LOAD r6, @sp, #-6   ; register wieder herstellen
+  LOAD r5, @sp, #-5
+  LOAD r4, @sp, #-4
+  LOAD r3, @sp, #-3
+  LOAD r2, @sp, #-2
+  LOAD r1, @sp, #-1
+  SUBI @sp, @sp, #6 
+
+jreg @ra
+@}

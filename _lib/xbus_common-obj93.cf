@@ -1,0 +1,24 @@
+v 4
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_common/xtimerxt.vhd" "c89689c77b4141b938ddce27d6d6b64eb41cfab0" "20230307215054.202":
+  entity xtimerxt at 1( 0) + 0 on 29;
+  architecture rtl of xtimerxt at 29( 601) + 0 on 30;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_common/xreset.vhd" "2c64d63c095d0722bdd33dd376c2163e3d94cb60" "20230307215054.009":
+  entity reset_own at 5( 245) + 0 on 11;
+  architecture rtl of reset_own at 16( 491) + 0 on 12;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_common/xtoolbox.vhd" "f86aaadfb961ee31f26a53e8ddc5afe0935c3857" "20230307215054.026":
+  package xtoolbox at 5( 245) + 0 on 13 body;
+  package body xtoolbox at 27( 1030) + 0 on 14;
+  entity sync_dualff at 160( 5185) + 0 on 15;
+  architecture rtl of sync_dualff at 174( 5397) + 0 on 16;
+  entity sync_feedback at 194( 5945) + 0 on 17;
+  architecture rtl of sync_feedback at 209( 6187) + 0 on 18;
+  entity reset_gen at 265( 7396) + 0 on 19;
+  architecture rtl of reset_gen at 277( 7736) + 0 on 20;
+  entity reset_sync at 333( 9351) + 0 on 21;
+  architecture rtl of reset_sync at 344( 9533) + 0 on 22;
+  entity arbiter_prio_async at 363( 10105) + 0 on 23;
+  architecture rtl of arbiter_prio_async at 383( 10636) + 0 on 24;
+  entity arbiter_roundrobin at 403( 11217) + 0 on 25;
+  architecture rtl of arbiter_roundrobin at 429( 11953) + 0 on 26;
+  entity basic_fifo at 510( 14091) + 0 on 27;
+  architecture rtl of basic_fifo at 547( 15167) + 0 on 28;

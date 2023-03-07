@@ -1,0 +1,296 @@
+; bootloader for the HaDes
+
+@DEF RET   "r1"
+@DEF RADR  "r1"
+@DEF PARAM "r2"
+@DEF RDATA "r2"
+@DEF RAND  "r2"
+@DEF PLEN  "r3"
+@DEF IPTR  "r4"
+@DEF PDONE "r5" ; Programm eingelesen, lese nun noch die Daten
+@DEF CKSUM "r6"
+@DEF TEMP  "r7"
+
+;; Die Startadresse des Bootloaders
+@DEF STARTADR "#0xF80" 
+
+;; Maximale Größe der Daten
+@DEF MAXDATA "#0x7FF"
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hauptprogramm ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+@code __init {
+Entry:
+; Anfang des Programmspeichers
+	jmp #BootEntry; Springe zum Bootloader
+; Ende des Programmspeichers
+
+; Anfang des Bootloaders
+@MEMA @STARTADR
+BootEntry:
+	; Bringe CPU in bekannten Status
+	dei
+	jal @RET, #EMPTYMACHINE
+	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; Programm einlesen ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	; LED1: bereit
+	ldui @temp, #0x0001
+	out  @temp, #64
+
+	; XUart auf Wordmode stellen, IRQ disabled
+	ldui @TEMP, #4
+	out  @TEMP, #98
+
+	; Warte auf erstes Datenwort
+InitRand:
+	inc  @RAND
+	in   @TEMP, #97				; UART-Status holen
+	andi @TEMP, @TEMP, #1	; RX-Flag auswählen
+	beqz @TEMP, #InitRand	; Warte bis Daten da
+
+	; Hier ist das erste Word angekommen, wir fahren ganz normal fort mit
+	; der ReadLength Routine, vorher müssen wir jedoch den RAND-Wert noch
+	; sichern (an Datenspeicher-Adresse 0x0).
+	dpma
+	store @RAND, r0, #0
+	epma
+
+	; Programmlänge lesen
+	jal @RET,  #READUART
+	ld  @PLEN, @RDATA; gelesenes Word in PLEN-Register kopieren
+
+	; Programmlänge überprüfen
+	sgti @TEMP, @RDATA, @STARTADR
+	bnez @TEMP, #ProgTooLong
+	slt  @TEMP, @RDATA, r0
+	bnez @TEMP, #ProgTooLong
+
+	; LED2: Länge eingelesen
+	ldui @temp, #0x0003
+	out  @temp, #64
+
+	; Programmdaten lesen
+ReadProg:
+	; Wenn alle Instruktionen bereits eingelesen wurden, dann gehe zum Checksumprüfen
+	beqz  @PLEN, #CSumProg
+
+	; nächste Instruktion verarbeiten
+	jal   @RET, #READUART			; Nächste Instruktion lesen
+	add   @CKSUM, @CKSUM, @RDATA	; Checksumme weiter berechnen
+	store @RDATA, @IPTR, #0			; Befehl in Programmspeicher schreiben
+	inc   @IPTR						; Programmspeicheradresse erhöhen 				
+	dec   @PLEN						; Counter dekrementieren
+
+	; Weiter gehts mit der nächsten Instruktion
+	jmp #ReadProg
+
+CSumProg:
+	; LED3: Programm eingelesen
+	ldui @temp, #0x0007
+	out  @temp, #64
+
+	; Checksumme einlesen
+	jal @RET, #READUART	
+
+	; Checksum prüfen
+	seq  @TEMP, @RDATA, @CKSUM
+	beqz @TEMP, #CheckSumErrorProg
+
+	; LED4: Programm Checksum eingelesen
+	ldui @temp, #0x000F
+	out  @temp, #64
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; Daten einlesen ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	; ab jetzt in Datenspeicher schreiben
+	dpma
+
+	; Checksumme & Schreibadresse resetten
+	ld  @CKSUM, r0
+	ld  @IPTR, r0
+
+	; Datenlänge lesen
+	jal @RET,  #READUART
+	ld  @PLEN, @RDATA; gelesenes Word in PLEN-Register kopieren
+
+	; Datenlänge überprüfen
+	ldui @TEMP, @MAXDATA
+	sgt  @TEMP, @RDATA, @TEMP
+	bnez @TEMP, #DataTooLong
+	slt  @TEMP, @RDATA, r0
+	bnez @TEMP, #DataTooLong
+
+	; LED5: Daten Länge eingelesen
+	ldui @temp, #0x001F
+	out  @temp, #64
+
+	; Daten lesen
+ReadData:
+	; Wenn alle Daten bereits eingelesen wurden, dann gehe zum Checksumprüfen
+	beqz  @PLEN, #CSumData
+
+	; nächste Datenwort verarbeiten
+	jal   @RET, #READUART			; Nächste Instruktion lesen
+	add   @CKSUM, @CKSUM, @RDATA	; Checksumme weiter berechnen
+	store @RDATA, @IPTR, #0			; Befehl in Datenspeicher schreiben
+	inc   @IPTR						; Programmspeicheradresse erhöhen 				
+	dec   @PLEN						; Counter dekrementieren
+
+	; Weiter gehts mit der nächsten Datenwort
+	jmp #ReadData
+
+CSumData:
+	; LED6: Daten eingelesen
+	ldui @temp, #0x003F
+	out  @temp, #64
+
+	; Checksumme einlesen
+	jal  @RET, #READUART
+
+	; Checksum prüfen
+	seq  @TEMP, @RDATA, @CKSUM
+	beqz @TEMP, #CheckSumErrorData
+
+	; LED7: Daten Checksum eingelesen
+	ldui @temp, #0x007F
+	out  @temp, #64
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; Programm ausführen ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+Done:
+	; Bringe CPU in bekannten Status
+	jal @RET, #EMPTYMACHINE
+	ld @RET, r0
+
+	; Interrupts wieder einschalten
+	eni
+
+	; Starte Anwendungsprogramm
+	jmp #Entry	  
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; Fehlerbereich ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ProgTooLong:	
+	ori  @temp, r0, #0x0100
+	shli @temp,@temp,#16
+	ori  @temp, @temp, #0x0100
+	out  @temp, #64
+	jmp  #ProgTooLong
+
+CheckSumErrorProg:
+	ori  @temp, r0, #0x0200
+	shli @temp,@temp,#16
+	ori  @temp, @temp, #0x0200
+	out  @temp, #64
+	jmp  #CheckSumErrorProg
+
+DataTooLong:
+	ori  @temp, r0, #0x0400
+	shli @temp,@temp,#16
+	ori  @temp, @temp, #0x0400
+	out  @temp, #64
+	jmp  #DataTooLong
+
+CheckSumErrorData:
+	ori  @temp, r0, #0x0800
+	shli @temp,@temp,#16
+	ori  @temp, @temp, #0x0800
+	out  @temp, #64
+	jmp  #CheckSumErrorData
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;; Funktionen ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; EmptyMachine löscht alle Register ausser R1 und
+; resettet die komplette Peripherie
+EMPTYMACHINE:
+
+	; disable interrupts
+	dei
+
+	;; fill r1 with ones
+	ld   r7,r1
+	xnor r1,r0,r0
+
+	;; XTimer
+	out  r0,#16
+	out  r1,#17
+	out  r0,#17
+
+	;; XConsole
+	out  r0,#64
+	out  r1,#66
+	out  r0,#67
+	out  r1,#68
+
+	;; XUart
+	out  r0,#97
+	in     r0,#96
+
+	;; XPS2
+	out  r0,#129
+	out  r0,#130
+
+	;; XVga
+	out  r0, #160
+	ldui r2, #0x4B
+	shli r2, r2, #10		; r2 = 12C00 = (640*480/4)
+clearloop:
+	out  r0, #162
+	dec  r2
+	bnez r2, #clearloop
+	out  r0, #160
+	
+	;; Register (r1 enthält Rücksprungadresse !)
+	ld r1,r7
+	ld r2,r0
+	ld r3,r0
+	ld r4,r0
+	ld r5,r0
+	ld r6,r0
+	ld r7,r0
+	jreg @RADR
+
+; Liest einen Wert (im derzeitigen Lesemodus) von der
+; UART-Schnittstelle. Dieser wird im Register @RDATA
+; abgelegt.
+READUART:
+	in   @TEMP, #97			; UART-Status holen
+	andi @TEMP, @TEMP, #1	; RX-Flag selecten
+	beqz @TEMP, #READUART	; Warte bis Daten da
+	in   @RDATA, #96		; Lese Daten
+	jreg @RADR
+; write banner
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Default IRQ Return Address ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+@MEMA #0x0FFE
+DefRETI:
+	JMP #DefRETI;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Default IRQ Handler ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+@MEMA #0x0FFF
+	RETI;
+
+@} ; Ende allen Codes

@@ -1,0 +1,42 @@
+# OpCodes alias
+
+00000 NOP
+00001 illegal
+
+00010 SWI
+00011 GETSWI
+
+00100	SHL
+00101	SHR
+00110	CSHL
+00111	CSHR
+                
+01000	AND
+01001	OR
+01010	XOR
+01011	XNOR
+                
+01100	BNEZ
+01101	BEQZ
+01110	PassImmed
+01111 illegal
+                
+10000	SUB
+10001	ADD                
+10010	SETOV
+10011	GETOV
+10100   MUL
+
+10101 illegal
+10110 illegal
+10111 illegal
+                
+11000	SNE
+11001	SEQ
+11010	SGT
+11011	SGE
+
+11100	SLT
+11101	SLE
+11110 illegal
+11111 illegal

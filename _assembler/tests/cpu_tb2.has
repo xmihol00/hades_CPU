@@ -1,0 +1,40 @@
+
+@code __init {
+nop
+dpma
+ori   r1,r0,#8
+store r1,r0,#200
+ldui  r3,#0xf000
+shr   r2,r3,r1
+store r2,r0,#201
+shl   r2,r3,r1
+store r2,r0,#202
+ori   r1,r0,#65535
+shli  r1,r1,#16
+store r1,r0,#203
+ori   r1,r1,#-4096
+cshli r2,r1,#12
+store r2,r0,#204
+cshri r4,r2,#15
+store r4,r0,#205
+shri  r4,r4,#1
+store r4,r0,#206
+and   r3,r2,r1
+store r3,r0,#207
+andi  r3,r2,#-10
+store r3,r0,#208
+or    r2,r1,r3
+ld    r4,r2
+store r4,r0,#209
+xor   r3,r2,r1
+store r3,r0,#210
+xnor  r3,r2,r1
+store r3,r0,#211
+xori  r2,r3,#4086
+store r2,r0,#212
+xnori r2,r2,#43947
+xnori r2,r2,#47802
+store r2,r0,#213
+forever:
+	jmp #forever
+@}

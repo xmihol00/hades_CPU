@@ -1,0 +1,114 @@
+
+@code __init {
+	DPMA
+
+	; setzte IRQ Zähler auf 0
+	LDUI r2, #0
+
+	;setze Einsprungadressen
+	SISA #0, *isr_swi
+	SISA #1, *isr_per
+	SISA #2, *isr_na
+	SISA #3, *isr_mem
+
+	; starte XTimer (1us)
+	LDUI r1, #1
+	LDUI r6, #3
+	OUT  r1, #16		;setzt XtimerXT auf 1us %
+	OUT  r6, #17		;startet XtimerXT mit IRQ
+
+	; löse Software Interrupt aus
+	ldui r7, #1000
+	SWI  r7, #200
+
+	; done
+endlos:
+	JMP #endlos
+@}
+
+@code isr_swi {
+	getswi r4, #0
+	getswi r5, #1
+	store  r5, r4, #0
+	reti
+@}
+
+@code isr_per {
+	; Interrupt Zähler erhöhen
+	ADDI r2,r2,#1;
+
+	; Interrupt bestätigen
+	ldui r7,#4
+	out  r7,#17
+
+	; falls zähler=1 => starte timer
+	SEQI r7,r2,#1
+	BNEZ r7,#starttimer
+
+	; falls zähler=8 => verlasse IRQ
+	seqi r7,r2,#8
+	BNEZ r7,#endtimer
+
+	; sonst => löse NA-interrupt aus
+	out  r7,#045
+
+	; warte einige takte
+	ldui r6,#10
+l3:
+	subi r6,r6,#1
+	bnez r6,#l3
+	reti
+
+starttimer:
+	ldui r7,#3
+	out  r7,#17
+
+endtimer:
+	reti
+@}
+
+@code isr_na {
+	; erhöht Interrupt Zähler
+	ADDI r2,r2,#1 
+
+	; falls zähler=3 => starte timer
+	SEQI r7,r2,#3
+	bnez r7,#startxtimer2
+
+	; falls zähler=5 => löse MEM IRQ aus
+	seqi r7,r2,#5
+	bnez r7,#triggermem
+	reti
+
+startxtimer2:
+	ldui r7,#3
+	out  r7,#17
+	reti
+
+triggermem: 
+	LDUI r3,#1
+	SHLI r3,r3,#18
+	load r4,r3,#0
+	reti
+@}
+
+@code isr_mem {
+	; erhöht Interrupt Zähler
+	ADDI r2,r2,#1
+
+	; löse NA-interrupt aus
+	out  r7,#045
+	LDUI r7,#7
+	out  r7,#17
+
+	; löse Software Interrupt aus
+	ldui r7, #1001
+	SWI  r7, #201
+
+	; warte einige takte
+	ldui r6,#10
+l4:
+	subi r6,r6,#1
+	bnez r6,#l4
+	reti
+@}

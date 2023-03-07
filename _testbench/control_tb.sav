@@ -1,0 +1,24 @@
+[size] 1501 893
+[pos] -7 -91
+*-26,064003 1519700000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+@28
+top.control_tb.clk
+top.control_tb.reset
+top.control_tb.uut.pma
+top.control_tb.uut.state
+top.control_tb.uut.xnaintr
+top.control_tb.uut.xwrite
+top.control_tb.uut.xread
+top.control_tb.uut.pwrite
+top.control_tb.uut.pcwrite
+top.control_tb.uut.regwrite
+top.control_tb.uut.loadir
+top.control_tb.uut.dmembusy
+top.control_tb.uut.xpresent
+top.control_tb.uut.xack
+top.control_tb.uut.epma
+top.control_tb.uut.dpma
+top.control_tb.uut.storeop
+top.control_tb.uut.loadop
+top.control_tb.uut.outop
+top.control_tb.uut.inop

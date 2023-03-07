@@ -1,0 +1,16 @@
+
+@code __init {
+	DPMA				; disable pmemory access
+	ldui  r1,#10		; Reg1=10
+	ldui  r2,#100		; Reg2=100
+	ldi   r3,#-42		; Reg3=-42
+	store r1,r2,#0		; mem[100]=10
+	store r3,r2,#10		; mem[110]=-42
+	load  r4,r0,#100	; Reg4=mem[100]=10
+	ldui  r2,#200		; Reg2=200
+	load  r5,r0,#110	; Reg5=mem[110]=-42
+	store r4,r2,#0		; mem[200]=Reg4=10
+	store r5,r2,#10		; mem[210]=Reg5=-42
+forever:
+	jmp #forever		; wait forever
+@}

@@ -1,0 +1,77 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Test2 for the HaDes processor:
+%   logic/shift-instrution
+%
+% pre-condition:
+%   Test1 (load/store) correct
+%
+% runtime @50MHz: 3200ns
+%
+% to observe:
+%   mem[200-213]
+%   Reg1-Reg4, Reg7
+% 
+% post-condition:
+%   mem[200] = 0x00000008 -> ori    OK
+%   mem[201] = 0x000000f0 -> shr    OK
+%   mem[202] = 0x00f00000 -> shl    OK
+%   mem[203] = 0xffff0000 -> shli   OK
+%   mem[204] = 0xff000fff -> cshli  OK
+%   mem[205] = 0x1ffffe00 -> cshri  OK
+%   mem[206] = 0x0fffff00 -> shri   OK
+%   mem[207] = 0xff000000 -> and    OK
+%   mem[208] = 0x00000ff6 -> andi   OK
+%   mem[209] = 0xfffffff6 -> or     OK
+%   mem[210] = 0x00000ff6 -> xor    OK
+%   mem[211] = 0xfffff009 -> xnor   OK
+%   mem[212] = 0xffffffff -> xori   OK
+%   mem[213] = 0xffffeeee -> xnori  OK
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+DEPTH         = 4096;    % Memory depth (number of words)  %
+WIDTH         = 32;      % Memory width (length of a word) %
+ADDRESS_RADIX = HEX;
+DATA_RADIX    = HEX;
+
+CONTENT
+  BEGIN
+[0..0fff] : 0;           % Initialize Memory %
+                         % __init: %
+0000: 00000000;          % NOP                       ; 
+0001: E0000000;          % DPMA                      ; 
+0002: 04910008;          % LDUI r1, #8               ; 
+0003: 989100C8;          % STORE r1, r0, #0x000C8    ; 
+0004: 04B1F000;          % LDUI r3, #61440           ; 
+0005: 02A62000;          % SHR r2, r3, r1            ; 
+0006: 98A100C9;          % STORE r2, r0, #0x000C9    ; 
+0007: 02262000;          % SHL r2, r3, r1            ; 
+0008: 98A100CA;          % STORE r2, r0, #0x000CA    ; 
+0009: 0491FFFF;          % LDUI r1, #65535           ; 
+000A: 02130010;          % SHLI r1, r1, #16          ; 
+000B: 989100CB;          % STORE r1, r0, #0x000CB    ; 
+000C: 0493F000;          % ORI r1, r1, #61440        ; 
+000D: 0323000C;          % CSHLI r2, r1, #12         ; 
+000E: 98A100CC;          % STORE r2, r0, #0x000CC    ; 
+000F: 03C5000F;          % CSHRI r4, r2, #15         ; 
+0010: 98C100CD;          % STORE r4, r0, #0x000CD    ; 
+0011: 02C90001;          % SHRI r4, r4, #1           ; 
+0012: 98C100CE;          % STORE r4, r0, #0x000CE    ; 
+0013: 04342000;          % AND r3, r2, r1            ; 
+0014: 98B100CF;          % STORE r3, r0, #0x000CF    ; 
+0015: 0435FFF6;          % ANDI r3, r2, #65526       ; 
+0016: 98B100D0;          % STORE r3, r0, #0x000D0    ; 
+0017: 04A26000;          % OR r2, r1, r3             ; 
+0018: 08C50000;          % ADDI r4, r2, #0           ; 
+0019: 98C100D1;          % STORE r4, r0, #0x000D1    ; 
+001A: 05342000;          % XOR r3, r2, r1            ; 
+001B: 98B100D2;          % STORE r3, r0, #0x000D2    ; 
+001C: 05B42000;          % XNOR r3, r2, r1           ; 
+001D: 98B100D3;          % STORE r3, r0, #0x000D3    ; 
+001E: 05270FF6;          % XORI r2, r3, #4086        ; 
+001F: 98A100D4;          % STORE r2, r0, #0x000D4    ; 
+0020: 05A5ABAB;          % XNORI r2, r2, #43947      ; 
+0021: 05A5BABA;          % XNORI r2, r2, #47802      ; 
+0022: 98A100D5;          % STORE r2, r0, #0x000D5    ; 
+0023: 6681FFFF;          % JMP #0xFFFF               ; 
+END;
