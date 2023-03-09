@@ -1,7 +1,7 @@
 v 4
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/pmemory_tb.vhd" "ddba9e1cb53278b7a9b6704853e94e174d9c8d0a" "20230307215206.110":
-  entity pmemory_tb at 11( 339) + 0 on 27;
-  architecture tb_architecture of pmemory_tb at 27( 757) + 0 on 28;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/pmemory_tb.vhd" "ddba9e1cb53278b7a9b6704853e94e174d9c8d0a" "20230309210334.580":
+  entity pmemory_tb at 11( 339) + 0 on 31;
+  architecture tb_architecture of pmemory_tb at 27( 757) + 0 on 32;
 file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/irqreceiver.vhd" "48caf6d8d35c10aa177cf9bd2e2c5ea2d53bf0bf" "20230307215055.584":
   entity irqreceiver at 21( 823) + 0 on 23;
   architecture fsm of irqreceiver at 35( 1059) + 0 on 24;
@@ -23,6 +23,12 @@ file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_m
 file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_ram_dp.vhd" "db31ccf1574cfbc7ef7e2ad3d1965cffa419e862" "20230307215055.559":
   entity hades_ram32_dp at 1( 0) + 0 on 21;
   architecture rtl of hades_ram32_dp at 32( 720) + 0 on 22;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/pmemory.vhd" "574d4783a37263057804c3d4385826ae60170b10" "20230307215128.411":
-  entity pmemory at 9( 300) + 0 on 25;
-  architecture rtl of pmemory at 37( 885) + 0 on 26;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/pmemory.vhd" "574d4783a37263057804c3d4385826ae60170b10" "20230309210317.321":
+  entity pmemory at 9( 300) + 0 on 29;
+  architecture rtl of pmemory at 37( 885) + 0 on 30;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/indec.vhd" "0fe9c52f26f3ef8e2caca2730dd80543a52d4f40" "20230309223006.403":
+  entity indec at 9( 304) + 0 on 47;
+  architecture rtl of indec at 43( 1153) + 0 on 48;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/indec_tb.vhd" "b2bbb27ed28c205337de586366ab690ac1d6e581" "20230309222902.147":
+  entity indec_tb at 11( 355) + 0 on 45;
+  architecture tb_architecture of indec_tb at 27( 822) + 0 on 46;
