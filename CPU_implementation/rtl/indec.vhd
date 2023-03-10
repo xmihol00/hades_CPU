@@ -2,7 +2,7 @@
 --
 -- Titel: Instruction Decoder  
 -- Autor: David Mihola (12211951)
--- Datum: 07. 03. 2023
+-- Datum: 10. 03. 2023
 --
 ---------------------------------------------------------------------------------------------------
 
@@ -44,6 +44,18 @@ architecture rtl of indec is
 begin
 	process(iword) is
 	begin
+		aopadr <= iword(19 downto 17);
+		if iword(31 downto 28) = "0011" or iword(31 downto 28) = "1001" then -- OUT or STORE
+			bopadr <= iword(22 downto 20);
+			wopadr <= (others => '0');
+		else
+			bopadr <= iword(15 downto 13);
+			wopadr <= iword(22 downto 20);
+		end if;
+
+		ivalid <= iword(16);
+		iop <= iword(15 downto 0);
+
 		opc <= iword(27 downto 23);
 		pccontr <= (others => '0');
 		inop <= '0';
