@@ -36,10 +36,11 @@ end pmemory;
 
 architecture rtl of pmemory is
 begin
+	-- concrete memory instantiation using the generic RAM
     MEM : entity work.hades_ram32_dp
     generic map (
     	INIT_FILE => INIT,
-    	WIDTH_ADDR => 12,
+    	WIDTH_ADDR => 12, 
     	INIT_DATA => hades_bootloader
     )
     port map (
