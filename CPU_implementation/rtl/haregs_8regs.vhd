@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel: Register File   
+-- Titel: Register File (implementation with 8 registers using signals)
 -- Autor: David Mihola (12211951)
 -- Datum: 11. 03. 2023
 --

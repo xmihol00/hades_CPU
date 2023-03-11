@@ -48,7 +48,7 @@ architecture TB_ARCHITECTURE of control_tb is
 		assert v(0)=regwrite report "wrong REGWRITE; expected " & std_logic'image(v(0)) severity error;
 	end;
 	
-	-- Prozedur zum Rücksetzen von Signalen
+	-- Prozedur zum Rï¿½cksetzen von Signalen
 		procedure clear(signal a: out std_logic) is 
 			begin a <= '0';
 		end procedure;  
@@ -90,12 +90,12 @@ begin
 	-- RESET Stimulus 
 	reset <= '1', '0' after 15 ns;
 	
-	-- Beschaltung der Eingänge und Beobachtung der Ausgänge
+	-- Beschaltung der Eingï¿½nge und Beobachtung der Ausgï¿½nge
 	test: process
 	begin
   
 --   20- 80ns: DPMA (normaler ALU Zyklus) --------------------------------------------------------
--- Dieser Befehl mit Beispielwerten zum Überprüfen der Signalwerte der Ausgänge  
+-- Dieser Befehl mit Beispielwerten zum ï¿½berprï¿½fen der Signalwerte der Ausgï¿½nge  
 		prove("1000000");                                                                 -- IFETCH
 		prove("0000000"); dpma <= '1';                                                    -- IDECODE
 		prove("0000000");                                                                 -- ALU
@@ -104,7 +104,7 @@ begin
 	  
 
 --  100- 160ns: ALU -------------------------------------------------------------------------------
--- Ab hier sind die Signalwerte, auf die die Ausgänge überprüft werden sollen, entsprechend zu setzen
+-- Ab hier sind die Signalwerte, auf die die Ausgï¿½nge ï¿½berprï¿½ft werden sollen, entsprechend zu setzen
 		prove("1000000");                                                                 -- IFETCH 	
 		prove("0000000");                                                                 -- IDECODE	
 		prove("0000000");                                                                 -- ALU      
@@ -132,7 +132,7 @@ begin
 		prove("0000000"); epma <= '1';                                                    -- IDECODE	
 		prove("0000000");                                                                 -- ALU    
 		prove("0000011");                                                                 -- WRITEBACK
-		clear(epma);	
+		--clear(epma);	
 	  
 --  480-560ns: STORE (mit PMA ohne DMEMBUSY) ----------------------------------------------------- 
 		prove("1000000");                                                                 -- IFETCH 
@@ -148,7 +148,7 @@ begin
 		prove("0000000");                                                                 -- ALU      
 		prove("0001000"); dmembusy <= '1';                                                -- MEMWRITE 	
 		prove("0000011");                                                                 -- WRITEBACK
-		clear(storeop, dmembusy);
+		clear(storeop, dmembusy, epma);
     
 --  680-740ns: DPMA ------------------------------------------------------------------------------
 		prove("1000000");                                                                 -- IFETCH
