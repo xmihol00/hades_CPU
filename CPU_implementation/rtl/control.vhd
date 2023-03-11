@@ -45,7 +45,7 @@ architecture rtl of control is
 	signal mealy_current_state : State_t := IFETCH;
 	signal mealy_next_state : State_t := IFETCH;
 begin
-	
+	-- Current implementation is the Mealy FSM.
 	process (clk, reset) is -- change of current state of the Mealy FSM
     begin
 	    if (reset = '1') then
@@ -55,7 +55,7 @@ begin
 	    end if;
     end process;
 
-	process (mealy_current_state, xack, xpresent, dmembusy) is -- change of next state of the Mealy FSM
+	process (mealy_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is -- Mealy FSM logic
 	begin
 		-- default values of the control signals
 		loadir <= '0';
@@ -140,5 +140,4 @@ begin
 				mealy_next_state <= IFETCH;
 		end case;
 	end process;
-
 end rtl;
