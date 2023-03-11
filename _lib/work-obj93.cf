@@ -2,9 +2,13 @@ v 4
 file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/control_tb.vhd" "60462ffd1c7258ebcfb9ae144d4077ff4da0ffbd" "20230311214909.952":
   entity control_tb at 11( 337) + 0 on 353;
   architecture tb_architecture of control_tb at 27( 754) + 0 on 354;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/haregs.vhd" "cf9334ddad739ed463d2ac072429121e4bb603cd" "20230311120911.880":
-  entity haregs at 9( 299) + 0 on 195;
-  architecture rtl of haregs at 36( 908) + 0 on 196;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/haregs.vhd" "27b6e3cc6837a3d0db82d3325a7f089dc7e07a49" "20230311223509.265":
+  entity multiplexer_8to1 at 9( 299) + 0 on 395;
+  architecture rtl of multiplexer_8to1 at 34( 967) + 0 on 396;
+  entity demultiplexer_1to8 at 51( 1406) + 0 on 397;
+  architecture rtl of demultiplexer_1to8 at 80( 2178) + 0 on 398;
+  entity haregs at 107( 2845) + 0 on 399;
+  architecture rtl of haregs at 134( 3454) + 0 on 400;
 file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/indec_tb.vhd" "b2bbb27ed28c205337de586366ab690ac1d6e581" "20230311142038.335":
   entity indec_tb at 11( 355) + 0 on 203;
   architecture tb_architecture of indec_tb at 27( 822) + 0 on 204;
@@ -38,9 +42,9 @@ file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/irqrece
 file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/pmemory_tb.vhd" "ddba9e1cb53278b7a9b6704853e94e174d9c8d0a" "20230310222656.531":
   entity pmemory_tb at 11( 339) + 0 on 107;
   architecture tb_architecture of pmemory_tb at 27( 757) + 0 on 108;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/haregs_tb.vhd" "6c08642903b5e8c1fee1b1c4a436f318ccefebee" "20230311120913.225":
-  entity haregs_tb at 11( 342) + 0 on 197;
-  architecture tb_architecture of haregs_tb at 28( 758) + 0 on 198;
+file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/haregs_tb.vhd" "6c08642903b5e8c1fee1b1c4a436f318ccefebee" "20230311223510.431":
+  entity haregs_tb at 11( 342) + 0 on 401;
+  architecture tb_architecture of haregs_tb at 28( 758) + 0 on 402;
 file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/control.vhd" "9d9a8301427bf107fd417800722ad376be8a1860" "20230311214908.837":
   entity control at 9( 301) + 0 on 351;
   architecture rtl of control at 43( 1034) + 0 on 352;
