@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel: Register File   
+-- Titel: Register File (implementation from file 'haregs_components.vhd')  
 -- Autor: David Mihola (12211951)
 -- Datum: 11. 03. 2023
 --
