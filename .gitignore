@@ -1,2 +1,2 @@
 *.o
-
+**/additional_testbenches/*.ghw

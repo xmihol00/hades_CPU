@@ -30,7 +30,7 @@ entity pmemory is
 		-- read port
 		loadir		: in  std_logic;
 		radr		: in  std_logic_vector(11 downto 0);
-		dataout	: out std_logic_vector(31 downto 0)
+		dataout	    : out std_logic_vector(31 downto 0)
 	);
 end pmemory;
 

@@ -43,65 +43,66 @@ end indec;
 architecture rtl of indec is
 	-- This approach did not work because of the compilation error "choice must be locally static expression",
 	-- this might be fixed with the 2008 VHDL standard according to the internet (--std=08 flag for GHDL).
-	--type Instruction_t is (ALUi, ALUIi, NOPi, SWIi, GETSWIi, INi, OUTi, ENIi, DEIi, BNEZi, BEQZi, BOVi, LOADi, STOREi, JALi, 
-	--					   JREGi, RETIi, SISAi, DPMAi, EPMAi);
-	--type Instructions_t is array(Instruction_t) of std_logic_vector(3 downto 0);
+	--type Instruction_opcodes_t is (ALU_opc, ALUI_opc, NOPi, SWI_opc, GETSWI_opc, IN_opc, OUT_opc, ENI_opc, DEI_opc, BNEZ_opc, BEQZ_opc, 
+    --	 							 BOV_opc, LOAD_opc, STORE_opc, JAL_opc, JREG_opc, RETI_opc, SISA_opc, DPMA_opc, EPMA_opc);
+	--type Instructions_t is array(Instruction_opcodes_t) of std_logic_vector(3 downto 0);
 	--constant Instructions : Instructions_t := (
-	--	ALUi		=> "0000",
-	--	ALUIi	=> "0000",
+	--	ALU_opc		=> "0000",
+	--	ALUI_opc	=> "0000",
 	--	NOPi	=> "0000",
-	--	SWIi	=> "0000",
-	--	GETSWIi	=> "0000",
-	--	INi		=> "0010",
-	--	OUTi	=> "0011",
-	--	ENIi	=> "0001",
-	--	DEIi	=> "0100",
-	--	BNEZi	=> "0101",
-	--	BEQZi	=> "0110",
-	--	BOVi	=> "0111",
-	--	LOADi	=> "1000",
-	--	STOREi	=> "1001",
-	--	JALi	=> "1010",
-	--	JREGi	=> "1011",
-	--	RETIi	=> "1100",
-	--	SISAi	=> "1101",
-	--	DPMAi	=> "1110",
-	--	EPMAi	=> "1111"
+	--	SWI_opc	=> "0000",
+	--	GETSWI_opc	=> "0000",
+	--	IN_opc		=> "0010",
+	--	OUT_opc	=> "0011",
+	--	ENI_opc	=> "0001",
+	--	DEI_opc	=> "0100",
+	--	BNEZ_opc	=> "0101",
+	--	BEQZ_opc	=> "0110",
+	--	BOV_opc	=> "0111",
+	--	LOAD_opc	=> "1000",
+	--	STORE_opc	=> "1001",
+	--	JAL_opc	=> "1010",
+	--	JREG_opc	=> "1011",
+	--	RETI_opc	=> "1100",
+	--	SISA_opc	=> "1101",
+	--	DPMA_opc	=> "1110",
+	--	EPMA_opc	=> "1111"
 	--);
 
-	-- simple constants instead
-	constant ALUi : std_logic_vector(3 downto 0) := "0000";
-	constant ALUIi : std_logic_vector(3 downto 0) := "0000";
-	constant SWIi : std_logic_vector(3 downto 0) := "0000";
-	constant GETSWIi : std_logic_vector(3 downto 0) := "0000";
-	constant INi : std_logic_vector(3 downto 0) := "0010";
-	constant OUTi : std_logic_vector(3 downto 0) := "0011";
-	constant ENIi : std_logic_vector(3 downto 0) := "0001";
-	constant DEIi : std_logic_vector(3 downto 0) := "0100";
-	constant BNEZi : std_logic_vector(3 downto 0) := "0101";
-	constant BEQZi : std_logic_vector(3 downto 0) := "0110";
-	constant BOVi : std_logic_vector(3 downto 0) := "0111";
-	constant LOADi : std_logic_vector(3 downto 0) := "1000";
-	constant STOREi : std_logic_vector(3 downto 0) := "1001";
-	constant JALi : std_logic_vector(3 downto 0) := "1010";
-	constant JREGi : std_logic_vector(3 downto 0) := "1011";
-	constant RETIi : std_logic_vector(3 downto 0) := "1100";
-	constant SISAi : std_logic_vector(3 downto 0) := "1101";
-	constant DPMAi : std_logic_vector(3 downto 0) := "1110";
-	constant EPMAi : std_logic_vector(3 downto 0) := "1111";
+	-- simple constants instead (instruction opcodes)
+	constant ALU_opc    : std_logic_vector(3 downto 0) := "0000";
+	constant ALUI_opc   : std_logic_vector(3 downto 0) := "0000";
+	constant SWI_opc    : std_logic_vector(3 downto 0) := "0000";
+	constant GETSWI_opc : std_logic_vector(3 downto 0) := "0000";
+	constant IN_opc     : std_logic_vector(3 downto 0) := "0010";
+	constant OUT_opc    : std_logic_vector(3 downto 0) := "0011";
+	constant ENI_opc    : std_logic_vector(3 downto 0) := "0001";
+	constant DEI_opc    : std_logic_vector(3 downto 0) := "0100";
+	constant BNEZ_opc   : std_logic_vector(3 downto 0) := "0101";
+	constant BEQZ_opc   : std_logic_vector(3 downto 0) := "0110";
+	constant BOV_opc    : std_logic_vector(3 downto 0) := "0111";
+	constant LOAD_opc   : std_logic_vector(3 downto 0) := "1000";
+	constant STORE_opc  : std_logic_vector(3 downto 0) := "1001";
+	constant JAL_opc    : std_logic_vector(3 downto 0) := "1010";
+	constant JREG_opc   : std_logic_vector(3 downto 0) := "1011";
+	constant RETI_opc   : std_logic_vector(3 downto 0) := "1100";
+	constant SISA_opc   : std_logic_vector(3 downto 0) := "1101";
+	constant DPMA_opc   : std_logic_vector(3 downto 0) := "1110";
+	constant EPMA_opc   : std_logic_vector(3 downto 0) := "1111";
 	
+	constant SWI_aopc   : std_logic_vector(4 downto 0) := "00010";
 begin
 	process(iword) is
 	begin
 		aopadr <= iword(19 downto 17);
-		if iword(31 downto 28) = OUTi or iword(31 downto 28) = STOREi then -- OUT or STORE
+		if iword(31 downto 28) = OUT_opc or iword(31 downto 28) = STORE_opc then -- OUT or STORE
 			bopadr <= iword(22 downto 20);
 			wopadr <= (others => '0');
 		else -- other instructions, map directly from instruction word
 			bopadr <= iword(15 downto 13);
 			wopadr <= iword(22 downto 20);
 		end if;
-
+		
 		ivalid <= iword(16);
 		iop <= iword(15 downto 0);
 
@@ -119,52 +120,51 @@ begin
 
 		case iword(31 downto 28) is
 			-- pccontr signal
-			when SWIi => -- SWI
-				if iword(27 downto 23) = "00010" then
+			when SWI_opc => -- SWI
+				if iword(27 downto 23) = SWI_aopc then
 				   pccontr <= "01" & "000000000";
 				end if;
-			when JALi => -- JAL
+			when JAL_opc =>  -- JAL
 				pccontr <= "101" & "00000000";
-			when JREGi => -- JREG
+			when JREG_opc => -- JREG
 				pccontr <= "0001" & "0000000";
-			when RETIi => -- RETI
+			when RETI_opc => -- RETI
 				pccontr <= "00001" & "000000";
-			when ENIi => -- ENI
+			when ENI_opc =>  -- ENI
 				pccontr <= "000001" & "00000";
-			when DEIi => -- DEI
+			when DEI_opc =>  -- DEI
 				pccontr <= "0000001" & "0000";
-			when SISAi => -- SISA
+			when SISA_opc => -- SISA
 				pccontr <= "10000001" & "000";
-			when BOVi => -- BOV
+			when BOV_opc =>  -- BOV
 				pccontr <= "100000001" & "00";
-			when BEQZi => -- BEQZ
+			when BEQZ_opc => -- BEQZ
 				pccontr <= "1000000001" & "0";
-			when BNEZi => -- BNEZ
+			when BNEZ_opc => -- BNEZ
 				pccontr <= "10000000001";
 			
 			-- other yet unset signals
-			when INi => -- IN
+			when IN_opc => -- IN
 				inop <= '1';
 				selxres <= '1';
-			when OUTi => -- OUT
+			when OUT_opc => -- OUT
 				outop <= '1';
 				selxres <= '1';
-			when LOADi => -- LOAD
+			when LOAD_opc => -- LOAD
 				loadop <= '1';
 				dmemop <= '1';
 				selxres <= '1';
-			when STOREi => -- STORE
+			when STORE_opc => -- STORE
 				storeop <= '1';
 				dmemop <= '1';
 				selxres <= '1';
-			when DPMAi => -- DPMA
+			when DPMA_opc => -- DPMA
 				dpma <= '1';
-			when EPMAi => -- EPMA
+			when EPMA_opc => -- EPMA
 				epma <= '1';
 
 			-- unnecessary, but recquired for compilation
-			when others =>
-				pccontr <= (others => '0');
+			when others => null;
 		end case;
 	end process;
 end rtl;
