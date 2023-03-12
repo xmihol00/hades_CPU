@@ -43,25 +43,25 @@ end indec;
 architecture rtl of indec is
 	-- This approach did not work because of the compilation error "choice must be locally static expression",
 	-- this might be fixed with the 2008 VHDL standard according to the internet (--std=08 flag for GHDL).
-	--type Instruction_opcodes_t is (ALU_opc, ALUI_opc, NOPi, SWI_opc, GETSWI_opc, IN_opc, OUT_opc, ENI_opc, DEI_opc, BNEZ_opc, BEQZ_opc, 
+	--type Instruction_opcodes_t is (ALU_opc, ALUI_opc, NOP_opc, SWI_opc, GETSWI_opc, IN_opc, OUT_opc, ENI_opc, DEI_opc, BNEZ_opc, BEQZ_opc, 
     --	 							 BOV_opc, LOAD_opc, STORE_opc, JAL_opc, JREG_opc, RETI_opc, SISA_opc, DPMA_opc, EPMA_opc);
 	--type Instructions_t is array(Instruction_opcodes_t) of std_logic_vector(3 downto 0);
 	--constant Instructions : Instructions_t := (
 	--	ALU_opc		=> "0000",
 	--	ALUI_opc	=> "0000",
-	--	NOPi	=> "0000",
-	--	SWI_opc	=> "0000",
+	--	NOP_opc		=> "0000",
+	--	SWI_opc		=> "0000",
 	--	GETSWI_opc	=> "0000",
 	--	IN_opc		=> "0010",
-	--	OUT_opc	=> "0011",
-	--	ENI_opc	=> "0001",
-	--	DEI_opc	=> "0100",
+	--	OUT_opc		=> "0011",
+	--	ENI_opc		=> "0001",
+	--	DEI_opc		=> "0100",
 	--	BNEZ_opc	=> "0101",
 	--	BEQZ_opc	=> "0110",
-	--	BOV_opc	=> "0111",
+	--	BOV_opc		=> "0111",
 	--	LOAD_opc	=> "1000",
 	--	STORE_opc	=> "1001",
-	--	JAL_opc	=> "1010",
+	--	JAL_opc		=> "1010",
 	--	JREG_opc	=> "1011",
 	--	RETI_opc	=> "1100",
 	--	SISA_opc	=> "1101",
@@ -72,6 +72,7 @@ architecture rtl of indec is
 	-- simple constants instead (instruction opcodes)
 	constant ALU_opc    : std_logic_vector(3 downto 0) := "0000";
 	constant ALUI_opc   : std_logic_vector(3 downto 0) := "0000";
+	constant NOP_opc    : std_logic_vector(3 downto 0) := "0000";
 	constant SWI_opc    : std_logic_vector(3 downto 0) := "0000";
 	constant GETSWI_opc : std_logic_vector(3 downto 0) := "0000";
 	constant IN_opc     : std_logic_vector(3 downto 0) := "0010";
@@ -107,16 +108,16 @@ begin
 		iop <= iword(15 downto 0);
 
 		-- default values
-		opc <= iword(27 downto 23);
+		opc     <= iword(27 downto 23);
 		pccontr <= (others => '0');
-		inop <= '0';
-		outop <= '0';
-		loadop <= '0';
+		inop    <= '0';
+		outop   <= '0';
+		loadop  <= '0';
 		storeop <= '0';
-		dmemop <= '0';
+		dmemop  <= '0';
 		selxres <= '0';
-		dpma <= '0';
-		epma <= '0';
+		dpma    <= '0';
+		epma    <= '0';
 
 		case iword(31 downto 28) is
 			-- pccontr signal
@@ -144,13 +145,13 @@ begin
 				pccontr <= "10000000001";
 			
 			-- other yet unset signals
-			when IN_opc => -- IN
+			when IN_opc =>    -- IN
 				inop <= '1';
 				selxres <= '1';
-			when OUT_opc => -- OUT
+			when OUT_opc =>   -- OUT
 				outop <= '1';
 				selxres <= '1';
-			when LOAD_opc => -- LOAD
+			when LOAD_opc =>  -- LOAD
 				loadop <= '1';
 				dmemop <= '1';
 				selxres <= '1';
@@ -158,9 +159,9 @@ begin
 				storeop <= '1';
 				dmemop <= '1';
 				selxres <= '1';
-			when DPMA_opc => -- DPMA
+			when DPMA_opc =>  -- DPMA
 				dpma <= '1';
-			when EPMA_opc => -- EPMA
+			when EPMA_opc =>  -- EPMA
 				epma <= '1';
 
 			-- unnecessary, but recquired for compilation
