@@ -1,39 +1,39 @@
 v 4
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xbus_syn.vhd" "bc25d6ece5ae062e3c23f2f04b6e80b1fbc472bf" "20230307215055.067":
-  entity xbus_syn at 1( 0) + 0 on 39;
-  architecture rtl of xbus_syn at 54( 1439) + 0 on 40;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xuart.vhd" "4d978ed8528ae45a5ef898ffd111fa2d7703f877" "20230307215054.823":
-  entity xuart_clkgen at 5( 245) + 0 on 27;
-  architecture rtl of xuart_clkgen at 26( 781) + 0 on 28;
-  entity xuart_transmitter at 91( 2549) + 0 on 29;
-  architecture rtl of xuart_transmitter at 121( 3362) + 0 on 30;
-  entity xuart_receiver at 246( 6979) + 0 on 31;
-  architecture rtl of xuart_receiver at 278( 7911) + 0 on 32;
-  entity xuart at 450( 12255) + 0 on 33;
-  architecture rtl of xuart at 483( 12990) + 0 on 34;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xconsole.vhd" "1faef67cd749fe891251034238f68c0f0fb7bd58" "20230307215054.533":
-  entity xconsole_deglitch at 5( 245) + 0 on 17;
-  architecture rtl of xconsole_deglitch at 27( 687) + 0 on 18;
-  entity xconsole at 91( 2550) + 0 on 19;
-  architecture rtl of xconsole at 127( 3391) + 0 on 20;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xvga_out.vhd" "4a4f43d26bedb5574d1fa26a8440dc47be929b62" "20230307215054.345":
-  entity xvga_out at 1( 0) + 0 on 13;
-  architecture rtl of xvga_out at 28( 624) + 0 on 14;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xdmemory_dcache.vhd" "c5731700e11e3180dac44fed20ef84f4c03f38b7" "20230307215054.322":
-  entity xdmemory_dcache at 1( 0) + 0 on 11;
-  architecture rtl of xdmemory_dcache at 25( 490) + 0 on 12;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xvga.vhd" "3a511a44c05251552a5eb91a886cfa24a8c78751" "20230307215054.408":
-  entity xvga at 1( 0) + 0 on 15;
-  architecture rtl of xvga at 40( 860) + 0 on 16;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xps2.vhd" "acf61564e0768538b569aedc1e7167a4fc00d43d" "20230307215054.649":
-  entity xps2_deglitch at 5( 245) + 0 on 21;
-  architecture rtl of xps2_deglitch at 18( 474) + 0 on 22;
-  entity xps2_lowlevel at 68( 1657) + 0 on 23;
-  architecture rtl of xps2_lowlevel at 104( 2418) + 0 on 24;
-  entity xps2 at 347( 8752) + 0 on 25;
-  architecture rtl of xps2 at 381( 9468) + 0 on 26;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xsevenseg.vhd" "3795cd6f84846902cd083bdac68bfaafcce17f6b" "20230307215054.987":
-  entity bcd_decoder at 5( 225) + 0 on 35;
-  architecture rtl of bcd_decoder at 17( 461) + 0 on 36;
-  entity xsevenseg at 37( 1333) + 0 on 37;
-  architecture rtl of xsevenseg at 72( 2071) + 0 on 38;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xbus_syn.vhd" "bc25d6ece5ae062e3c23f2f04b6e80b1fbc472bf" "20230313082618.997":
+  entity xbus_syn at 1( 0) + 0 on 69;
+  architecture rtl of xbus_syn at 54( 1439) + 0 on 70;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xuart.vhd" "4d978ed8528ae45a5ef898ffd111fa2d7703f877" "20230313082618.831":
+  entity xuart_clkgen at 5( 245) + 0 on 57;
+  architecture rtl of xuart_clkgen at 26( 781) + 0 on 58;
+  entity xuart_transmitter at 91( 2549) + 0 on 59;
+  architecture rtl of xuart_transmitter at 121( 3362) + 0 on 60;
+  entity xuart_receiver at 246( 6979) + 0 on 61;
+  architecture rtl of xuart_receiver at 278( 7911) + 0 on 62;
+  entity xuart at 450( 12255) + 0 on 63;
+  architecture rtl of xuart at 483( 12990) + 0 on 64;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xconsole.vhd" "1faef67cd749fe891251034238f68c0f0fb7bd58" "20230313082618.637":
+  entity xconsole_deglitch at 5( 245) + 0 on 47;
+  architecture rtl of xconsole_deglitch at 27( 687) + 0 on 48;
+  entity xconsole at 91( 2550) + 0 on 49;
+  architecture rtl of xconsole at 127( 3391) + 0 on 50;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xvga_out.vhd" "4a4f43d26bedb5574d1fa26a8440dc47be929b62" "20230313082618.515":
+  entity xvga_out at 1( 0) + 0 on 43;
+  architecture rtl of xvga_out at 28( 624) + 0 on 44;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xdmemory_dcache.vhd" "c5731700e11e3180dac44fed20ef84f4c03f38b7" "20230313082618.497":
+  entity xdmemory_dcache at 1( 0) + 0 on 41;
+  architecture rtl of xdmemory_dcache at 25( 490) + 0 on 42;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xvga.vhd" "3a511a44c05251552a5eb91a886cfa24a8c78751" "20230313082618.555":
+  entity xvga at 1( 0) + 0 on 45;
+  architecture rtl of xvga at 40( 860) + 0 on 46;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xps2.vhd" "acf61564e0768538b569aedc1e7167a4fc00d43d" "20230313082618.717":
+  entity xps2_deglitch at 5( 245) + 0 on 51;
+  architecture rtl of xps2_deglitch at 18( 474) + 0 on 52;
+  entity xps2_lowlevel at 68( 1657) + 0 on 53;
+  architecture rtl of xps2_lowlevel at 104( 2418) + 0 on 54;
+  entity xps2 at 347( 8752) + 0 on 55;
+  architecture rtl of xps2 at 381( 9468) + 0 on 56;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_synth/xsevenseg.vhd" "3795cd6f84846902cd083bdac68bfaafcce17f6b" "20230313082618.944":
+  entity bcd_decoder at 5( 225) + 0 on 65;
+  architecture rtl of bcd_decoder at 17( 461) + 0 on 66;
+  entity xsevenseg at 37( 1333) + 0 on 67;
+  architecture rtl of xsevenseg at 72( 2071) + 0 on 68;

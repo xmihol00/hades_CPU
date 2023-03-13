@@ -58,10 +58,11 @@ function stoptime {
   run
 }
 
+export GHDL_GCC_BIN=gcc
 #TestBench compilieren und ausführen und ggf. Waveform anzeigen
 # workaround, because GHDL uses the windows paths for the hex file
 function run {
-  ../_bin/ghdl-0.33-x86_64-linux/bin/ghdl -a --workdir=../_lib -P../_lib $source.vhd
+  ghdl -a --workdir=../_lib -P../_lib $source.vhd
 
   #Waveforms der CPU-Tests werden explizit im Gruppenordner abgelegt
   wave=$source
@@ -70,10 +71,10 @@ function run {
     source=$source$n
   fi
    
-   ../_bin/ghdl-0.33-x86_64-linux/bin/ghdl -e -fexplicit -Wl,-no-pie --workdir=../_lib -P../_lib $param1"_tb"
+  ghdl -e --workdir=../_lib -P../_lib $param1"_tb"
 
   echo "== simulation: ${param1}_tb for $stoptime"
-  ../_bin/ghdl-0.33-x86_64-linux/bin/ghdl -r --workdir=../_lib -P../_lib $param1"_tb" \
+  ghdl -r --workdir=../_lib -P../_lib $param1"_tb" \
 			--wave=$wave.ghw --stop-time=$stoptime
   
   #remove tmp cpu test file  

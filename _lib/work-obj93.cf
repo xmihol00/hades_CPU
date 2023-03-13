@@ -1,50 +1,50 @@
 v 4
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "./additional_testbenches/indec_tb.vhd" "fc18f8620e8db36a1d4e7f3a516a0909ab321ab0" "20230312135606.140":
-  entity indec_tb at 10( 353) + 0 on 671;
-  architecture tb_architecture of indec_tb at 20( 584) + 0 on 672;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "./additional_testbenches/pmemory_tb.vhd" "5c9f5bc55f0397db3a9ade85a2319a93a55bab0e" "20230312090115.708":
-  entity pmemory_tb at 10( 358) + 0 on 495;
-  architecture tb_architecture of pmemory_tb at 20( 540) + 0 on 496;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/control.vhd" "9d9a8301427bf107fd417800722ad376be8a1860" "20230311214908.837":
-  entity control at 9( 301) + 0 on 351;
-  architecture rtl of control at 43( 1034) + 0 on 352;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/haregs_tb.vhd" "6c08642903b5e8c1fee1b1c4a436f318ccefebee" "20230311223510.431":
-  entity haregs_tb at 11( 342) + 0 on 401;
-  architecture tb_architecture of haregs_tb at 28( 758) + 0 on 402;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/irqreceiver.vhd" "48caf6d8d35c10aa177cf9bd2e2c5ea2d53bf0bf" "20230307215055.584":
-  entity irqreceiver at 21( 823) + 0 on 23;
-  architecture fsm of irqreceiver at 35( 1059) + 0 on 24;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_shift.vhd" "844006ab0a10032959680aa9e55ff2f2a9912d92" "20230307215055.531":
-  entity hades_shift at 1( 0) + 0 on 19;
-  architecture rtl of hades_shift at 28( 536) + 0 on 20;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_compare.vhd" "4bfcd920e74deba75a33fc730ec48797c509bc05" "20230307215055.473":
-  entity hades_compare at 1( 0) + 0 on 15;
-  architecture rtl of hades_compare at 23( 407) + 0 on 16;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hadescomponents.vhd" "e4b521719350bfbba37e18f8c651729927b70a03" "20230307215055.138":
-  package hadescomponents at 1( 0) + 0 on 11 body;
-  package body hadescomponents at 190( 4717) + 0 on 12;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_addsub.vhd" "6aed069bbd3b6d48f05fe3e6e2fc7bfe66e38ebb" "20230307215055.446":
-  entity hades_addsub at 1( 0) + 0 on 13;
-  architecture rtl of hades_addsub at 25( 438) + 0 on 14;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_mul.vhd" "f3b02c9a6299904f235c34f8be19721129c388b7" "20230307215055.498":
-  entity hades_mul at 1( 0) + 0 on 17;
-  architecture rtl of hades_mul at 25( 431) + 0 on 18;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_ram_dp.vhd" "db31ccf1574cfbc7ef7e2ad3d1965cffa419e862" "20230307215055.559":
-  entity hades_ram32_dp at 1( 0) + 0 on 21;
-  architecture rtl of hades_ram32_dp at 32( 720) + 0 on 22;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/pmemory.vhd" "738c7bb92dd5fdef7e29928113b6ffd6ee3d74a9" "20230310222651.872":
-  entity pmemory at 9( 300) + 0 on 105;
-  architecture rtl of pmemory at 37( 885) + 0 on 106;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/indec.vhd" "95003b55769db051b6309bec933f0bc7938ea671" "20230312135559.227":
-  entity indec at 9( 304) + 0 on 667;
-  architecture rtl of indec at 43( 1153) + 0 on 668;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "rtl/haregs.vhd" "27b6e3cc6837a3d0db82d3325a7f089dc7e07a49" "20230311223509.265":
-  entity multiplexer_8to1 at 9( 299) + 0 on 395;
-  architecture rtl of multiplexer_8to1 at 34( 967) + 0 on 396;
-  entity demultiplexer_1to8 at 51( 1406) + 0 on 397;
-  architecture rtl of demultiplexer_1to8 at 80( 2178) + 0 on 398;
-  entity haregs at 107( 2845) + 0 on 399;
-  architecture rtl of haregs at 134( 3454) + 0 on 400;
-file "/mnt/sdc3/david/projs/hades_CPU/CPU_implementation/" "../_testbench/control_tb.vhd" "60462ffd1c7258ebcfb9ae144d4077ff4da0ffbd" "20230311214909.952":
-  entity control_tb at 11( 337) + 0 on 353;
-  architecture tb_architecture of control_tb at 27( 754) + 0 on 354;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_testbench/haregs_tb.vhd" "6c08642903b5e8c1fee1b1c4a436f318ccefebee" "20230313085656.243":
+  entity haregs_tb at 11( 342) + 0 on 727;
+  architecture tb_architecture of haregs_tb at 28( 758) + 0 on 728;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_testbench/control_tb.vhd" "60462ffd1c7258ebcfb9ae144d4077ff4da0ffbd" "20230313085607.715":
+  entity control_tb at 11( 337) + 0 on 719;
+  architecture tb_architecture of control_tb at 27( 754) + 0 on 720;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_testbench/indec_tb.vhd" "b2bbb27ed28c205337de586366ab690ac1d6e581" "20230313085533.189":
+  entity indec_tb at 11( 355) + 0 on 715;
+  architecture tb_architecture of indec_tb at 27( 822) + 0 on 716;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "rtl/indec.vhd" "564a8d54a598c4c1eaf020a7e6d2c3375101a2c6" "20230313085527.379":
+  entity indec at 9( 304) + 0 on 713;
+  architecture rtl of indec at 43( 1153) + 0 on 714;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "rtl/pmemory.vhd" "68aec8d0a6f0157eac103b3366ee05bfb23b86bc" "20230313085514.032":
+  entity pmemory at 9( 300) + 0 on 709;
+  architecture rtl of pmemory at 37( 889) + 0 on 710;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_ram_dp.vhd" "db31ccf1574cfbc7ef7e2ad3d1965cffa419e862" "20230313082619.308":
+  entity hades_ram32_dp at 1( 0) + 0 on 683;
+  architecture rtl of hades_ram32_dp at 32( 720) + 0 on 684;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_mul.vhd" "f3b02c9a6299904f235c34f8be19721129c388b7" "20230313082619.266":
+  entity hades_mul at 1( 0) + 0 on 679;
+  architecture rtl of hades_mul at 25( 431) + 0 on 680;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_addsub.vhd" "6aed069bbd3b6d48f05fe3e6e2fc7bfe66e38ebb" "20230313082619.232":
+  entity hades_addsub at 1( 0) + 0 on 675;
+  architecture rtl of hades_addsub at 25( 438) + 0 on 676;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hadescomponents.vhd" "e4b521719350bfbba37e18f8c651729927b70a03" "20230313082619.044":
+  package hadescomponents at 1( 0) + 0 on 673 body;
+  package body hadescomponents at 190( 4717) + 0 on 674;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_compare.vhd" "4bfcd920e74deba75a33fc730ec48797c509bc05" "20230313082619.249":
+  entity hades_compare at 1( 0) + 0 on 677;
+  architecture rtl of hades_compare at 23( 407) + 0 on 678;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/hades_shift.vhd" "844006ab0a10032959680aa9e55ff2f2a9912d92" "20230313082619.289":
+  entity hades_shift at 1( 0) + 0 on 681;
+  architecture rtl of hades_shift at 28( 536) + 0 on 682;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/work/irqreceiver.vhd" "48caf6d8d35c10aa177cf9bd2e2c5ea2d53bf0bf" "20230313082619.326":
+  entity irqreceiver at 21( 823) + 0 on 685;
+  architecture fsm of irqreceiver at 35( 1059) + 0 on 686;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "../_testbench/pmemory_tb.vhd" "ddba9e1cb53278b7a9b6704853e94e174d9c8d0a" "20230313085520.305":
+  entity pmemory_tb at 11( 339) + 0 on 711;
+  architecture tb_architecture of pmemory_tb at 27( 757) + 0 on 712;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "rtl/control.vhd" "9d9a8301427bf107fd417800722ad376be8a1860" "20230313085558.179":
+  entity control at 9( 301) + 0 on 717;
+  architecture rtl of control at 43( 1034) + 0 on 718;
+file "/home/david/projs/hades_CPU/CPU_implementation/" "rtl/haregs.vhd" "0ed42294624cb1fffcf7c52e5b70ec6afac5a207" "20230313085623.782":
+  entity multiplexer_8to1 at 9( 349) + 0 on 721;
+  architecture rtl of multiplexer_8to1 at 34( 1017) + 0 on 722;
+  entity demultiplexer_1to8 at 51( 1456) + 0 on 723;
+  architecture rtl of demultiplexer_1to8 at 80( 2228) + 0 on 724;
+  entity haregs at 107( 2895) + 0 on 725;
+  architecture rtl of haregs at 134( 3504) + 0 on 726;

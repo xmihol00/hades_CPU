@@ -14,7 +14,7 @@ function help {
 
 
 
-#Aktion für alle Librarys ausführen
+#Aktion fï¿½r alle Librarys ausfï¿½hren
 function all {
 	for i in $list; do 
 		bash lib.sh $i $param2 || {
@@ -24,7 +24,7 @@ function all {
 	done
 	exit 0
 }
-#Prüfen, ob angegebene Library angezeigt, gebaut oder gelöscht werden soll 
+#Prï¿½fen, ob angegebene Library angezeigt, gebaut oder gelï¿½scht werden soll 
 function lib {
 	if [ -z $param2 ] || [[ $param2 = show ]]; then show; fi
 	if [[ $param2 = build ]]; then build; fi
@@ -32,15 +32,15 @@ function lib {
 	help
 }
 
-  
+export GHDL_GCC_BIN=gcc
 #Inhalt der Library anzeigen  
 function show {
 	echo "== show $param1 =="
-	../_bin/ghdl-0.33-x86_64-linux/bin/ghdl -d --workdir=../_lib --work=$param1
+	ghdl -d --workdir=../_lib --work=$param1
 	exit 0
 }
   
-#Library löschen 
+#Library lï¿½schen 
 function clean {
 	echo "== clean $param1 =="
 	rm -rf ../_lib/$param1*.cf
@@ -54,7 +54,7 @@ function clean {
 function build {
 	for i in $list; do
 		echo "== build $param1 <= $i =="
-		../_bin/ghdl-0.33-x86_64-linux/bin/ghdl	-a --workdir=../_lib \
+		ghdl	-a --workdir=../_lib \
 		-P../_lib --work=$param1 ../_lib/$param1/$i.vhd 
 	done
 	exit 0

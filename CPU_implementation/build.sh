@@ -26,6 +26,7 @@ function help {
 }
 
 
+export GHDL_GCC_BIN=gcc
 function build {
   for i in $reqList 
   do
@@ -34,8 +35,7 @@ function build {
    }
   done
   echo "== work <= "$input
-
-  ../_bin/ghdl-0.33-x86_64-linux/bin/ghdl -a --ieee=synopsys --workdir=../_lib -P../_lib rtl/$input.vhd   
+  ghdl -a --ieee=synopsys --workdir=../_lib -P../_lib rtl/$input.vhd   
   exit $?
 }
 
