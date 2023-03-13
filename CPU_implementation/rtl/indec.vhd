@@ -91,15 +91,15 @@ architecture rtl of indec is
 	constant DPMA_opc   : std_logic_vector(3 downto 0) := "1110";
 	constant EPMA_opc   : std_logic_vector(3 downto 0) := "1111";
 	
-	constant SWI_aopc   : std_logic_vector(4 downto 0) := "00010";
+	constant SWI_aopc   : std_logic_vector(4 downto 0) := "00010"; -- SWI opcode for the ALU
 begin
 	process(iword) is
 	begin
-		aopadr <= iword(19 downto 17);
-		if iword(31 downto 28) = OUT_opc or iword(31 downto 28) = STORE_opc then -- OUT or STORE
+		aopadr <= iword(19 downto 17); -- 'aopadr' placement is the same for all instructions
+		if iword(31 downto 28) = OUT_opc or iword(31 downto 28) = STORE_opc then -- OUT or STORE instructions, 'bopadr' is mapped from 'wopadr'
 			bopadr <= iword(22 downto 20);
 			wopadr <= (others => '0');
-		else -- other instructions, map directly from instruction word
+		else -- other instructions, map directly from the instruction word following the 'bopadr' and 'wopadr' placements
 			bopadr <= iword(15 downto 13);
 			wopadr <= iword(22 downto 20);
 		end if;
@@ -122,6 +122,7 @@ begin
 		case iword(31 downto 28) is
 			-- pccontr signal
 			when SWI_opc => -- SWI
+				-- SWI shares same instruction code as ALU, ALUI, NOP and GETSWI, it must be distinguished by the ALU opcode
 				if iword(27 downto 23) = SWI_aopc then
 				   pccontr <= "01" & "000000000";
 				end if;
@@ -144,25 +145,25 @@ begin
 			when BNEZ_opc => -- BNEZ
 				pccontr <= "10000000001";
 			
-			-- other yet unset signals
+			-- assignment of signals, that further specify some instructions
 			when IN_opc =>    -- IN
-				inop <= '1';
+				inop    <= '1';
 				selxres <= '1';
 			when OUT_opc =>   -- OUT
-				outop <= '1';
+				outop   <= '1';
 				selxres <= '1';
 			when LOAD_opc =>  -- LOAD
-				loadop <= '1';
-				dmemop <= '1';
+				loadop  <= '1';
+				dmemop  <= '1';
 				selxres <= '1';
 			when STORE_opc => -- STORE
 				storeop <= '1';
-				dmemop <= '1';
+				dmemop  <= '1';
 				selxres <= '1';
 			when DPMA_opc =>  -- DPMA
-				dpma <= '1';
+				dpma    <= '1';
 			when EPMA_opc =>  -- EPMA
-				epma <= '1';
+				epma    <= '1';
 
 			-- unnecessary, but recquired for compilation
 			when others => null;
