@@ -32,7 +32,7 @@ function lib {
 	help
 }
 
-export GHDL_GCC_BIN=gcc
+
 #Inhalt der Library anzeigen  
 function show {
 	echo "== show $param1 =="

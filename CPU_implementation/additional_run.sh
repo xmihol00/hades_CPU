@@ -58,7 +58,7 @@ function stoptime {
   run
 }
 
-export GHDL_GCC_BIN=gcc
+
 #TestBench compilieren und ausführen und ggf. Waveform anzeigen
 # workaround, because GHDL uses the windows paths for the hex file
 function run {

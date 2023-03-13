@@ -1,7 +1,0 @@
-v 4
-file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_sim/xbus_sim.vhd" "0bcc0dd48292a746b7026bb337a184b6f4cfb976" "20230313082618.470":
-  entity xbus_sim at 1( 0) + 0 on 17;
-  architecture rtl of xbus_sim at 35( 759) + 0 on 18;
-file "/home/david/projs/hades_CPU/CPU_implementation/" "../_lib/xbus_sim/xdmemory_sim.vhd" "430ba72442073f2cfabd2e931054be2bf61eb464" "20230313082618.451":
-  entity xdmemory_sim at 1( 0) + 0 on 15;
-  architecture rtl of xdmemory_sim at 21( 442) + 0 on 16;

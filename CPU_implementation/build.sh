@@ -26,7 +26,7 @@ function help {
 }
 
 
-export GHDL_GCC_BIN=gcc
+
 function build {
   for i in $reqList 
   do
