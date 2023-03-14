@@ -132,7 +132,7 @@ begin
 		prove("0000000"); epma <= '1';                                                    -- IDECODE	
 		prove("0000000");                                                                 -- ALU    
 		prove("0000011");                                                                 -- WRITEBACK
-		--clear(epma);	
+		clear(epma);	
 	  
 --  480-560ns: STORE (mit PMA ohne DMEMBUSY) ----------------------------------------------------- 
 		prove("1000000");                                                                 -- IFETCH 

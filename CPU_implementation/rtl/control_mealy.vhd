@@ -44,33 +44,38 @@ architecture rtl of control is
 	type State_t is (IFETCH, IDECODE, ALU, IOREAD, IOWRITE, XBUSNAINTR, MEMREAD, MEMWRITE, WRITEBACK);
 	signal mealy_current_state : State_t := IFETCH;
 	signal mealy_next_state : State_t := IFETCH;
+	signal epma_set : std_logic; -- remember if program or data memory is written
 begin
-	
-	process (clk, reset) is -- change of current state of the Mealy FSM
-    begin
-	    if (reset = '1') then
-		    mealy_current_state <= IFETCH;
-	    elsif rising_edge(clk) then
-		    mealy_current_state <= mealy_next_state;
-	    end if;
-    end process;
-
-	process (mealy_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is -- Mealy FSM logic
+	-- EPMA/DPMA logic
+	process (clk, reset) is
 	begin
-		-- default values of the control signals
-		loadir <= '0';
-		regwrite <= '0';
-		pcwrite <= '0';
-		pwrite <= '0';
-		xread <= '0';
-		xwrite <= '0';
-		xnaintr <= '0';
+		if reset = '1' then
+			epma_set <= '1';
+		elsif rising_edge(clk) then
+			if dpma = '1' then
+				epma_set <= '0';
+			elsif epma = '1' then
+				epma_set <= '1';
+			end if;
+		end if;
+	end process;
+	
+	-- current state logic
+	process (clk, reset) is
+	begin
+		if (reset = '1') then
+			mealy_current_state <= IFETCH;
+		elsif rising_edge(clk) then
+			mealy_current_state <= mealy_next_state;
+		end if;
+	end process;
 
-		-- next state and output logic
+	-- Mealy FSM next state logic
+	process (mealy_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is
+	begin
 		case mealy_current_state is
 			when IFETCH =>
 				mealy_next_state <= IDECODE;
-				loadir <= '1';
 
 			when IDECODE =>
 				mealy_next_state <= ALU;
@@ -89,7 +94,6 @@ begin
 
 			when IOREAD =>
 				mealy_next_state <= IOREAD;
-				xread <= '1';
 				if xpresent = '0' then
 					mealy_next_state <= XBUSNAINTR;
 				elsif xack = '1' then
@@ -98,7 +102,6 @@ begin
 				
 			when IOWRITE =>
 				mealy_next_state <= IOWRITE;
-				xwrite <= '1';
 				if xpresent = '0' then
 					mealy_next_state <= XBUSNAINTR;
 				elsif xack = '1' then
@@ -107,37 +110,69 @@ begin
 
 			when XBUSNAINTR =>
 				mealy_next_state <= IFETCH;
-				xnaintr <= '1';
-				pcwrite <= '1';
 
 			when MEMREAD =>
 				mealy_next_state <= MEMREAD;
-				xread <= '1';
 				if dmembusy = '0' then
 					mealy_next_state <= WRITEBACK;
 				end if;
 
 			when MEMWRITE =>
-				if epma = '1' then
-					pwrite <= '1';
+				mealy_next_state <= MEMWRITE;
+				if epma_set = '1' or dmembusy = '0' then
 					mealy_next_state <= WRITEBACK;
-				else
-					xwrite <= '1';
-				end if;
-				
-				if dmembusy = '0' then
-					mealy_next_state <= WRITEBACK;
-				elsif epma = '0' then
-					mealy_next_state <= MEMWRITE;
 				end if;
 
 			when WRITEBACK =>
 				mealy_next_state <= IFETCH;
+
+			when others =>
+				mealy_next_state <= IFETCH;
+		end case;
+	end process;
+
+	-- Mealy FSM output logic
+	process (mealy_current_state, epma_set) is
+	begin
+		-- default values of the control signals
+		loadir <= '0';
+		regwrite <= '0';
+		pcwrite <= '0';
+		pwrite <= '0';
+		xread <= '0';
+		xwrite <= '0';
+		xnaintr <= '0';
+
+		case mealy_current_state is
+			when IFETCH =>
+				loadir <= '1';
+
+			when IOREAD =>
+				xread <= '1';
+				
+			when IOWRITE =>
+				xwrite <= '1';
+
+			when XBUSNAINTR =>
+				xnaintr <= '1';
+				pcwrite <= '1';
+
+			when MEMREAD =>
+				xread <= '1';
+			
+			when MEMWRITE =>
+				if epma_set = '1' then
+					pwrite <= '1';
+				else
+					xwrite <= '1';
+				end if;
+			
+			when WRITEBACK =>
 				pcwrite <= '1';
 				regwrite <= '1';
 
 			when others =>
-				mealy_next_state <= IFETCH;
+				NULL;
 		end case;
 	end process;
 end rtl;

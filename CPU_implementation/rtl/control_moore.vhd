@@ -41,22 +41,37 @@ entity control is
 end control;
 
 architecture rtl of control is
-	type State_t is (IFETCH, IDECODE, ALU, IOREAD, IOWRITE, XBUSNAINTR, MEMREAD, MEMWRITE, MEMWRITE_PMA, MEMWRITE_DMA, WRITEBACK);
+	type State_t is (IFETCH, IDECODE, ALU, IOREAD, IOWRITE, XBUSNAINTR, MEMREAD, MEMWRITE_PMA, MEMWRITE_DMA, WRITEBACK);
 	signal moore_current_state : State_t := IFETCH;
 	signal moore_next_state : State_t := IFETCH;
-	signal async_state_change : std_logic := '0'; -- enables asynchronous state change without clock edge
+	signal epma_set : std_logic; -- remember if program or data memory is written
 begin
+	-- EPMA/DPMA logic
+	process (clk, reset) is
+	begin
+		if reset = '1' then
+			epma_set <= '1';
+		elsif rising_edge(clk) then
+			if dpma = '1' then
+				epma_set <= '0';
+			elsif epma = '1' then
+				epma_set <= '1';
+			end if;
+		end if;
+	end process;
 	
-	process (clk, reset, async_state_change) is -- change of current state of the Moore FSM
+	-- current state logic
+	process (clk, reset) is
     begin
 	    if (reset = '1') then
 		    moore_current_state <= IFETCH;
-	    elsif rising_edge(clk) or async_state_change'event then
+	    elsif rising_edge(clk) then
 		    moore_current_state <= moore_next_state;
 	    end if;
     end process;
-
-	process (moore_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is -- Moore FSM next state logic
+	
+	-- Moore FSM next state logic
+	process (moore_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is
 	begin
 		case moore_current_state is
 			when IFETCH =>
@@ -74,7 +89,11 @@ begin
 				elsif loadop = '1' then
 					moore_next_state <= MEMREAD;
 				elsif storeop = '1' then
-					moore_next_state <= MEMWRITE;
+					if epma_set = '1' then
+						moore_next_state <= MEMWRITE_PMA;
+					else
+						moore_next_state <= MEMWRITE_DMA;
+					end if;
 				end if;
 
 			when IOREAD =>
@@ -101,14 +120,6 @@ begin
 				if dmembusy = '0' then
 					moore_next_state <= WRITEBACK;
 				end if;
-
-			when MEMWRITE =>
-				if epma = '1' then
-					moore_next_state <= MEMWRITE_PMA;
-				else
-					moore_next_state <= MEMWRITE_DMA;
-				end if;
-				async_state_change <= not async_state_change;
 							
 			when MEMWRITE_PMA =>				
 				moore_next_state <= WRITEBACK;
@@ -117,9 +128,6 @@ begin
 				moore_next_state <= MEMWRITE_DMA;
 				if dmembusy = '0' then
 					moore_next_state <= WRITEBACK;
-				elsif epma = '1' then
-					moore_next_state <= MEMWRITE_PMA;
-					async_state_change <= not async_state_change;
 				end if;
 
 			when WRITEBACK =>
@@ -129,8 +137,9 @@ begin
 				moore_next_state <= IFETCH;
 		end case;
 	end process;
-
-	process (moore_current_state) is -- Moore FSM output logic
+	
+	-- Moore FSM output logic
+	process (moore_current_state) is
 	begin
 		-- default values of the control signals
 		loadir <= '0';

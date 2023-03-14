@@ -36,11 +36,10 @@ end haregs;
 architecture rtl of haregs is
 	type RegisterFile_t is array(0 to 7) of std_logic_vector(31 downto 0); -- register file of 8 32-bit registers
 	signal registers : RegisterFile_t;
-	signal written : std_logic := '0'; -- Ensure processes that read reagisters are notified when any register changes.
 	constant r0_idx : integer := 0;    -- Index of the fisrt register that cannot be written and always returns 0.
 begin
 	-- All writes to registers must be in a single process, otherwise the value inside registers will be undefined.
-	process(clk, reset, regwrite, wopadr) is
+	process(clk, reset) is
 	begin
 		if reset = '1' then -- reset values of registers to 0
 			for i in registers'range loop
@@ -50,19 +49,12 @@ begin
 		elsif rising_edge(clk) and regwrite = '1' then -- synchronously write a supplied value to a given valid register
 			registers(to_integer(unsigned(wopadr))) <= wop;
 			registers(r0_idx) <= (others => '0'); -- make sure r0 is always 0
-			written <= not written; -- notify processes about a change in the register file
 		end if;
 	end process;
 
 	-- output A
-	process(written, aopadr) is
-	begin
-		aop <= registers(to_integer(unsigned(aopadr)));
-	end process;
-	
+	aop <= registers(to_integer(unsigned(aopadr)));
+
 	-- output B
-	process(written, bopadr) is
-	begin
-		bop <= registers(to_integer(unsigned(bopadr)));
-	end process;
+	bop <= registers(to_integer(unsigned(bopadr)));
 end rtl;
