@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel: Control Unit (using Mealy FSM)  
+-- Titel: Control Unit (using Moore FSM)
 -- Autor: David Mihola (12211951)
 -- Datum: 11. 03. 2023   
 --
@@ -41,9 +41,9 @@ entity control is
 end control;
 
 architecture rtl of control is
-	type State_t is (IFETCH, IDECODE, ALU, IOREAD, IOWRITE, XBUSNAINTR, MEMREAD, MEMWRITE, WRITEBACK);
-	signal mealy_current_state : State_t := IFETCH;
-	signal mealy_next_state : State_t := IFETCH;
+	type State_t is (IFETCH, IDECODE, ALU, IOREAD, IOWRITE, XBUSNAINTR, MEMREAD, MEMWRITE_PMA, MEMWRITE_DMA, WRITEBACK);
+	signal moore_current_state : State_t := IFETCH;
+	signal moore_next_state : State_t := IFETCH;
 	signal epma_set : std_logic; -- remember if program or data memory is written
 begin
 	-- EPMA/DPMA logic
@@ -62,77 +62,84 @@ begin
 	
 	-- current state logic
 	process (clk, reset) is
+    begin
+	    if (reset = '1') then
+		    moore_current_state <= IFETCH;
+	    elsif rising_edge(clk) then
+		    moore_current_state <= moore_next_state;
+	    end if;
+    end process;
+	
+	-- Moore FSM next state logic
+	process (moore_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is
 	begin
-		if (reset = '1') then
-			mealy_current_state <= IFETCH;
-		elsif rising_edge(clk) then
-			mealy_current_state <= mealy_next_state;
-		end if;
-	end process;
-
-	-- Mealy FSM next state logic
-	process (mealy_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is
-	begin
-		case mealy_current_state is
+		case moore_current_state is
 			when IFETCH =>
-				mealy_next_state <= IDECODE;
+				moore_next_state <= IDECODE;
 
 			when IDECODE =>
-				mealy_next_state <= ALU;
+				moore_next_state <= ALU;
 
 			when ALU =>
-				mealy_next_state <= WRITEBACK;
+				moore_next_state <= WRITEBACK;
 				if inop = '1' then
-					mealy_next_state <= IOREAD;
+					moore_next_state <= IOREAD;
 				elsif outop = '1' then
-					mealy_next_state <= IOWRITE;
+					moore_next_state <= IOWRITE;
 				elsif loadop = '1' then
-					mealy_next_state <= MEMREAD;
+					moore_next_state <= MEMREAD;
 				elsif storeop = '1' then
-					mealy_next_state <= MEMWRITE;
+					if epma_set = '1' then
+						moore_next_state <= MEMWRITE_PMA;
+					else
+						moore_next_state <= MEMWRITE_DMA;
+					end if;
 				end if;
 
 			when IOREAD =>
-				mealy_next_state <= IOREAD;
+				moore_next_state <= IOREAD;
 				if xpresent = '0' then
-					mealy_next_state <= XBUSNAINTR;
+					moore_next_state <= XBUSNAINTR;
 				elsif xack = '1' then
-					mealy_next_state <= WRITEBACK;
+					moore_next_state <= WRITEBACK;
 				end if;
 				
 			when IOWRITE =>
-				mealy_next_state <= IOWRITE;
+				moore_next_state <= IOWRITE;
 				if xpresent = '0' then
-					mealy_next_state <= XBUSNAINTR;
+					moore_next_state <= XBUSNAINTR;
 				elsif xack = '1' then
-					mealy_next_state <= WRITEBACK;
+					moore_next_state <= WRITEBACK;
 				end if;
 
 			when XBUSNAINTR =>
-				mealy_next_state <= IFETCH;
+				moore_next_state <= IFETCH;
 
 			when MEMREAD =>
-				mealy_next_state <= MEMREAD;
+				moore_next_state <= MEMREAD;
 				if dmembusy = '0' then
-					mealy_next_state <= WRITEBACK;
+					moore_next_state <= WRITEBACK;
 				end if;
-
-			when MEMWRITE =>
-				mealy_next_state <= MEMWRITE;
-				if epma_set = '1' or dmembusy = '0' then
-					mealy_next_state <= WRITEBACK;
+							
+			when MEMWRITE_PMA =>				
+				moore_next_state <= WRITEBACK;
+			
+			when MEMWRITE_DMA =>
+				moore_next_state <= MEMWRITE_DMA;
+				if dmembusy = '0' then
+					moore_next_state <= WRITEBACK;
 				end if;
 
 			when WRITEBACK =>
-				mealy_next_state <= IFETCH;
+				moore_next_state <= IFETCH;
 
 			when others =>
-				mealy_next_state <= IFETCH;
+				moore_next_state <= IFETCH;
 		end case;
 	end process;
-
-	-- Mealy FSM output logic
-	process (mealy_current_state) is
+	
+	-- Moore FSM output logic
+	process (moore_current_state) is
 	begin
 		-- default values of the control signals
 		loadir <= '0';
@@ -143,7 +150,7 @@ begin
 		xwrite <= '0';
 		xnaintr <= '0';
 
-		case mealy_current_state is
+		case moore_current_state is
 			when IFETCH =>
 				loadir <= '1';
 
@@ -160,13 +167,12 @@ begin
 			when MEMREAD =>
 				xread <= '1';
 			
-			when MEMWRITE =>
-				if epma_set = '1' then
-					pwrite <= '1';
-				else
-					xwrite <= '1';
-				end if;
+			when MEMWRITE_PMA =>
+				pwrite <= '1';
 			
+			when MEMWRITE_DMA =>
+				xwrite <= '1';
+
 			when WRITEBACK =>
 				pcwrite <= '1';
 				regwrite <= '1';

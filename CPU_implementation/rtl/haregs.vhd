@@ -45,7 +45,6 @@ begin
 			for i in registers'range loop
 				registers(i) <= (others => '0');
 			end loop;
-			written <= not written; -- notify processes about a change in the register file
 		elsif rising_edge(clk) and regwrite = '1' then -- synchronously write a supplied value to a given valid register
 			registers(to_integer(unsigned(wopadr))) <= wop;
 			registers(r0_idx) <= (others => '0'); -- make sure r0 is always 0
