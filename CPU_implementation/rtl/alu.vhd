@@ -67,9 +67,22 @@ architecture rtl of alu is
 	constant JAL_aopc    : std_logic_vector(4 downto 0) := "01110";
 	constant JREG_aopc   : std_logic_vector(4 downto 0) := "00110";
 	constant SISA_aopc   : std_logic_vector(4 downto 0) := "01110";
+	constant NOP_aopc    : std_logic_vector(4 downto 0) := "00000";
 
-	constant ANY_SHIFT_aopc : std_logic_vector(1 downto 0) := "00";
-	constant ANY_LOGIC_aopc : std_logic_vector(1 downto 0) := "01";
+	constant INVLD1_aopc : std_logic_vector(4 downto 0) := "00000";
+	constant INVLD2_aopc : std_logic_vector(4 downto 0) := "01111";
+	constant INVLD3_aopc : std_logic_vector(4 downto 0) := "10101";
+	constant INVLD4_aopc : std_logic_vector(4 downto 0) := "10110";
+	constant INVLD5_aopc : std_logic_vector(4 downto 0) := "10111";
+	constant INVLD6_aopc : std_logic_vector(4 downto 0) := "11110";
+	constant INVLD7_aopc : std_logic_vector(4 downto 0) := "11111";
+
+	constant ANY_SHIFT_aopc : std_logic_vector(2 downto 0) := "001";
+	constant ANY_LOGIC_aopc : std_logic_vector(2 downto 0) := "010";
+	constant ANY_BRANCH_aopc : std_logic_vector(2 downto 0) := "011";
+	constant ANY_COMP_aopc : std_logic_vector(2 downto 0) := "111";
+
+	constant RESULT_CLEAR : std_logic_vector(30 downto 0) := (others => '0');
 
 	signal ovfflag : std_logic;
 
@@ -87,26 +100,53 @@ architecture rtl of alu is
 	signal add_sub_res : std_logic_vector(31 downto 0);
 	signal add_sub_sub : std_logic;
 	signal add_sub_ov : std_logic;
+
+	signal mul_res : std_logic_vector(31 downto 0);
+	signal mul_ov : std_logic;
+
+	signal comp_eq : std_logic;	
+	signal comp_lt : std_logic;
+	signal comp_gt : std_logic;
+
+	signal regwritten : std_logic;
 begin
 	-- clocked logic
 	process (clk, reset) is
 	begin
-		if rising_edge(clk) then
+		if reset = '1' then
+			ovfflag <= '0';
+			overflow <= '0';
+			regwritten <= '0'; -- TODO
+		elsif rising_edge(clk) then
 			if regwrite = '1' then
-				if opcode = ADD_aopc or opcode = SUB_aopc then
-					ovfflag <= add_sub_ov;
-				elsif opcode(4 downto 3) = ANY_SHIFT_aopc then
+				regwritten <= '1'; -- TODO
+				if opcode(4 downto 2) = ANY_SHIFT_aopc then
 					ovfflag <= shift_ov;
+				elsif opcode = SETOV_aopc then
+					ovfflag <= bchannel(0);
+				elsif opcode = ADD_aopc or opcode = SUB_aopc then
+					ovfflag <= add_sub_ov;
+				elsif opcode = NOP_aopc then
+					ovfflag <= '0';
 				end if;
 			end if;
-			overflow <= ovfflag;
+			
+			if regwritten = '1' then -- TODO
+				if opcode = MUL_aopc then
+					overflow <= mul_ov;
+				else
+					overflow <= ovfflag;
+				end if;
+			end if;
 		end if;
 	end process;
 
 	-- swi/getswi
-	swi_achannel <= achannel when opcode = SWI_aopc and regwrite = '1' else
+	swi_achannel <= (others => '0') when reset = '1' else
+					achannel when opcode = SWI_aopc and regwrite = '1' else
 					swi_achannel;
-	swi_bchannel <= bchannel when opcode = SWI_aopc and regwrite = '1' else
+	swi_bchannel <= (others => '0') when reset = '1' else
+					bchannel when opcode = SWI_aopc and regwrite = '1' else
 					swi_bchannel;
 
 	getswi_res <= swi_bchannel when bchannel(0) = '0' else
@@ -131,7 +171,7 @@ begin
 		OV => shift_ov
 	);
 
-	-- logic
+	-- bitwise logic
 	logic_res <= achannel AND bchannel when opcode = AND_aopc else
 				 achannel OR bchannel when opcode = OR_aopc else
 				 achannel XOR bchannel when opcode = XOR_aopc else
@@ -155,24 +195,51 @@ begin
 		ov => add_sub_ov
 	);
 
-	result <= (others => '0') when reset = '1' else
+	-- multiplication
+	MUL: entity work.hades_mul
+	generic map (
+		N => 32
+	)
+	port map (
+		a => achannel,
+		b => bchannel,
+
+		clk => clk,
+
+		r => mul_res,
+		ov => mul_ov
+	);
+
+	-- compare logic
+	COMP: entity work.hades_compare
+	generic map (
+		N => 32
+	)
+	port map (
+		a => achannel,
+		b => bchannel,
+
+		eq => comp_eq,
+		lt => comp_lt,
+		gt => comp_gt
+	);
+ 
+	result <= (others => '0') when reset = '1' or opcode = INVLD1_aopc or opcode = INVLD2_aopc or opcode = INVLD3_aopc or opcode = INVLD4_aopc or opcode = INVLD5_aopc or opcode = INVLD6_aopc or opcode = INVLD7_aopc else
 	          getswi_res when opcode = GETSWI_aopc else
-			  shift_res when opcode(4 downto 3) = ANY_SHIFT_aopc else 
-			  logic_res when opcode(4 downto 3) = ANY_LOGIC_aopc else
+			  shift_res when opcode(4 downto 2) = ANY_SHIFT_aopc else 
+			  logic_res when opcode(4 downto 2) = ANY_LOGIC_aopc else
 			  add_sub_res when opcode = ADD_aopc or opcode = SUB_aopc else
+			  mul_res when opcode = MUL_aopc else
+			  RESULT_CLEAR & ovfflag when opcode = GETOV_aopc else
+			  b"0000_0000_0000_0000" & bchannel(15 downto 0) when opcode(4 downto 2) = ANY_BRANCH_aopc else
+			  RESULT_CLEAR & comp_eq when opcode = SEQ_aopc else
+			  RESULT_CLEAR & not comp_eq when opcode = SNE_aopc else
+			  RESULT_CLEAR & comp_lt when opcode = SLT_aopc else
+			  RESULT_CLEAR & (comp_lt or comp_eq) when opcode = SLE_aopc else
+			  RESULT_CLEAR & comp_gt when opcode = SGT_aopc else
+			  RESULT_CLEAR & (comp_gt or comp_eq) when opcode = SGE_aopc else
 			  (others => '0');
 
-	zero <= '1' when reset = '1' or
-					 (shift_res = x"0000_0000" and opcode(4 downto 3) = ANY_SHIFT_aopc) or 
-					 (logic_res = x"0000_0000" and opcode(4 downto 3) = ANY_LOGIC_aopc) or 
-					 (getswi_res = x"0000_0000" and opcode(4 downto 3) = GETSWI_aopc) 
-				else '0';
-	
-	--process (regwrite) is 
-	--begin
-	--	if regwrite = '1' and opcode = SWI_aopc then
-	--		swi_achannel <= achannel;
-	--		swi_bchannel <= bchannel;
-	--	end if;
-	--end process;
+	zero <= '1' when (opcode = BNEZ_aopc or opcode = BEQZ_aopc) and achannel = x"0000_0000" else
+			'0';
 end rtl;

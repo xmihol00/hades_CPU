@@ -59,7 +59,7 @@ begin
 	-- CLK Stimulus [50MHz]
 	clk <= not clk after 10 ns;
 	
-	-- Beschaltung der Eingänge und Beobachtung der Ausgänge
+	-- Beschaltung der Eingï¿½nge und Beobachtung der Ausgï¿½nge
 	test: process
 	
 		-- Beobachtungsprozedur
@@ -97,7 +97,7 @@ begin
 				
 			-- ensure that overflow-flag has not changed yet
 			assert overflow = oov  
-				report "wrong OVERFLOW " & std_logic'image(overflow) & "; expected " & std_logic'image(oov)
+				report "wrong OVERFLOW1 " & std_logic'image(overflow) & "; expected " & std_logic'image(oov)
 				severity error;
 				
 			-- deassert reg-write
@@ -108,7 +108,7 @@ begin
 			
 			-- check overflow-flag
 			assert overflow = ov  
-				report "wrong OVERFLOW " & std_logic'image(overflow) & "; expected " & std_logic'image(ov)
+				report "wrong OVERFLOW2 " & std_logic'image(overflow) & "; expected " & std_logic'image(ov)
 				severity error;
 		end;
 	
@@ -184,7 +184,7 @@ begin
 		prove(opc_SHR, x"30000006",x"00000003", x"06000000", ro=>'1'); -- 1030ns
 		prove(opc_SHR, x"30000006",x"00000004", x"03000000", ro=>'1'); -- 1070ns
 		
----- bitweise logische Verknüpfungen ----------------------------------------------------------------  
+---- bitweise logische Verknï¿½pfungen ----------------------------------------------------------------  
 
 		-- reset ALU
 		reset <= '1', '0' after 2 ns;
