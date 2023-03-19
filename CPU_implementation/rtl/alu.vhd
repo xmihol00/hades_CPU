@@ -1,8 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel:    
--- Autor:    
--- Datum:    
+-- Titel: Arithmetic Logic Unit
+-- Autor: David Mihola (12211951)
+-- Datum: 18. 03. 2023   
 --
 ---------------------------------------------------------------------------------------------------
 
@@ -35,6 +35,7 @@ entity alu is
 end alu;
 
 architecture rtl of alu is
+	-- ALU operation codes (aopc)
 	constant SWI_aopc    : std_logic_vector(4 downto 0) := "00010";
 	constant GETSWI_aopc : std_logic_vector(4 downto 0) := "00011";
 	constant SHL_aopc    : std_logic_vector(4 downto 0) := "00100";
@@ -69,6 +70,7 @@ architecture rtl of alu is
 	constant SISA_aopc   : std_logic_vector(4 downto 0) := "01110";
 	constant NOP_aopc    : std_logic_vector(4 downto 0) := "00000";
 
+	-- invalid ALU operation codes
 	constant INVLD1_aopc : std_logic_vector(4 downto 0) := "00000";
 	constant INVLD2_aopc : std_logic_vector(4 downto 0) := "01111";
 	constant INVLD3_aopc : std_logic_vector(4 downto 0) := "10101";
@@ -77,84 +79,96 @@ architecture rtl of alu is
 	constant INVLD6_aopc : std_logic_vector(4 downto 0) := "11110";
 	constant INVLD7_aopc : std_logic_vector(4 downto 0) := "11111";
 
-	constant ANY_SHIFT_aopc : std_logic_vector(2 downto 0) := "001";
-	constant ANY_LOGIC_aopc : std_logic_vector(2 downto 0) := "010";
+	-- 3 MSBs of ALU operation codes, which signyfy the type of the operation
+	constant ANY_SHIFT_aopc : std_logic_vector(2 downto 0)  := "001";
+	constant ANY_LOGIC_aopc : std_logic_vector(2 downto 0)  := "010";
 	constant ANY_BRANCH_aopc : std_logic_vector(2 downto 0) := "011";
-	constant ANY_COMP_aopc : std_logic_vector(2 downto 0) := "111";
+	constant ANY_COMP_aopc : std_logic_vector(2 downto 0)   := "111";
 
+	-- constant used to set the 31 MSBs of the result to 0
 	constant RESULT_CLEAR : std_logic_vector(30 downto 0) := (others => '0');
 
-	signal ovfflag : std_logic;
+	-- register for storing the overflow flag
+	signal ov_flag : std_logic;
 
+	-- software interupt logic
 	signal swi_achannel : std_logic_vector(31 downto 0);
 	signal swi_bchannel : std_logic_vector(31 downto 0);
 	signal getswi_res : std_logic_vector(31 downto 0);
 
+	-- shift logic
 	signal shift_res: std_logic_vector(31 downto 0);
     signal shift_ov : std_logic;
 	signal shift_cyclic : std_logic;
 	signal shift_rl : std_logic;
 
-	signal logic_res: std_logic_vector(31 downto 0);
+	-- bitwise logic
+	signal bitwise_res: std_logic_vector(31 downto 0);
 
+	-- addition and subtraction logic
 	signal add_sub_res : std_logic_vector(31 downto 0);
 	signal add_sub_sub : std_logic;
 	signal add_sub_ov : std_logic;
 
+	-- multiplication logic
 	signal mul_res : std_logic_vector(31 downto 0);
 	signal mul_ov : std_logic;
 
+	-- comparison results
 	signal comp_eq : std_logic;	
 	signal comp_lt : std_logic;
 	signal comp_gt : std_logic;
 
+	-- overflow flag logic
 	signal regwritten : std_logic;
 begin
 	-- clocked logic
-	process (clk, reset) is
+	process(clk, reset) is
 	begin
 		if reset = '1' then
-			ovfflag <= '0';
+			ov_flag <= '0';
 			overflow <= '0';
-			regwritten <= '0'; -- TODO
+			regwritten <= '0'; -- TODO: is this correct? Might be useless.
 		elsif rising_edge(clk) then
 			if regwrite = '1' then
-				regwritten <= '1'; -- TODO
+				regwritten <= '1'; -- TODO: is this correct? Might be useless.
 				if opcode(4 downto 2) = ANY_SHIFT_aopc then
-					ovfflag <= shift_ov;
+					ov_flag <= shift_ov;
 				elsif opcode = SETOV_aopc then
-					ovfflag <= bchannel(0);
+					ov_flag <= bchannel(0);
 				elsif opcode = ADD_aopc or opcode = SUB_aopc then
-					ovfflag <= add_sub_ov;
-				elsif opcode = NOP_aopc then
-					ovfflag <= '0';
+					ov_flag <= add_sub_ov;
 				end if;
+				-- 'ov_flag' stays unchanged for the other cases (bitwise logic, comparison, ...)
 			end if;
 			
-			if regwritten = '1' then -- TODO
+			if regwritten = '1' then -- TODO: is this correct? Might be useless.
 				if opcode = MUL_aopc then
-					overflow <= mul_ov;
+					overflow <= mul_ov;  -- overflow flag is dalyed by one clock cycle in case of multiplication
 				else
-					overflow <= ovfflag;
+					overflow <= ov_flag; -- dalay by one clock cycle for the other cases (set overflow, shifts and add/sub)
 				end if;
 			end if;
 		end if;
 	end process;
 
-	-- swi/getswi
+	-- software interupt logic
+	-- channels are cleared at reset and change only when SWI is executed and regwrite is set
 	swi_achannel <= (others => '0') when reset = '1' else
-					achannel when opcode = SWI_aopc and regwrite = '1' else
+					achannel when opcode = SWI_aopc and 
+								  regwrite = '1' else 
 					swi_achannel;
 	swi_bchannel <= (others => '0') when reset = '1' else
-					bchannel when opcode = SWI_aopc and regwrite = '1' else
+					bchannel when opcode = SWI_aopc and 
+								  regwrite = '1' else
 					swi_bchannel;
 
-	getswi_res <= swi_bchannel when bchannel(0) = '0' else
+	getswi_res <= swi_bchannel when bchannel(0) = '0' else -- results is selected based on the LSB of the second operand
 				  swi_achannel;
 	
 	-- shifts
-	shift_cyclic <= '1' when opcode = CSHL_aopc or opcode = CSHR_aopc else '0';
-	shift_rl <= '1' when opcode = SHR_aopc or opcode = CSHR_aopc else '0';
+	shift_cyclic <= '1' when opcode = CSHL_aopc or opcode = CSHR_aopc else '0'; -- cyclic or non cyclic shift
+	shift_rl <= '1' when opcode = SHR_aopc or opcode = CSHR_aopc else '0';      -- right or left shift
 
 	SHIFT: entity work.hades_shift
 	generic map (
@@ -172,14 +186,14 @@ begin
 	);
 
 	-- bitwise logic
-	logic_res <= achannel AND bchannel when opcode = AND_aopc else
-				 achannel OR bchannel when opcode = OR_aopc else
-				 achannel XOR bchannel when opcode = XOR_aopc else
-				 achannel XNOR bchannel when opcode = XNOR_aopc else
-				 (others => '0');
+	bitwise_res <= achannel AND  bchannel when opcode = AND_aopc  else
+				   achannel OR   bchannel when opcode = OR_aopc   else
+				   achannel XOR  bchannel when opcode = XOR_aopc  else
+				   achannel XNOR bchannel when opcode = XNOR_aopc else
+				   (others => '0'); 
 
-	-- add/sub
-	add_sub_sub <= '1' when opcode = SUB_aopc else '0';
+	-- addition and subtraction
+	add_sub_sub <= '1' when opcode = SUB_aopc else '0'; -- specifies whether the operation is subtraction or addition
 
 	ADD_SUB: entity work.hades_addsub
 	generic map (
@@ -223,23 +237,36 @@ begin
 		lt => comp_lt,
 		gt => comp_gt
 	);
- 
-	result <= (others => '0') when reset = '1' or opcode = INVLD1_aopc or opcode = INVLD2_aopc or opcode = INVLD3_aopc or opcode = INVLD4_aopc or opcode = INVLD5_aopc or opcode = INVLD6_aopc or opcode = INVLD7_aopc else
-	          getswi_res when opcode = GETSWI_aopc else
-			  shift_res when opcode(4 downto 2) = ANY_SHIFT_aopc else 
-			  logic_res when opcode(4 downto 2) = ANY_LOGIC_aopc else
+	
+	-- result logic
+	result <= (others => '0') when reset = '1' or 
+								   opcode = INVLD1_aopc or 
+								   opcode = INVLD2_aopc or 
+								   opcode = INVLD3_aopc or 
+								   opcode = INVLD4_aopc or 
+								   opcode = INVLD5_aopc or 
+								   opcode = INVLD6_aopc or 
+								   opcode = INVLD7_aopc else -- clear the result at reset or invalid opcode
+	          getswi_res  when opcode = GETSWI_aopc else
+			  shift_res   when opcode(4 downto 2) = ANY_SHIFT_aopc else 
+			  bitwise_res when opcode(4 downto 2) = ANY_LOGIC_aopc else
 			  add_sub_res when opcode = ADD_aopc or opcode = SUB_aopc else
-			  mul_res when opcode = MUL_aopc else
-			  RESULT_CLEAR & ovfflag when opcode = GETOV_aopc else
-			  b"0000_0000_0000_0000" & bchannel(15 downto 0) when opcode(4 downto 2) = ANY_BRANCH_aopc else
-			  RESULT_CLEAR & comp_eq when opcode = SEQ_aopc else
-			  RESULT_CLEAR & not comp_eq when opcode = SNE_aopc else
-			  RESULT_CLEAR & comp_lt when opcode = SLT_aopc else
+			  mul_res     when opcode = MUL_aopc else
+			  -- result of the get overflow instruction is stored as a LSB of the result, other bits are cleared
+			  RESULT_CLEAR & ov_flag when opcode = GETOV_aopc else
+			  -- result of the branch instructions is taken from the 16 LSBs of the second operand, other bits are cleared
+			  x"0000" & bchannel(15 downto 0) when opcode(4 downto 2) = ANY_BRANCH_aopc else
+			  -- result of the comparison instructions is stored as a LSB of the result, other bits are cleared
+			  RESULT_CLEAR & comp_eq              when opcode = SEQ_aopc else
+			  RESULT_CLEAR & not comp_eq          when opcode = SNE_aopc else
+			  RESULT_CLEAR & comp_lt              when opcode = SLT_aopc else
 			  RESULT_CLEAR & (comp_lt or comp_eq) when opcode = SLE_aopc else
-			  RESULT_CLEAR & comp_gt when opcode = SGT_aopc else
+			  RESULT_CLEAR & comp_gt              when opcode = SGT_aopc else
 			  RESULT_CLEAR & (comp_gt or comp_eq) when opcode = SGE_aopc else
-			  (others => '0');
+			  (others => '0'); -- result is cleared for other opcodes
 
-	zero <= '1' when (opcode = BNEZ_aopc or opcode = BEQZ_aopc) and achannel = x"0000_0000" else
+	zero <= '1' when (opcode = BNEZ_aopc or 
+	                  opcode = BEQZ_aopc) and 
+					 achannel = x"0000_0000" else -- zero flag is set for BNEZ and BEQZ if achannel is zero
 			'0';
 end rtl;
