@@ -92,75 +92,72 @@ architecture rtl of alu is
 	signal ov_flag : std_logic;
 
 	-- software interupt logic
-	signal swi_achannel : std_logic_vector(31 downto 0);
-	signal swi_bchannel : std_logic_vector(31 downto 0);
-	signal getswi_res : std_logic_vector(31 downto 0);
+	signal swi_achannel : std_logic_vector(31 downto 0) := (others => '0');
+	signal swi_bchannel : std_logic_vector(31 downto 0) := (others => '0');
+	signal getswi_res : std_logic_vector(31 downto 0)   := (others => '0');
 
 	-- shift logic
-	signal shift_res: std_logic_vector(31 downto 0);
-    signal shift_ov : std_logic;
-	signal shift_cyclic : std_logic;
-	signal shift_rl : std_logic;
+	signal shift_res: std_logic_vector(31 downto 0) := (others => '0');
+    signal shift_ov : std_logic := '0';
+	signal shift_cyclic : std_logic := '0';
+	signal shift_rl : std_logic := '0';
 
 	-- bitwise logic
-	signal bitwise_res: std_logic_vector(31 downto 0);
+	signal bitwise_res: std_logic_vector(31 downto 0) := (others => '0');
 
 	-- addition and subtraction logic
-	signal add_sub_res : std_logic_vector(31 downto 0);
-	signal add_sub_sub : std_logic;
-	signal add_sub_ov : std_logic;
+	signal add_sub_res : std_logic_vector(31 downto 0) := (others => '0');
+	signal add_sub_sub : std_logic := '0';
+	signal add_sub_ov : std_logic  := '0';
 
 	-- multiplication logic
-	signal mul_res : std_logic_vector(31 downto 0);
-	signal mul_ov : std_logic;
+	signal mul_res : std_logic_vector(31 downto 0) := (others => '0');
+	signal mul_ov : std_logic := '0';
 
 	-- comparison results
-	signal comp_eq : std_logic;	
-	signal comp_lt : std_logic;
-	signal comp_gt : std_logic;
+	signal comp_eq : std_logic := '0';	
+	signal comp_lt : std_logic := '0';
+	signal comp_gt : std_logic := '0';
 
 	-- overflow flag logic
-	signal regwritten : std_logic;
+	signal regwritten : std_logic := '0';
 begin
 	-- clocked logic
 	process(clk, reset) is
 	begin
 		if reset = '1' then
 			ov_flag <= '0';
-			overflow <= '0';
-			regwritten <= '0'; -- TODO: is this correct? Might be useless.
+			regwritten <= '0';
 		elsif rising_edge(clk) then
-			if regwrite = '1' then
-				regwritten <= '1'; -- TODO: is this correct? Might be useless.
+
+			if regwritten = '1' then
 				if opcode(4 downto 2) = ANY_SHIFT_aopc then
 					ov_flag <= shift_ov;
 				elsif opcode = SETOV_aopc then
 					ov_flag <= bchannel(0);
 				elsif opcode = ADD_aopc or opcode = SUB_aopc then
 					ov_flag <= add_sub_ov;
+				elsif opcode = MUL_aopc then
+					ov_flag <= mul_ov;
 				end if;
 				-- 'ov_flag' stays unchanged for the other cases (bitwise logic, comparison, ...)
 			end if;
 			
-			if regwritten = '1' then -- TODO: is this correct? Might be useless.
-				if opcode = MUL_aopc then
-					overflow <= mul_ov;  -- overflow flag is dalyed by one clock cycle in case of multiplication
-				else
-					overflow <= ov_flag; -- dalay by one clock cycle for the other cases (set overflow, shifts and add/sub)
-				end if;
-			end if;
+			regwritten <= regwrite;
+
 		end if;
 	end process;
+
+	overflow <= ov_flag;
 
 	-- software interupt logic
 	-- channels are cleared at reset and change only when SWI is executed and regwrite is set
 	swi_achannel <= (others => '0') when reset = '1' else
-					achannel when opcode = SWI_aopc and 
-								  regwrite = '1' else 
+					achannel        when opcode = SWI_aopc and regwrite = '1' else 
 					swi_achannel;
+
 	swi_bchannel <= (others => '0') when reset = '1' else
-					bchannel when opcode = SWI_aopc and 
-								  regwrite = '1' else
+					bchannel        when opcode = SWI_aopc and regwrite = '1' else
 					swi_bchannel;
 
 	getswi_res <= swi_bchannel when bchannel(0) = '0' else -- results is selected based on the LSB of the second operand
@@ -168,7 +165,7 @@ begin
 	
 	-- shifts
 	shift_cyclic <= '1' when opcode = CSHL_aopc or opcode = CSHR_aopc else '0'; -- cyclic or non cyclic shift
-	shift_rl <= '1' when opcode = SHR_aopc or opcode = CSHR_aopc else '0';      -- right or left shift
+	shift_rl <= '1'     when opcode = SHR_aopc  or opcode = CSHR_aopc else '0'; -- right or left shift
 
 	SHIFT: entity work.hades_shift
 	generic map (
@@ -239,8 +236,7 @@ begin
 	);
 	
 	-- result logic
-	result <= (others => '0') when reset = '1' or 
-								   opcode = INVLD1_aopc or 
+	result <= (others => '0') when opcode = INVLD1_aopc or 
 								   opcode = INVLD2_aopc or 
 								   opcode = INVLD3_aopc or 
 								   opcode = INVLD4_aopc or 

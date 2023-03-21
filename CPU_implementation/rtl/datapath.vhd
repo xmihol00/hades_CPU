@@ -57,22 +57,22 @@ architecture rtl of datapath is
 	constant ANY_ARITHMETIC_aopc : std_logic_vector(1 downto 0) := "10";    -- 2 MSBs of ALU opcode, which signify an arithmetic instruction
 	constant PASS_IMMED_aopc     : std_logic_vector(4 downto 0) := "01110"; -- ALU opcode for a PassImmed instruction
 
-	signal jal_selxres : std_logic_vector(1 downto 0); -- variable to make the 'wop' logic simpler
+	signal jal_selxres : std_logic_vector(1 downto 0) := "00"; -- variable to make the 'wop' logic simpler
 
 	-- registers for storing the ALU opcode and the value of the first operand
-	signal opcode_reg : std_logic_vector(4 downto 0);
-	signal aop_reg    : std_logic_vector(31 downto 0);
+	signal opcode_reg : std_logic_vector(4 downto 0)  := (others => '0');
+	signal aop_reg    : std_logic_vector(31 downto 0) := (others => '0');
 
 	-- result of the second operand selection logic
-	signal selected_bop : std_logic_vector(31 downto 0);
+	signal bop_reg : std_logic_vector(31 downto 0) := (others => '0');
 
 	-- registers for storing the result and zero flag of the ALU
-	signal result_reg : std_logic_vector(31 downto 0);
+	signal result_reg : std_logic_vector(31 downto 0) := (others => '0');
 	signal zero_reg   : std_logic;
 
 	-- registers for input output data
-	signal xdatain_reg  : std_logic_vector(31 downto 0);
-	signal xdataout_reg : std_logic_vector(31 downto 0);
+	signal xdatain_reg  : std_logic_vector(31 downto 0) := (others => '0');
+	signal xdataout_reg : std_logic_vector(31 downto 0) := (others => '0');
 begin
 	jal_selxres <= jal & selxres; -- vector from the 'jal' and 'selxres' bits used for further calculations lower
 	
@@ -80,28 +80,31 @@ begin
 	process(clk, reset) is
 	begin
 		if reset = '1' then
-			opcode_reg <= (others => '0');
-			aop_reg <= (others => '0');
+			-- clear of all the registers on reset
+			opcode_reg   <= (others => '0');
+			aop_reg      <= (others => '0');
+			xdatain_reg  <= (others => '0');
+			xdataout_reg <= (others => '0');
 		elsif rising_edge(clk) then
 			xdataout <= xdataout_reg;
-			zero <= zero_reg;
-			sisalvl <= result_reg(15 downto 14);
+			zero     <= zero_reg;
+			sisalvl  <= result_reg(15 downto 14);
 
-			-- memory address logic, MSB is set to, when invalid address is encountered, i.e. 20 MSBs of the result are not 0
+			-- memory address logic, MSB is set, when invalid address is encountered, i.e. 20 MSBs of the result are not 0
 			if result_reg(31 downto 12) = x"0000_0" then
 				xadr <= result_reg(12 downto 0);
 			else
 				xadr <= '1' & result_reg(11 downto 0);
 			end if;
 	
-			-- 'wop' logic
+			-- 'wop' logic base on the JAL and SELXRES signals
 			case jal_selxres is
-				when "00" => wop <= result_reg;
-				when "10" => wop <= x"0000_0" & pcinc;
+				when "00" =>   wop <= result_reg;
+				when "10" =>   wop <= x"0000_0" & pcinc;
 				when others => wop <= xdatain_reg;
 			end case;
 			
-			-- program counter logic based on the relative jump instruction
+			-- program counter logic based on the RELA signal
 			if rela = '0' then
 				pcnew <= result_reg(11 downto 0);
 			else
@@ -109,18 +112,19 @@ begin
 			end if;
 			
 			-- asignment of the internal registers
-			opcode_reg <= opc;
-			aop_reg <= aop;
-			xdatain_reg <= xdatain;
+			opcode_reg   <= opc;
+			aop_reg      <= aop;
+			xdatain_reg  <= xdatain;
 			xdataout_reg <= bop;
 		end if;
 	end process;
-
-	selected_bop <= bop when ivalid = '0' else 
-					x"FFFF" & iop when iop(15) = '1' and 
-										    (opcode_reg(4 downto 3) = ANY_ARITHMETIC_aopc or
-											 opcode_reg = PASS_IMMED_aopc) else -- sign extention
-					x"0000" & iop; -- zero (unsigned) extention
+	
+	-- B operand selection logic
+	bop_reg <= bop           when ivalid = '0' else 
+			   x"FFFF" & iop when iop(15) = '1' and 
+								  (opcode_reg(4 downto 3) = ANY_ARITHMETIC_aopc or
+								   opcode_reg = PASS_IMMED_aopc) else -- sign extention
+			   x"0000" & iop; -- zero (unsigned) extention
 	
     -- ALU instantiation
 	ALU: entity work.alu
@@ -132,7 +136,7 @@ begin
 		regwrite => regwrite,
 
 		achannel => aop_reg,
-		bchannel => selected_bop,
+		bchannel => bop_reg,
 
 		result => result_reg,
 		overflow => ov,
