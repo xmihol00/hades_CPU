@@ -41,35 +41,7 @@ entity indec is
 end indec;
 
 architecture rtl of indec is
-	-- This approach did not work because of the compilation error "choice must be locally static expression",
-	-- this might be fixed with the 2008 VHDL standard according to the internet (--std=08 flag for GHDL).
-	--type Instruction_opcodes_t is (ALU_opc, ALUI_opc, NOP_opc, SWI_opc, GETSWI_opc, IN_opc, OUT_opc, ENI_opc, DEI_opc, BNEZ_opc, BEQZ_opc, 
-    --	 							 BOV_opc, LOAD_opc, STORE_opc, JAL_opc, JREG_opc, RETI_opc, SISA_opc, DPMA_opc, EPMA_opc);
-	--type Instructions_t is array(Instruction_opcodes_t) of std_logic_vector(3 downto 0);
-	--constant Instructions : Instructions_t := (
-	--	ALU_opc		=> "0000",
-	--	ALUI_opc	=> "0000",
-	--	NOP_opc		=> "0000",
-	--	SWI_opc		=> "0000",
-	--	GETSWI_opc	=> "0000",
-	--	IN_opc		=> "0010",
-	--	OUT_opc		=> "0011",
-	--	ENI_opc		=> "0001",
-	--	DEI_opc		=> "0100",
-	--	BNEZ_opc	=> "0101",
-	--	BEQZ_opc	=> "0110",
-	--	BOV_opc		=> "0111",
-	--	LOAD_opc	=> "1000",
-	--	STORE_opc	=> "1001",
-	--	JAL_opc		=> "1010",
-	--	JREG_opc	=> "1011",
-	--	RETI_opc	=> "1100",
-	--	SISA_opc	=> "1101",
-	--	DPMA_opc	=> "1110",
-	--	EPMA_opc	=> "1111"
-	--);
-
-	-- simple constants instead (instruction opcodes)
+	-- simple constants (instruction opcodes)
 	constant ALU_opc    : std_logic_vector(3 downto 0) := "0000";
 	constant ALUI_opc   : std_logic_vector(3 downto 0) := "0000";
 	constant NOP_opc    : std_logic_vector(3 downto 0) := "0000";
