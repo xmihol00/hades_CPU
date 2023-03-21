@@ -45,9 +45,11 @@ begin
 			for i in registers'range loop
 				registers(i) <= (others => '0');
 			end loop;
-		elsif rising_edge(clk) and regwrite = '1' then -- synchronously write a supplied value to a given valid register
-			registers(to_integer(unsigned(wopadr))) <= wop;
-			registers(r0_idx) <= (others => '0'); -- make sure r0 is always 0
+		elsif rising_edge(clk) then
+			if regwrite = '1' then -- synchronously write a supplied value to a given valid register, separate if for synthesis
+				registers(to_integer(unsigned(wopadr))) <= wop;
+				registers(r0_idx) <= (others => '0'); -- make sure r0 is always 0
+			end if;
 		end if;
 	end process;
 

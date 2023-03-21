@@ -99,9 +99,9 @@ begin
 	
 			-- 'wop' logic base on the JAL and SELXRES signals
 			case jal_selxres is
-				when "00" =>   wop <= result_reg;
-				when "10" =>   wop <= x"0000_0" & pcinc;
-				when others => wop <= xdatain_reg;
+				when "00" =>   wop <= result_reg;			-- result from the ALU
+				when "10" =>   wop <= x"0000_0" & pcinc;    -- the value of the next PC
+				when others => wop <= xdatain_reg;			-- the value read from the data memory
 			end case;
 			
 			-- program counter logic based on the RELA signal
@@ -116,15 +116,15 @@ begin
 			aop_reg      <= aop;
 			xdatain_reg  <= xdatain;
 			xdataout_reg <= bop;
+			if ivalid = '0' then
+				bop_reg <= bop;
+			elsif iop(15) = '1' and (opcode_reg(4 downto 3) = ANY_ARITHMETIC_aopc or opcode_reg = PASS_IMMED_aopc) then
+				bop_reg <= x"FFFF" & iop;
+			else
+				bop_reg <= x"0000" & iop;
+			end if;		
 		end if;
 	end process;
-	
-	-- B operand selection logic
-	bop_reg <= bop           when ivalid = '0' else 
-			   x"FFFF" & iop when iop(15) = '1' and 
-								  (opcode_reg(4 downto 3) = ANY_ARITHMETIC_aopc or
-								   opcode_reg = PASS_IMMED_aopc) else -- sign extention
-			   x"0000" & iop; -- zero (unsigned) extention
 	
     -- ALU instantiation
 	ALU: entity work.alu

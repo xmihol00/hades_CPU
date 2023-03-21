@@ -79,7 +79,7 @@ architecture rtl of alu is
 	constant INVLD6_aopc : std_logic_vector(4 downto 0) := "11110";
 	constant INVLD7_aopc : std_logic_vector(4 downto 0) := "11111";
 
-	-- 3 MSBs of ALU operation codes, which signyfy the type of the operation
+	-- 3 MSBs of ALU operation codes, which signify the type of the operation (logic, arithmetic, shifts, ...)
 	constant ANY_SHIFT_aopc : std_logic_vector(2 downto 0)  := "001";
 	constant ANY_LOGIC_aopc : std_logic_vector(2 downto 0)  := "010";
 	constant ANY_BRANCH_aopc : std_logic_vector(2 downto 0) := "011";
@@ -139,11 +139,14 @@ begin
 					ov_flag <= add_sub_ov;
 				elsif opcode = MUL_aopc then
 					ov_flag <= mul_ov;
+				elsif opcode = GETOV_aopc then
+					ov_flag <= ov_flag; -- GETOV does not change the overflow flag
+				else
+				    ov_flag <= '0'; -- for all other instructions overflow is '0'
 				end if;
-				-- 'ov_flag' stays unchanged for the other cases (bitwise logic, comparison, ...)
 			end if;
 			
-			regwritten <= regwrite;
+			regwritten <= regwrite; -- delay of the regwrite signal
 
 		end if;
 	end process;
@@ -152,13 +155,19 @@ begin
 
 	-- software interupt logic
 	-- channels are cleared at reset and change only when SWI is executed and regwrite is set
-	swi_achannel <= (others => '0') when reset = '1' else
-					achannel        when opcode = SWI_aopc and regwrite = '1' else 
-					swi_achannel;
+	process(reset, clk) is
+	begin
+		if reset = '1' then
+			swi_achannel  <= (others => '0');
+		elsif rising_edge(clk) then
 
-	swi_bchannel <= (others => '0') when reset = '1' else
-					bchannel        when opcode = SWI_aopc and regwrite = '1' else
-					swi_bchannel;
+			if regwrite = '1' and opcode = SWI_aopc then
+				swi_achannel <= achannel;
+				swi_bchannel <= bchannel;
+			end if;
+			
+		end if;	
+	end process;
 
 	getswi_res <= swi_bchannel when bchannel(0) = '0' else -- results is selected based on the LSB of the second operand
 				  swi_achannel;
@@ -236,13 +245,9 @@ begin
 	);
 	
 	-- result logic
-	result <= (others => '0') when opcode = INVLD1_aopc or 
-								   opcode = INVLD2_aopc or 
-								   opcode = INVLD3_aopc or 
-								   opcode = INVLD4_aopc or 
-								   opcode = INVLD5_aopc or 
-								   opcode = INVLD6_aopc or 
-								   opcode = INVLD7_aopc else -- clear the result at reset or invalid opcode
+	result <= (others => '0') when opcode = INVLD1_aopc or opcode = INVLD2_aopc or opcode = INVLD3_aopc or 
+								   opcode = INVLD4_aopc or opcode = INVLD5_aopc or opcode = INVLD6_aopc or 
+								   opcode = INVLD7_aopc else -- clear the result at invalid opcode
 	          getswi_res  when opcode = GETSWI_aopc else
 			  shift_res   when opcode(4 downto 2) = ANY_SHIFT_aopc else 
 			  bitwise_res when opcode(4 downto 2) = ANY_LOGIC_aopc else
@@ -261,8 +266,7 @@ begin
 			  RESULT_CLEAR & (comp_gt or comp_eq) when opcode = SGE_aopc else
 			  (others => '0'); -- result is cleared for other opcodes
 
-	zero <= '1' when (opcode = BNEZ_aopc or 
-	                  opcode = BEQZ_aopc) and 
+	zero <= '1' when (opcode = BNEZ_aopc or opcode = BEQZ_aopc) and 
 					 achannel = x"0000_0000" else -- zero flag is set for BNEZ and BEQZ if achannel is zero
 			'0';
 end rtl;
