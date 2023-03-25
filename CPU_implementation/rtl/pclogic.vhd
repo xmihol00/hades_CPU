@@ -39,5 +39,39 @@ entity pclogic is
 end pclogic;
 
 architecture rtl of pclogic is
+	signal pcmux	: std_logic_vector(11 downto 0);
+	signal irqmux	: std_logic_vector(11 downto 0);
+	signal pc_reg 	: std_logic_vector(11 downto 0);
+	signal inner_pcinc 	: std_logic_vector(11 downto 0);
 begin
+
+	process (clk, reset) is
+	begin
+		if reset = '1' then
+			pc_reg <= (others => '0');
+		elsif rising_edge(clk) then
+			if pcwrite = '1' then
+				pc_reg <= irqmux;
+			end if;
+		end if;
+	end process;
+
+	inner_pcinc <= std_logic_vector(unsigned(pc_reg) + 1);
+
+	pcmux <= isrr when pccontr(3) = '1' else
+	         pcnew when 
+			 			(pccontr(0) = '1' and zero = '0') or
+			 			(pccontr(1) = '1' and zero = '1') or
+			 			(pccontr(2) = '1' and ov = '1') or
+	                    (pccontr(4) = '1') or
+	                    (pccontr(5) = '1') else
+			 inner_pcinc;
+	
+	irqmux <= isra when intr = '1' else
+	          pcmux;
+	
+	pcakt <= pc_reg;
+	pcinc <= inner_pcinc;
+	pcnext <= pcmux;
+
 end rtl;
