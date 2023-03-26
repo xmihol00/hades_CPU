@@ -1,8 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel:    
--- Autor:    
--- Datum:    
+-- Titel: Program Counter logic
+-- Autor: David Mihola (12211951)
+-- Datum: 26. 03. 2023
 --
 ---------------------------------------------------------------------------------------------------
 
@@ -44,6 +44,8 @@ architecture rtl of pclogic is
 	signal pc_reg 	: std_logic_vector(11 downto 0);
 	signal inner_pcinc 	: std_logic_vector(11 downto 0);
 begin
+	-- instruction: JREG JAL RETI BOV BEQZ BNEZ
+    -- pccontr:        5   4    3   2    1    0
 
 	process (clk, reset) is
 	begin
@@ -56,22 +58,21 @@ begin
 		end if;
 	end process;
 
-	inner_pcinc <= std_logic_vector(unsigned(pc_reg) + 1);
+	inner_pcinc <= std_logic_vector(unsigned(pc_reg) + 1); -- increment PC by 1
 
-	pcmux <= isrr when pccontr(3) = '1' else
-	         pcnew when 
-			 			(pccontr(0) = '1' and zero = '0') or
-			 			(pccontr(1) = '1' and zero = '1') or
-			 			(pccontr(2) = '1' and ov = '1') or
-	                    (pccontr(4) = '1') or
-	                    (pccontr(5) = '1') else
-			 inner_pcinc;
+	pcmux <= isrr when pccontr(3) = '1' else -- RETI - return from subroutine
+	         pcnew when -- jump in the program happens
+			 			(pccontr(0) = '1' and zero = '0') or -- branch when not zero
+			 			(pccontr(1) = '1' and zero = '1') or -- branch when zero
+			 			(pccontr(2) = '1' and ov = '1') or   -- branch when overflow
+	                    (pccontr(4) = '1') or				 -- JAL  - subroutine call
+	                    (pccontr(5) = '1') else				 -- JREG - jump to absolute address
+			 inner_pcinc;									 -- other intructions, increment PC by 1
 	
 	irqmux <= isra when intr = '1' else
 	          pcmux;
 	
-	pcakt <= pc_reg;
-	pcinc <= inner_pcinc;
+	pcakt  <= pc_reg;
+	pcinc  <= inner_pcinc;
 	pcnext <= pcmux;
-
 end rtl;

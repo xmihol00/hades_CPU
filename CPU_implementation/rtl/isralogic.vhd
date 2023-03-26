@@ -1,8 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel:    
--- Autor:    
--- Datum:    
+-- Titel: ISRA logic
+-- Autor: David Mihola (12211951)
+-- Datum: 25. 03. 2023
 --
 ---------------------------------------------------------------------------------------------------
 
@@ -45,11 +45,13 @@ begin
 	process(clk, reset) is
 	begin
 		if reset = '1' then
+			-- reset all registers to the address of the bootloader
 			isra1_reg <= x"FFF";
 			isra2_reg <= x"FFF";
 			isra3_reg <= x"FFF";
 			isra4_reg <= x"FFF";
 		elsif rising_edge(clk) then
+			-- synchronously write the new address to the selected register
 			if isra1_write = '1' then
 				isra1_reg <= pcnew;
 			end if;
@@ -67,16 +69,14 @@ begin
 			end if;
 		end if;
 	end process;
+	
+	-- write enable based on pcwrite, sisa and sisalvl
+	isra1_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "00") else '0';
+	isra2_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "01") else '0';
+	isra3_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "10") else '0';
+	isra4_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "11") else '0';
 
-	isra1_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "00") else 
-				   '0';
-	isra2_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "01") else 
-				   '0';
-	isra3_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "10") else 
-				   '0';
-	isra4_write <= '1' when pcwrite = '1' and sisa = '1' and (sisalvl = "11") else 
-				   '0';
-
+	-- output based on the current interrupt level
 	isra <= isra1_reg when selisra = "001" else
 			isra2_reg when selisra = "010" else
 			isra3_reg when selisra = "011" else

@@ -1,8 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 --
--- Titel:    
--- Autor:    
--- Datum:    
+-- Titel: ISRR logic
+-- Autor: David Mihola (12211951)
+-- Datum: 25. 03. 2023
 --
 ---------------------------------------------------------------------------------------------------
 
@@ -32,6 +32,7 @@ entity isrrlogic is
 end isrrlogic;
 
 architecture rtl of isrrlogic is
+	-- registers for the interrupt service routine return address and the return interrupt level
 	signal issr1_reg	: std_logic_vector(14 downto 0);
 	signal issr2_reg	: std_logic_vector(14 downto 0);
 	signal issr3_reg	: std_logic_vector(14 downto 0);
@@ -47,6 +48,7 @@ begin
 	process(clk, reset) is
 	begin
 		if reset = '1' then
+			-- reset the registers to adress 0xFFE, where there is an infinite loop
 			issr1_reg <= "000" & x"FFE";
 			issr2_reg <= "000" & x"FFE";
 			issr3_reg <= "000" & x"FFE";
@@ -61,6 +63,7 @@ begin
 		end if;
 	end process;
 
+	-- shift the registers when an interrupt occures or RETI is executed but not both together
 	shift <= '1' when pcwrite = '1' and (intr xor reti) = '1' else '0';
 
 	issr1_mux <= curlvl & pcnext when reti = '0' else issr2_reg;
@@ -70,5 +73,4 @@ begin
 
 	isrr <= issr1_reg(11 downto 0);
 	retilvl <= issr1_reg(14 downto 12);
-
 end rtl;
