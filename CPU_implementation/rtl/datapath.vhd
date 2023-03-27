@@ -59,11 +59,14 @@ architecture rtl of datapath is
 
 	signal jal_selxres : std_logic_vector(1 downto 0) := "00"; -- variable to make the 'wop' logic simpler
 
+	signal inner_zero   : std_logic := '0';
+	signal inner_result : std_logic_vector(31 downto 0) := (others => '0');
+
 	-- registers for storing the ALU opcode and the value of the first operand
 	signal opcode_reg : std_logic_vector(4 downto 0)  := (others => '0');
 	signal aop_reg    : std_logic_vector(31 downto 0) := (others => '0');
 
-	-- result of the second operand selection logic
+	-- register to store the result of the second operand selection logic
 	signal bop_reg : std_logic_vector(31 downto 0) := (others => '0');
 
 	-- registers for storing the result and zero flag of the ALU
@@ -83,46 +86,28 @@ begin
 			-- clear of all the registers on reset
 			opcode_reg   <= (others => '0');
 			aop_reg      <= (others => '0');
+			bop_reg      <= (others => '0');
+			result_reg   <= (others => '0');
+			zero_reg     <= '0';
 			xdatain_reg  <= (others => '0');
 			xdataout_reg <= (others => '0');
 		elsif rising_edge(clk) then
-			xdataout <= xdataout_reg;
-			zero     <= zero_reg;
-			sisalvl  <= result_reg(15 downto 14);
-
-			-- memory address logic, MSB is set, when invalid address is encountered, i.e. 20 MSBs of the result are not 0
-			if result_reg(31 downto 12) = x"0000_0" then
-				xadr <= result_reg(12 downto 0);
-			else
-				xadr <= '1' & result_reg(11 downto 0);
-			end if;
-	
-			-- 'wop' logic base on the JAL and SELXRES signals
-			case jal_selxres is
-				when "00" =>   wop <= result_reg;			-- result from the ALU
-				when "10" =>   wop <= x"0000_0" & pcinc;    -- the value of the next PC
-				when others => wop <= xdatain_reg;			-- the value read from the data memory
-			end case;
-			
-			-- program counter logic based on the RELA signal
-			if rela = '0' then
-				pcnew <= result_reg(11 downto 0);
-			else
-				pcnew <= std_logic_vector(unsigned(result_reg(11 downto 0)) + unsigned(pcinc)); -- sum of the result with the next PC (PC + 1)
-			end if;
-			
-			-- asignment of the internal registers
+			-- assignment of the registers on the rising edge of the clock
+			zero_reg     <= inner_zero;
+			result_reg   <= inner_result;
 			opcode_reg   <= opc;
 			aop_reg      <= aop;
 			xdatain_reg  <= xdatain;
 			xdataout_reg <= bop;
+			
+			-- second operand selection logic
 			if ivalid = '0' then
 				bop_reg <= bop;
 			elsif iop(15) = '1' and (opc(4 downto 3) = ANY_ARITHMETIC_aopc or opc = PASS_IMMED_aopc) then
-				bop_reg <= x"FFFF" & iop;
+				bop_reg <= x"FFFF" & iop; -- sign extension of the immediate value
 			else
-				bop_reg <= x"0000" & iop;
-			end if;		
+				bop_reg <= x"0000" & iop; -- zero extension of the immediate value
+			end if;
 		end if;
 	end process;
 	
@@ -138,8 +123,24 @@ begin
 		achannel => aop_reg,
 		bchannel => bop_reg,
 
-		result => result_reg,
+		result => inner_result,
 		overflow => ov,
-		zero => zero_reg
+		zero => inner_zero
 	);
+
+	-- 'wop' logic base on the JAL and SELXRES signals
+	wop <= result_reg        when jal_selxres = "00" else
+		   x"0000_0" & pcinc when jal_selxres = "10" else
+		   xdatain_reg;
+
+	-- memory address logic, MSB is set, when invalid address is encountered, i.e. 20 MSBs of the result are not 0
+	xadr <= result_reg(12 downto 0) when result_reg(31 downto 12) = x"0000_0" else '1' & result_reg(11 downto 0);
+
+	-- program counter logic based on the RELA signal
+	pcnew <= result_reg(11 downto 0) when rela = '0' else 
+			 std_logic_vector(unsigned(result_reg(11 downto 0)) + unsigned(pcinc)); -- sum of the result with the next PC (PC + 1)
+
+	zero <= zero_reg;
+	xdataout <= xdataout_reg;
+	sisalvl  <= result_reg(15 downto 14);
 end rtl;

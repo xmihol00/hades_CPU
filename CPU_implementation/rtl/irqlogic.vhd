@@ -47,7 +47,7 @@ architecture rtl of irqlogic is
 begin
 	-- instruction: SWI RETI ENI DEI SISA
     -- pccontr:       4    3   2   1    0
-	
+
 	swi_and_pcwrite <= pccontr(4) and pcwrite;
 
 	ISRA_logic: entity work.isralogic
@@ -79,7 +79,7 @@ begin
 			isrr    => isrr
 		);
 	
-	ChechIRQ: entity work.checkirq
+	check_IRQ: entity work.checkirq
 		port map (
 			clk		=> clk,
 			reset	=> reset,

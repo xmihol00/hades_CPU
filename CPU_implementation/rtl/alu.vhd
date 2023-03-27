@@ -88,12 +88,13 @@ architecture rtl of alu is
 	-- constant used to set the 31 MSBs of the result to 0
 	constant RESULT_CLEAR : std_logic_vector(30 downto 0) := (others => '0');
 
-	-- register for storing the overflow flag
-	signal ov_flag : std_logic;
+	-- overflow flag logic
+	signal overflow_reg : std_logic;
+	signal regwritten_reg : std_logic := '0';
 
 	-- software interupt logic
-	signal swi_achannel : std_logic_vector(31 downto 0) := (others => '0');
-	signal swi_bchannel : std_logic_vector(31 downto 0) := (others => '0');
+	signal swi_achannel_reg : std_logic_vector(31 downto 0) := (others => '0');
+	signal swi_bchannel_reg : std_logic_vector(31 downto 0) := (others => '0');
 	signal getswi_res : std_logic_vector(31 downto 0)   := (others => '0');
 
 	-- shift logic
@@ -118,59 +119,49 @@ architecture rtl of alu is
 	signal comp_eq : std_logic := '0';	
 	signal comp_lt : std_logic := '0';
 	signal comp_gt : std_logic := '0';
-
-	-- overflow flag logic
-	signal regwritten : std_logic := '0';
 begin
-	-- clocked logic
+	-- overflow flag logic
 	process(clk, reset) is
 	begin
 		if reset = '1' then
-			ov_flag <= '0';
-			regwritten <= '0';
+			overflow_reg   <= '0';
+			regwritten_reg <= '0';
 		elsif rising_edge(clk) then
-
-			if regwritten = '1' then
+			if regwritten_reg = '1' then -- delayed store of the overflow flag
 				if opcode(4 downto 2) = ANY_SHIFT_aopc then
-					ov_flag <= shift_ov;
+					overflow_reg <= shift_ov;
 				elsif opcode = SETOV_aopc then
-					ov_flag <= bchannel(0);
+					overflow_reg <= bchannel(0);
 				elsif opcode = ADD_aopc or opcode = SUB_aopc then
-					ov_flag <= add_sub_ov;
+					overflow_reg <= add_sub_ov;
 				elsif opcode = MUL_aopc then
-					ov_flag <= mul_ov;
-				elsif opcode = GETOV_aopc then
-					ov_flag <= ov_flag; -- GETOV does not change the overflow flag
-				else
-				    ov_flag <= '0'; -- for all other instructions overflow is '0'
+					overflow_reg <= mul_ov;
+				elsif opcode /= GETOV_aopc then
+				    overflow_reg <= '0'; -- for all other instructions exept of GETOV overflow is '0'
 				end if;
 			end if;
 			
-			regwritten <= regwrite; -- delay of the regwrite signal
-
+			regwritten_reg <= regwrite; -- delay of the regwrite signal by one clock cycle
 		end if;
 	end process;
 
-	overflow <= ov_flag;
-
 	-- software interupt logic
-	-- channels are cleared at reset and change only when SWI is executed and regwrite is set
+	-- channels are cleared at reset and change only when SWI is executed and regwrite is set at rising edge of the clock
 	process(reset, clk) is
 	begin
 		if reset = '1' then
-			swi_achannel  <= (others => '0');
+			swi_achannel_reg  <= (others => '0');
+			swi_bchannel_reg  <= (others => '0');
 		elsif rising_edge(clk) then
-
 			if regwrite = '1' and opcode = SWI_aopc then
-				swi_achannel <= achannel;
-				swi_bchannel <= bchannel;
+				swi_achannel_reg <= achannel;
+				swi_bchannel_reg <= bchannel;
 			end if;
-			
 		end if;	
 	end process;
 
-	getswi_res <= swi_bchannel when bchannel(0) = '0' else -- results is selected based on the LSB of the second operand
-				  swi_achannel;
+	getswi_res <= swi_bchannel_reg when bchannel(0) = '0' else -- results is selected based on the LSB of the second operand
+				  swi_achannel_reg;
 	
 	-- shifts
 	shift_cyclic <= '1' when opcode = CSHL_aopc or opcode = CSHR_aopc else '0'; -- cyclic or non cyclic shift
@@ -254,7 +245,7 @@ begin
 			  add_sub_res when opcode = ADD_aopc or opcode = SUB_aopc else
 			  mul_res     when opcode = MUL_aopc else
 			  -- result of the get overflow instruction is stored as a LSB of the result, other bits are cleared
-			  RESULT_CLEAR & ov_flag when opcode = GETOV_aopc else
+			  RESULT_CLEAR & overflow_reg when opcode = GETOV_aopc else
 			  -- result of the branch instructions is taken from the 16 LSBs of the second operand, other bits are cleared
 			  x"0000" & bchannel(15 downto 0) when opcode(4 downto 2) = ANY_BRANCH_aopc else
 			  -- result of the comparison instructions is stored as a LSB of the result, other bits are cleared
@@ -265,7 +256,8 @@ begin
 			  RESULT_CLEAR & comp_gt              when opcode = SGT_aopc else
 			  RESULT_CLEAR & (comp_gt or comp_eq) when opcode = SGE_aopc else
 			  (others => '0'); -- result is cleared for other opcodes
-
+	
+	overflow <= overflow_reg;
 	zero <= '1' when (opcode = BNEZ_aopc or opcode = BEQZ_aopc) and 
 					 achannel = x"0000_0000" else -- zero flag is set for BNEZ and BEQZ if achannel is zero
 			'0';
