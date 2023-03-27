@@ -137,7 +137,7 @@ begin
 				elsif opcode = MUL_aopc then
 					overflow_reg <= mul_ov;
 				elsif opcode /= GETOV_aopc then
-				    overflow_reg <= '0'; -- for all other instructions exept of GETOV overflow is '0'
+				    overflow_reg <= '0'; -- for all other instructions exept of GETOV overflow is '0' (GETOV keeps the current value)
 				end if;
 			end if;
 			
@@ -146,7 +146,7 @@ begin
 	end process;
 
 	-- software interupt logic
-	-- channels are cleared at reset and change only when SWI is executed and regwrite is set at rising edge of the clock
+	-- channels are cleared at reset and change only when SWI is executed and regwrite is set at the rising edge of the clock
 	process(reset, clk) is
 	begin
 		if reset = '1' then
@@ -165,7 +165,7 @@ begin
 	
 	-- shifts
 	shift_cyclic <= '1' when opcode = CSHL_aopc or opcode = CSHR_aopc else '0'; -- cyclic or non cyclic shift
-	shift_rl <= '1'     when opcode = SHR_aopc  or opcode = CSHR_aopc else '0'; -- right or left shift
+	shift_rl     <= '1' when opcode = SHR_aopc  or opcode = CSHR_aopc else '0'; -- right or left shift
 
 	SHIFT: entity work.hades_shift
 	generic map (
@@ -184,10 +184,10 @@ begin
 
 	-- bitwise logic
 	bitwise_res <= achannel AND  bchannel when opcode = AND_aopc  else
-				   achannel OR   bchannel when opcode = OR_aopc   else
-				   achannel XOR  bchannel when opcode = XOR_aopc  else
-				   achannel XNOR bchannel when opcode = XNOR_aopc else
-				   (others => '0'); 
+                   achannel OR   bchannel when opcode = OR_aopc   else
+                   achannel XOR  bchannel when opcode = XOR_aopc  else
+                   achannel XNOR bchannel when opcode = XNOR_aopc else
+                   (others => '0'); 
 
 	-- addition and subtraction
 	add_sub_sub <= '1' when opcode = SUB_aopc else '0'; -- specifies whether the operation is subtraction or addition
@@ -237,28 +237,27 @@ begin
 	
 	-- result logic
 	result <= (others => '0') when opcode = INVLD1_aopc or opcode = INVLD2_aopc or opcode = INVLD3_aopc or 
-								   opcode = INVLD4_aopc or opcode = INVLD5_aopc or opcode = INVLD6_aopc or 
-								   opcode = INVLD7_aopc else -- clear the result at invalid opcode
-	          getswi_res  when opcode = GETSWI_aopc else
-			  shift_res   when opcode(4 downto 2) = ANY_SHIFT_aopc else 
-			  bitwise_res when opcode(4 downto 2) = ANY_LOGIC_aopc else
-			  add_sub_res when opcode = ADD_aopc or opcode = SUB_aopc else
-			  mul_res     when opcode = MUL_aopc else
-			  -- result of the get overflow instruction is stored as a LSB of the result, other bits are cleared
-			  RESULT_CLEAR & overflow_reg when opcode = GETOV_aopc else
-			  -- result of the branch instructions is taken from the 16 LSBs of the second operand, other bits are cleared
-			  x"0000" & bchannel(15 downto 0) when opcode(4 downto 2) = ANY_BRANCH_aopc else
-			  -- result of the comparison instructions is stored as a LSB of the result, other bits are cleared
-			  RESULT_CLEAR & comp_eq              when opcode = SEQ_aopc else
-			  RESULT_CLEAR & not comp_eq          when opcode = SNE_aopc else
-			  RESULT_CLEAR & comp_lt              when opcode = SLT_aopc else
-			  RESULT_CLEAR & (comp_lt or comp_eq) when opcode = SLE_aopc else
-			  RESULT_CLEAR & comp_gt              when opcode = SGT_aopc else
-			  RESULT_CLEAR & (comp_gt or comp_eq) when opcode = SGE_aopc else
-			  (others => '0'); -- result is cleared for other opcodes
+                                   opcode = INVLD4_aopc or opcode = INVLD5_aopc or opcode = INVLD6_aopc or 
+                                   opcode = INVLD7_aopc else -- clear the result at invalid opcode
+              getswi_res  when opcode = GETSWI_aopc else
+              shift_res   when opcode(4 downto 2) = ANY_SHIFT_aopc else 
+              bitwise_res when opcode(4 downto 2) = ANY_LOGIC_aopc else
+              add_sub_res when opcode = ADD_aopc or opcode = SUB_aopc else
+              mul_res     when opcode = MUL_aopc else
+              -- result of the get overflow instruction is stored as a LSB of the result, other bits are cleared
+              RESULT_CLEAR & overflow_reg when opcode = GETOV_aopc else
+              -- result of the branch instructions is taken from the 16 LSBs of the second operand, other bits are cleared
+              x"0000" & bchannel(15 downto 0) when opcode(4 downto 2) = ANY_BRANCH_aopc else
+              -- result of the comparison instructions is stored as a LSB of the result, other bits are cleared
+              RESULT_CLEAR & comp_eq              when opcode = SEQ_aopc else
+              RESULT_CLEAR & not comp_eq          when opcode = SNE_aopc else
+              RESULT_CLEAR & comp_lt              when opcode = SLT_aopc else
+              RESULT_CLEAR & (comp_lt or comp_eq) when opcode = SLE_aopc else
+              RESULT_CLEAR & comp_gt              when opcode = SGT_aopc else
+              RESULT_CLEAR & (comp_gt or comp_eq) when opcode = SGE_aopc else
+              (others => '0'); -- result is cleared for other opcodes
 	
 	overflow <= overflow_reg;
 	zero <= '1' when (opcode = BNEZ_aopc or opcode = BEQZ_aopc) and 
-					 achannel = x"0000_0000" else -- zero flag is set for BNEZ and BEQZ if achannel is zero
-			'0';
+                     achannel = x"0000_0000" else '0'; -- zero flag is set for BNEZ and BEQZ if achannel is zero
 end rtl;

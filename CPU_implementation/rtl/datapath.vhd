@@ -130,7 +130,7 @@ begin
 
 	-- 'wop' logic base on the JAL and SELXRES signals
 	wop <= result_reg        when jal_selxres = "00" else
-		   x"0000_0" & pcinc when jal_selxres = "10" else
+           x"0000_0" & pcinc when jal_selxres = "10" else
 		   xdatain_reg;
 
 	-- memory address logic, MSB is set, when invalid address is encountered, i.e. 20 MSBs of the result are not 0
@@ -138,7 +138,7 @@ begin
 
 	-- program counter logic based on the RELA signal
 	pcnew <= result_reg(11 downto 0) when rela = '0' else 
-			 std_logic_vector(unsigned(result_reg(11 downto 0)) + unsigned(pcinc)); -- sum of the result with the next PC (PC + 1)
+             std_logic_vector(unsigned(result_reg(11 downto 0)) + unsigned(pcinc)); -- sum of the result with the next PC (PC + 1)
 
 	zero <= zero_reg;
 	xdataout <= xdataout_reg;
