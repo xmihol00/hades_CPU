@@ -71,7 +71,7 @@ begin
     end process;
 	
 	-- Moore FSM next state logic
-	process (moore_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy) is
+	process (moore_current_state, inop, outop, loadop, storeop, dpma, epma, xack, xpresent, dmembusy, epma_set) is
 	begin
 		case moore_current_state is
 			when IFETCH =>

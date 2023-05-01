@@ -68,7 +68,7 @@ architecture rtl of mcu is
 	signal xmemintr	: std_logic;
 begin
 
-  process(clk_in)
+  process(reset, clk_in)
   begin
 	if reset='1' then
 	   clk <= '0';
