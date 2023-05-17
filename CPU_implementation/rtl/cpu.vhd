@@ -59,7 +59,6 @@ architecture rtl of cpu is
 	signal inner_dpma              : std_logic := '0';
 	signal inner_epma              : std_logic := '0';
 	signal inner_aop			   : std_logic_vector(31 downto 0) := (others => '0');
-	signal inner_bop			   : std_logic_vector(31 downto 0) := (others => '0');
 	signal inner_wop			   : std_logic_vector(31 downto 0) := (others => '0');
 	signal inner_regwrite          : std_logic := '0';
 	signal inner_pcwrite           : std_logic := '0';
@@ -122,7 +121,7 @@ begin
 		bopadr   => inner_bopaddr,
 
 		aop      => inner_aop,
-		bop      => inner_bop
+		bop      => inner_datain_bop
 	);
 
 	CONTROL: entity work.control
@@ -176,7 +175,7 @@ begin
 		opc      => inner_opc,
 		regwrite => inner_regwrite,		
 		aop      => inner_aop,
-		bop      => inner_bop,
+		bop      => inner_datain_bop,
 		iop      => inner_iop,
 		ivalid   => inner_ivalid,
 		selxres  => inner_selxres,

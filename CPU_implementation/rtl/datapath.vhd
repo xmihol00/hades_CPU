@@ -103,7 +103,7 @@ begin
 			-- second operand selection logic
 			if ivalid = '0' then
 				bop_reg <= bop;
-			elsif iop(15) = '1' and (opc(4 downto 3) = ANY_ARITHMETIC_aopc or opc = PASS_IMMED_aopc) then
+			elsif iop(15) = '1' and opc(4) = '1' then
 				bop_reg <= x"FFFF" & iop; -- sign extension of the immediate value
 			else
 				bop_reg <= x"0000" & iop; -- zero extension of the immediate value

@@ -1,0 +1,297 @@
+HDDB2
+0 disable program-memory access
+1 disable interrupts
+2 init stack-pointer
+3 call main
+4 done, just wait forever
+5 save context
+12 7 segment
+13 7 segment calculator
+14 led_blink
+15 led_walk
+16 switches
+17 buttons
+18 UART
+19 mouse
+20 keyboard
+21 vga1
+22 vga2
+23 vga3
+25 restore context & return
+33 save context
+40 bring periphery to known state
+45 init global variable
+46 start timer
+52 wait until button is pressed
+55 reset 7seg
+57 restore context & return
+65 save context
+72 restart timer
+77 convert value in r1 to bcd
+79 enable bit
+83 restore context
+91 save context
+98 r5 counter
+100 check last digit
+101 greater 5 --> add 3
+107 add 3 in last digit
+108 check second digit
+109 greater 5 --> add 3
+115 add 3 << 4
+116 check third digit
+117 greater 5 --> add 3
+123 add 3 << 8
+124 check third digit
+125 greater 5 --> add 3
+131 add 3 << 12
+132 shift everything one time to the left
+133 decrement counter down to zero
+134 shift 15 then 14 then 13 ...
+135 only last bit
+136 shift r1 into r2
+137 exit if shifted 16 times
+139 restore context & return
+148 east button
+149 east button
+153 save context
+160 bring periphery to known state
+165 init PS/2
+170 kayboard found => enable IRQ
+184 wait until button is pressed
+185 disable IRQs
+186 reset 7seg
+188 restore context & return
+196 reset controller
+198 wait until initialized
+201 done
+202 save context
+209 check if data was received
+212 receive byte and set the ASCII to the leds
+214 restore context
+222 save context
+229 bring periphery to known state
+235 change pattern
+245 fill screen
+247 check for exit-button
+251 restore context & return
+259 save context
+266 reset address
+267 get pattern
+272 r2 = 0x2580 = (640*480/32)
+274 fill screen
+285 swap patterns & reload counter
+291 restore context & return
+299 save context
+306 reset address
+307 clear y
+308 clear x
+309 R
+312 G
+316 B
+325 output pixel
+326 increment x
+329 increment y
+332 wait until button is pressed
+333 restore context & return
+341 save context
+348 reset address
+350 init counter 307200/4
+351 load mask
+352 save mask, FASTBUFFER
+353 decrement counter
+354 check if finish
+355 wait until button is pressed
+356 restore context & return
+364 save context
+371 bring periphery to known state
+376 current value
+377 init global variable
+378 convert value in r1 to bcd
+380 write 7-segment reg
+384 read switch status
+385 update LEDs
+387 read buttons
+388 south
+389 substract button (south button)
+390 north
+391 add button (north button)
+392 west
+393 set number to zero
+394 east
+395 exit button east
+397 add value
+398 reset buttons
+400 substract value
+401 reset buttons
+403 set value to zero
+404 reset buttons
+406 reset 7seg
+416 save context
+423 bring periphery to known state
+428 make all LEDs blink
+432 wait until button is pressed
+433 restore context & return
+441 save context
+448 bring periphery to known state
+453 init LEDs
+455 start timer
+461 wait until button is pressed
+462 stop timer
+464 restore context & return
+472 save context
+479 restart timer
+481 update LEDs
+482 restore context
+490 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+498 save context
+505 bring periphery to known state
+510 get switches
+511 update LEDs
+517 check if exit button pressed
+518 east button
+521 reset 7seg
+524 restore context & return
+532 save context
+539 bring periphery to known state
+544 init status
+545 get & ack switches
+547 update status
+549 update LEDs
+551 east button
+553 restore context & return
+561 save context
+568 bring periphery to known state
+573 configure UART
+577 wait until button is pressed
+578 disable IRQs
+579 restore context & return
+587 save context
+594 check if data was received
+597 receive & echo byte
+599 check for more data
+600 restore context
+608 save context
+615 bring periphery to known state
+620 init global vars
+623 init PS/2
+628 init mouse
+629 mouse found => enable IRQ
+639 wait until button is pressed
+640 disable IRQs
+641 reset 7seg
+643 restore context & return
+651 write mouse-init-byte
+653 receive ack
+657 done
+658 save context
+665 check if data was received
+668 handle byte
+669 check for more data
+670 restore context
+678 save context
+685 load byte-counter
+686 receive byte
+687 store byte into buffer
+688 update byte-counter
+691 parse frame
+692 reset byte-counter
+693 save byte-counter
+694 restore context
+702 save context
+709 read frame from buffer
+713 sign-expand x-offset if required
+717 sign-expand y-offset if required
+721 update x-pos
+724 update y-pos
+727 x-coord
+728 scale down
+729 convert value in r1 to bcd
+731 y-coord
+732 scale down
+733 convert value in r1 to bcd
+743 update LEDs
+745 restore context
+@GLOBAL@ 0 1 test1_val
+@GLOBAL@ 1 1 test2_bcd
+@GLOBAL@ 2 16 vga_pattern1
+@GLOBAL@ 18 1 mask
+@GLOBAL@ 19 1 test4_pos
+@GLOBAL@ 20 1 test9_cnt
+@GLOBAL@ 21 1 test9_x
+@GLOBAL@ 22 1 test9_y
+@GLOBAL@ 23 3 test9_data
+@LABEL@ 0 __init
+@LABEL@ 4 __init:done
+@LABEL@ 5 main
+@LABEL@ 12 main:loop
+@LABEL@ 33 test1
+@LABEL@ 65 test1_isr
+@LABEL@ 91 bin2bcd
+@LABEL@ 100 bin2bcd:bin2bcd1
+@LABEL@ 104 bin2bcd:bin2bcdadd3
+@LABEL@ 108 bin2bcd:bin2bcddigit2
+@LABEL@ 112 bin2bcd:bin2bcdadd30
+@LABEL@ 116 bin2bcd:bin2bcddigit3
+@LABEL@ 120 bin2bcd:bin2bcdadd300
+@LABEL@ 124 bin2bcd:bin2bcddigit4
+@LABEL@ 128 bin2bcd:bin2bcdadd3000
+@LABEL@ 132 bin2bcd:bin2bcd2
+@LABEL@ 137 bin2bcd:bin2bcd3
+@LABEL@ 138 bin2bcd:bin2bcd4
+@LABEL@ 139 bin2bcd:bin2bcdexit
+@LABEL@ 148 wait_button:wait
+@LABEL@ 152 wait_button:done
+@LABEL@ 153 test10
+@LABEL@ 179 test10:nodev
+@LABEL@ 184 test10:run
+@LABEL@ 196 ps2_init
+@LABEL@ 198 ps2_init:wait
+@LABEL@ 202 test10_isr
+@LABEL@ 214 test10_isr:done
+@LABEL@ 222 test11
+@LABEL@ 235 test11:loop
+@LABEL@ 240 test11:check_sub
+@LABEL@ 244 test11:check_invalid_selection
+@LABEL@ 245 test11:fill_screen
+@LABEL@ 259 test11_fill
+@LABEL@ 274 test11_fill:fill
+@LABEL@ 285 test11_fill:nline
+@LABEL@ 289 test11_fill:l2
+@LABEL@ 299 test12
+@LABEL@ 308 test12:yloop
+@LABEL@ 309 test12:xloop
+@LABEL@ 322 test12:l1
+@LABEL@ 341 test13
+@LABEL@ 352 test13:loop
+@LABEL@ 364 test2
+@LABEL@ 378 test2:waitt1
+@LABEL@ 384 test2:waitt2
+@LABEL@ 397 test2:waitt3
+@LABEL@ 400 test2:waitt4
+@LABEL@ 403 test2:waitt5
+@LABEL@ 406 test2:test2exit
+@LABEL@ 416 test3
+@LABEL@ 441 test4
+@LABEL@ 472 test4_isr
+@LABEL@ 490 test4_upd
+@LABEL@ 498 test5
+@LABEL@ 510 test5:loop
+@LABEL@ 532 test6
+@LABEL@ 545 test6:loop
+@LABEL@ 561 test8
+@LABEL@ 587 test8_isr
+@LABEL@ 594 test8_isr:next
+@LABEL@ 600 test8_isr:done
+@LABEL@ 608 test9
+@LABEL@ 634 test9:nodev
+@LABEL@ 639 test9:run
+@LABEL@ 651 ps2_init_mouse
+@LABEL@ 653 ps2_init_mouse:wait
+@LABEL@ 658 test9_isr
+@LABEL@ 665 test9_isr:next
+@LABEL@ 670 test9_isr:done
+@LABEL@ 678 test9_rxbyte
+@LABEL@ 693 test9_rxbyte:done
+@LABEL@ 702 test9_parse
+@LABEL@ 717 test9_parse:x_positive
+@LABEL@ 721 test9_parse:y_positive
