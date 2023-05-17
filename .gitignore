@@ -1,3 +1,4 @@
 *.o
 *.cf
 *.ghw
+__pycache__
