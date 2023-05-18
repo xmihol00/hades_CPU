@@ -27,18 +27,29 @@ class VariableTable():
         self.current_scope[variable.name] = variable
     
     def find(self, name: str) -> Variable:
-        for i in range(self.current_scope_index, -1, -1):
-            scope_id = '_'.join(self.scope_ids[:i])
+        for i in range(self.current_scope_index, 0, -1):
+            scope_id = '_'.join(map(lambda x: str(x), self.scope_ids[:i]))
             if name in self.scopes[scope_id]:
                 return self.scopes[scope_id][name]
             
         raise Exception(f"Variable {name} does not exist.")
+    
+    def exists(self, name: str) -> bool:
+        print(self.current_scope_index)
+        for i in range(self.current_scope_index, 0, -1):
+            scope_id = '_'.join(map(lambda x: str(x), self.scope_ids[:i]))
+            print(scope_id)
+            if name in self.scopes[scope_id]:
+                return True
+        return False
 
     def __str__(self) -> str:
         summary_string = ""
+        indent = ""
         for scope_id, scope in self.scopes.items():
-            summary_string += f"Scope {scope_id}:\n"
+            indent = ' ' * (scope_id.count('_') * 2)
+            summary_string += f"{indent}{scope_id}:\n"
             for variable in scope.values():
-                summary_string += f"\t{variable}\n"
-        return self.scopes.__str__()
+                summary_string += f"{indent}{variable}\n"
+        return summary_string
     

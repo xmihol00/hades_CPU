@@ -7,12 +7,12 @@ int main()
         int i = 0;
         a = a + 1;
     }
-
+    int b = 0;
     for (int i = 0; i < 10; i = i + 1)
     {
-        a = a + 1;
+        b = b + 1;
         break;
     }
 
-    return a;
+    return a + b;
 }

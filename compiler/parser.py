@@ -1,5 +1,6 @@
 from enum import Enum
-from function_table import FunctionTable
+from function_call_table import FunctionCallTable
+from function_declaration_table import FunctionDeclarationTable
 from variable_table import VariableTable
 from utils import ordinal
 from constructs import Function, Variable
@@ -27,8 +28,9 @@ class ParserStates(Enum):
     SEMICOLON = 18
     
 class Parser:
-    def __init__(self, function_table: FunctionTable, variable_table: VariableTable):
-        self.function_table = function_table
+    def __init__(self, function_declaration_table: FunctionDeclarationTable, function_call_table: FunctionCallTable, variable_table: VariableTable):
+        self.function_declaration_table = function_declaration_table
+        self.function_call_table = function_call_table
         self.variable_table = variable_table
         self.variable_table.increase_scope()
         self.callback_table = { 
@@ -57,7 +59,7 @@ class Parser:
         self.current_function = None
         self.current_variable = None
         self.for_counter = 0
-        self.expression_analyzer = ExpressionParser()
+        self.expression_analyzer = ExpressionParser(self.function_call_table, self.variable_table)
     
     def parse(self, token: Tokens, value: str, line_number: int, token_number: int):
         try:
@@ -65,6 +67,8 @@ class Parser:
         except Exception as e:
             print(self.current_function)
             print(self.state)
+            print(self.expression_analyzer.state)
+            print(self.expression_analyzer.expression)
             print(f"Unexpected {ordinal(token_number)} token '{value}' at line {line_number}.")
             raise e
     
@@ -109,6 +113,7 @@ class Parser:
             self.current_function.body.append(value)
             self.scope_type_stack.append(ScopeTypes.BLOCK) # will be changed to FOR_HEADER for lass expression later
             self.variable_table.increase_scope()
+            self.current_function.body.append(InnerAlphabet.SCOPE_INCREMENT)
             self.state = ParserStates.FOR_OPENED_BRACKET
         elif Keywords.BREAK == value and ParserStates.STATEMENT == self.state:
             self.current_function.body.append(value)
@@ -118,7 +123,7 @@ class Parser:
         if ParserStates.FUNCTION_NAME == self.state:
             self.state = ParserStates.FUNCTION_PARAMETERS_OPENED
             self.current_function.name = value
-            self.function_table.add(self.current_function)
+            self.function_declaration_table.add(self.current_function)
         elif ParserStates.FUNCTION_PARAMETER_NAME == self.state:
             self.state = ParserStates.FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET
             self.current_function.parameters[-1].name = value
@@ -127,12 +132,12 @@ class Parser:
             self.state = ParserStates.VARIABLE_ASSIGNMENT_OR_SEMICOLON
             self.current_variable.name = value
             self.variable_table.add(self.current_variable)
-            self.expression_analyzer.add_variable_operand(self.current_variable)
+            self.expression_analyzer.add_identifier_operand(self.current_variable)
         elif ParserStates.EXPRESSION == self.state:
-            self.expression_analyzer.add_variable_operand(value)
+            self.expression_analyzer.add_identifier_operand(value)
         elif ParserStates.STATEMENT == self.state:
             self.state = ParserStates.EXPRESSION
-            self.expression_analyzer.add_variable_operand(value)
+            self.expression_analyzer.add_identifier_operand(value)
         else:
             raise Exception()
 
@@ -264,5 +269,7 @@ class Parser:
         if ParserStates.FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET == self.state:
             self.state = ParserStates.FUNCTION_PARAMETER_TYPE
             self.current_variable = None
+        elif ParserStates.EXPRESSION == self.state:
+            self.expression_analyzer.add_comma()
         else:
             raise Exception()

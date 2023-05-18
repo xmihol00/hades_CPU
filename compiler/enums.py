@@ -64,6 +64,8 @@ class Operators(Enum):
     LOGICAL_OR = "||"                   # precedence 1
 
     ASSIGNMENT = "="                    # precedence 0
+    PARAMETER_ASSIGNMENT = ":="
+    PARAMETER_POSSIBLE_ASSIGNMENT = "?="
 
 
 class VariableUsage(Enum):

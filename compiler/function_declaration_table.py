@@ -1,7 +1,7 @@
 from constructs import Function
 import re
 
-class FunctionTable():
+class FunctionDeclarationTable():
     def __init__(self):
         self.functions = {}
     
