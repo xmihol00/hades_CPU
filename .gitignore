@@ -2,3 +2,4 @@
 *.cf
 *.ghw
 __pycache__
+log.txt

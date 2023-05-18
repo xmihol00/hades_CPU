@@ -1,4 +1,5 @@
 from constructs import Function
+import re
 
 class FunctionTable():
     def __init__(self):
@@ -10,4 +11,4 @@ class FunctionTable():
         self.functions[function.name] = function
     
     def __str__(self) -> str:
-        return "\n\n".join([str(function) for function in self.functions])
+        return "\n\n".join([ '\n'.join(filter(lambda x: not re.match(r"^\s*$", x), str(function).split('\n'))) for function in self.functions.values()])

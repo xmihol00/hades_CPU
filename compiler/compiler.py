@@ -19,4 +19,10 @@ if "__main__" == __name__:
 
     for expression in scanner.scan():
         parser.parse(*expression)
+    
+    print("Internal code representation:")
+    print(function_table)
+
+    print("Variable table:")
+    print(variable_table)
 

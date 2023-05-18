@@ -6,18 +6,23 @@ class Tokens(Enum):
     IDENTIFIER = 3
     OPENED_BRACKET = 4
     CLOSED_BRACKET = 5
-    OPENED_PARENTHESES = 6
-    CLOSED_PARENTHESES = 7
+    OPENED_CURLY_BRACKET = 6
+    CLOSED_CURLY_BRACKET = 7
     INTEGER = 8
     BOOLEAN = 9
-    ASSIGNMENT = 10
-    OPERATOR = 11
+    OPERATOR = 10
+    ASSIGNMENT = 11
     SEMICOLON = 12
+    COMMA = 13
 
 class Keywords(Enum):
     RETURN = "return"
     IF = "if"
     ELSE = "else"
+    ELSE_IF = "else if"
+    WHILE = "while"
+    FOR = "for"
+    BREAK = "break"
 
 class Types(Enum):
     VOID = "void"
@@ -60,14 +65,40 @@ class Operators(Enum):
 
     ASSIGNMENT = "="                    # precedence 0
 
+
 class VariableUsage(Enum):
     DECLARATION = 1
     ASSIGNMENT = 2
     DECLARATION_WITH_ASSIGNMENT = 3
     EXPRESSION = 4
 
+PRINT_INDENT = ""
 class InnerAlphabet(Enum):
-    LAST_RESULT = "<LR>"
-    EXPRESSION_END = "<EE>"
-    FUNCTION_START = "<FS>"
-    FUNCTION_END = "<FE>"
+    EXPRESSION_END = 0
+    FUNCTION_START = 1
+    FUNCTION_END = 2
+    SCOPE_INCREMENT = 3
+    SCOPE_DECREMENT = 4
+
+    def __str__(self) -> str:
+        global PRINT_INDENT
+
+        old_indent = PRINT_INDENT
+        if self == InnerAlphabet.SCOPE_INCREMENT or self == InnerAlphabet.FUNCTION_START:
+            PRINT_INDENT += "  "
+        elif self == InnerAlphabet.SCOPE_DECREMENT or self == InnerAlphabet.FUNCTION_END:
+            PRINT_INDENT = PRINT_INDENT[:-2]
+            old_indent = PRINT_INDENT
+
+        pre_new_line = f"\n{old_indent}" if self != InnerAlphabet.EXPRESSION_END else ''
+        return f"{pre_new_line}{self.__class__.__name__}.{self.name}\n{PRINT_INDENT}"
+
+class ScopeTypes(Enum):
+    GLOBAL = 1
+    FUNCTION = 2
+    IF = 3
+    ELSE = 4
+    WHILE = 5
+    FOR_HEADER = 6
+    FOR_BODY = 7
+    BLOCK = 8

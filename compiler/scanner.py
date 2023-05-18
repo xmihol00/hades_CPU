@@ -5,18 +5,19 @@ from enums import Tokens
 class Scanner:
     def __init__(self, program: str):
         self.regex = (
-            r"(\n)|" +                                      # new line
-            r"(//.*\n)|" +                                  # line comment
-            r"(return|if|else|for|while|break)|" +          # keywords
-            r"(int|void)|" +                                # types
-            r"([a-zA-Z_][a-zA-Z0-9_]*)|" +                  # identifiers
-            r"(\()|(\))|(\{)|(\})|" +                       # brackets
-            r"(\d+)|" +                                     # integers
-            r"(true|false)|"                                # booleans
-            r"(=)|" +                                       # assignment
-            r"(\+|-|\*|<<<|>>>|<<|>>)|" +                   # operators
-            r"(;)|" +                                       # semicolon
-            r"([^\s]*?)|"                                   # not a whitespace
+            r"(\n)|" +                                                              # new line
+            r"(//.*\n|#.*\n)|" +                                                    # line comment or preprocessor directive
+            r"(return|if|else|for|while|break)|" +                                  # keywords
+            r"(int|void)|" +                                                        # types
+            r"([a-zA-Z_][a-zA-Z0-9_]*)|" +                                          # identifiers
+            r"(\()|(\))|(\{)|(\})|" +                                               # brackets
+            r"(\d+)|" +                                                             # integers
+            r"(true|false)|"                                                        # booleans
+            r"(\+|-|\*|<<<|>>>|<<|>>|&&|&|\|\||\||\^|>=|<=|>|<|==|!=|!|~)|" +       # operators
+            r"(=)|" +                                                               # assignment
+            r"(;)|" +                                                               # semicolon
+            r"(,)|" +                                                               # comma
+            r"([^\s]*?)|"                                                           # not a whitespace
         )
         self.program = program
         self.line_number = 1

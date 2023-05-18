@@ -8,7 +8,7 @@ class Function():
         self.body = []
     
     def __str__(self) -> str:
-        return f"{self.return_type} {self.name}({', '.join([str(parameter) for parameter in self.parameters])}) {' '.join([str(expression) for expression in self.body])}'"
+        return f"{self.return_type} {self.__class__.__name__}.{self.name}({', '.join([str(parameter).strip() for parameter in self.parameters])}) {' '.join([str(expression) for expression in self.body])}"
 
 class FunctionCall():
     def __init__(self, name: str = None, parameters: list = None):
@@ -16,7 +16,7 @@ class FunctionCall():
         self.parameters = parameters
     
     def __str__(self) -> str:
-        return f"FunctionCalls.{self.name}({', '.join([str(parameter) for parameter in self.parameters])})"
+        return f"{self.__class__.__name__}.{self.name}({','.join([str(parameter) for parameter in self.parameters])})"
 
 class Variable():
     def __init__(self, type: str = None, name: str = None, usage: VariableUsage = None):
@@ -33,7 +33,7 @@ class Variable():
             self.usage = usage
     
     def __str__(self) -> str:
-        return f"Variables.{self.name}"
+        return f"{self.__class__.__name__}.{self.name}"
 
 class Constant():
     def __init__(self, type: str = None, value: str|int|float|bool = None):
@@ -43,4 +43,11 @@ class Constant():
         self.value = value
     
     def __str__(self) -> str:
-        return f"Constants.{self.value}"
+        return f"{self.__class__.__name__}.{self.value}"
+
+class IntermediateResult():
+    def __init__(self, number: int):
+        self.number = number
+    
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}.{self.number}"

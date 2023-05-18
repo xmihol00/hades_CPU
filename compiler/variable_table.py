@@ -14,10 +14,12 @@ class VariableTable():
             self.scope_ids[self.current_scope_index] += 1
         self.current_scope_index += 1
         self.current_scope = {}
-        self.scopes['_'.join(str(self.scope_ids[:self.current_scope_index]))] = self.current_scope
+        self.scopes['_'.join(map(lambda x: str(x), self.scope_ids[:self.current_scope_index]))] = self.current_scope
     
     def decrease_scope(self):
-        pass
+        self.scopes['_'.join(map(lambda x: str(x), self.scope_ids[:self.current_scope_index]))] = self.current_scope
+        self.current_scope_index -= 1
+        self.current_scope = self.scopes['_'.join(map(lambda x: str(x), self.scope_ids[:self.current_scope_index]))]
 
     def add(self, variable: Variable):
         if variable.name in self.current_scope:
@@ -31,4 +33,12 @@ class VariableTable():
                 return self.scopes[scope_id][name]
             
         raise Exception(f"Variable {name} does not exist.")
+
+    def __str__(self) -> str:
+        summary_string = ""
+        for scope_id, scope in self.scopes.items():
+            summary_string += f"Scope {scope_id}:\n"
+            for variable in scope.values():
+                summary_string += f"\t{variable}\n"
+        return self.scopes.__str__()
     
