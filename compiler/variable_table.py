@@ -35,10 +35,8 @@ class VariableTable():
         raise Exception(f"Variable {name} does not exist.")
     
     def exists(self, name: str) -> bool:
-        print(self.current_scope_index)
         for i in range(self.current_scope_index, 0, -1):
             scope_id = '_'.join(map(lambda x: str(x), self.scope_ids[:i]))
-            print(scope_id)
             if name in self.scopes[scope_id]:
                 return True
         return False

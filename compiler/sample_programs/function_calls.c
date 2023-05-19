@@ -19,4 +19,5 @@ int main()
     c = random() * add(add(a - random(), b), c) + random();
     random();
     add(random(), add(random() + 1, random() - 1));
+    return add((a - b - (c - (5 & 6) + a)) * c, 2 + random() * (a + b + c));
 }

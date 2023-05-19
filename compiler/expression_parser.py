@@ -133,6 +133,7 @@ class ExpressionParser:
         self.operator_stack = []
         self.operand_stack = []
         self.current_precedence = -1
+        self.in_function_call = False
         if ExpressionParserStates.FUNCTION_CALL == self.state:
             self.in_function_call = True
             self.state = ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET
@@ -154,12 +155,11 @@ class ExpressionParser:
                     scope_result = ReturnValue(self.current_function_call)
                 else:
                     scope_result = self.operand_stack.pop()
-                    
+                
+                previous_in_function_call = self.in_function_call
                 self.current_precedence, self.operator_stack, self.operand_stack, self.in_function_call = self.bracket_stack.pop()
-                if self.in_function_call:
+                if self.in_function_call and previous_in_function_call:
                     self.current_function_call = self.function_call_stack.pop()
-                else:
-                    self.current_function_call = None
 
                 self.operand_stack.append(scope_result)
                 return
