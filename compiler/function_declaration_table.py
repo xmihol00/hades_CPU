@@ -11,4 +11,4 @@ class FunctionDeclarationTable():
         self.functions[function.name] = function
     
     def __str__(self) -> str:
-        return "\n\n".join([ '\n'.join(filter(lambda x: not re.match(r"^\s*$", x), str(function).split('\n'))) for function in self.functions.values()])
+        return "\n\n".join(['\n'.join(filter(lambda x: not re.match(r"^\s*$", x), str(function).split('\n'))) for function in self.functions.values()])

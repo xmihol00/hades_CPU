@@ -8,7 +8,7 @@ class Scanner:
             r"(\n)|" +                                                              # new line
             r"(//.*\n|#.*\n)|" +                                                    # line comment or preprocessor directive
             r"(return|if|else|for|while|break)|" +                                  # keywords
-            r"(int|void)|" +                                                        # types
+            r"(int)|" +                                                             # types
             r"([a-zA-Z_][a-zA-Z0-9_]*)|" +                                          # identifiers
             r"(\()|(\))|(\{)|(\})|" +                                               # brackets
             r"(\d+)|" +                                                             # integers

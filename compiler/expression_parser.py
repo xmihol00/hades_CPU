@@ -78,10 +78,16 @@ class ExpressionParser:
         self.expression = []
         self.operand_stack = []
         self.operator_stack = []
-        self.function_call_stack = []
         self.current_function_call = None
-        self.in_function_call = False
+        self.new_function_call = None
         self.intermediate_results_count = 0
+        self.identifiers = True
+
+    def allow_identifiers(self):
+        self.identifiers = True
+    
+    def forbid_identifiers(self):
+        self.identifiers = False
     
     def add_assignment(self):
         if len(self.operand_stack) == 1 and len(self.operator_stack) == 0 and len(self.expression) == 0:
@@ -92,17 +98,16 @@ class ExpressionParser:
             raise Exception()
     
     def add_identifier_operand(self, operand: str|Variable):
-        if ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state:
+        if ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state and self.identifiers:
             if isinstance(operand, str):
                 operand = Variable(name=operand, usage=VariableUsage.EXPRESSION)
+
             if self.variable_table.exists(operand.name):
                 self.operand_stack.append(operand)
                 self.state = ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET
             else:
                 self.state = ExpressionParserStates.FUNCTION_CALL
-                if self.current_function_call:
-                    self.function_call_stack.append(self.current_function_call)                
-                self.current_function_call = FunctionCall(name=operand.name)
+                self.new_function_call = FunctionCall(name=operand.name)
         else:
             raise Exception()
     
@@ -129,13 +134,14 @@ class ExpressionParser:
             raise Exception()
 
     def add_opened_bracket(self):
-        self.bracket_stack.append((self.current_precedence, self.operator_stack, self.operand_stack, self.in_function_call))
+        self.bracket_stack.append((self.current_precedence, self.operator_stack, self.operand_stack, self.current_function_call))
         self.operator_stack = []
         self.operand_stack = []
         self.current_precedence = -1
-        self.in_function_call = False
+        self.current_function_call = None
         if ExpressionParserStates.FUNCTION_CALL == self.state:
-            self.in_function_call = True
+            self.current_function_call = self.new_function_call
+            self.new_function_call = None
             self.state = ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET
             self.operand_stack.append(Parameter(0, self.current_function_call))
             self.operator_stack.append(Operators.PARAMETER_POSSIBLE_ASSIGNMENT)
@@ -147,7 +153,7 @@ class ExpressionParser:
         if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state:
             self._pop_stacks_insert_expression(-1)
             if len(self.bracket_stack) > 0 and len(self.operand_stack) == 1:
-                if self.in_function_call:
+                if self.current_function_call:
                     self.operand_stack.pop()
                     self.intermediate_results_count -= 1
                     self.current_function_call.add_parameter()
@@ -156,28 +162,21 @@ class ExpressionParser:
                 else:
                     scope_result = self.operand_stack.pop()
                 
-                previous_in_function_call = self.in_function_call
-                self.current_precedence, self.operator_stack, self.operand_stack, self.in_function_call = self.bracket_stack.pop()
-                if self.in_function_call and previous_in_function_call:
-                    self.current_function_call = self.function_call_stack.pop()
-
+                self.current_precedence, self.operator_stack, self.operand_stack, self.current_function_call = self.bracket_stack.pop()
                 self.operand_stack.append(scope_result)
-                return
-        elif (self.in_function_call and ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state and
+            else:
+                raise Exception()
+        elif (self.current_function_call and ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state and
               isinstance(self.operand_stack[-1], Parameter) and self.operator_stack[-1] == Operators.PARAMETER_POSSIBLE_ASSIGNMENT):
             self.operand_stack.pop()
             self.operator_stack.pop()
             self.state = ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET
-            self.current_precedence, self.operator_stack, self.operand_stack, self.in_function_call = self.bracket_stack.pop()
-            self.operand_stack.append(ReturnValue(self.current_function_call))
+            return_value = ReturnValue(self.current_function_call)
             self.function_call_table.add(self.current_function_call)
-            if self.in_function_call:
-                self.current_function_call = self.function_call_stack.pop()
-            else:
-                self.current_function_call = None
-            return
-            
-        raise Exception()
+            self.current_precedence, self.operator_stack, self.operand_stack, self.current_function_call = self.bracket_stack.pop()
+            self.operand_stack.append(return_value)
+        else:
+            raise Exception()
 
     def add_semicolon(self):
         if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET:
@@ -188,7 +187,7 @@ class ExpressionParser:
             raise Exception()
     
     def add_comma(self):
-        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and self.in_function_call:
+        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and self.current_function_call:
             self._pop_stacks_insert_expression(-1)
             self.current_function_call.add_parameter()
             self.operand_stack.pop()
