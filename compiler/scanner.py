@@ -31,9 +31,7 @@ class Scanner:
                         self.line_number += 1
                         self.token_number = 0
                     elif i == len(match.groups()):
-                        print(f"Unexpected character{'s' if len(match.group(i)) > 1 else ''} '{match.group(i)}' at line {self.line_number}", file=sys.stderr)
-                        exit(1)
+                        raise Exception(f"Unexpected character{'s' if len(match.group(i)) > 1 else ''} '{match.group(i)}' at line {self.line_number}")
                     else:
                         self.token_number += 1
                         yield Tokens(i - 2), match.group(i), self.line_number, self.token_number
-

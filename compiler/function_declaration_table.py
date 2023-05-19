@@ -10,5 +10,10 @@ class FunctionDeclarationTable():
             raise Exception(f"Function {function.name} already exists.")
         self.functions[function.name] = function
     
+    def exists(self, name: str, number_of_parameters: int) -> bool:
+        if name in self.functions:
+            return len(self.functions[name].parameters) == number_of_parameters
+        return False
+    
     def __str__(self) -> str:
         return "\n\n".join(['\n'.join(filter(lambda x: not re.match(r"^\s*$", x), str(function).split('\n'))) for function in self.functions.values()])

@@ -62,7 +62,7 @@ class Parser:
         self.current_function = None
         self.current_variable = None
         self.for_counter = 0
-        self.expression_analyzer = ExpressionParser(function_call_table=self.function_call_table, variable_table=self.variable_table)
+        self.expression_parser = ExpressionParser(function_call_table=self.function_call_table, variable_table=self.variable_table)
         self.global_variable_or_function_type = None
         self.global_variable_or_function_name = None
         self.global_expressions = global_expressions
@@ -71,12 +71,7 @@ class Parser:
         try:
             self.callback_table[token](value)
         except Exception as e:
-            print(self.current_function)
-            print(self.state)
-            print(self.expression_analyzer.state)
-            print(self.expression_analyzer.expression)
-            print(f"Unexpected {ordinal(token_number)} token '{value}' at line {line_number}.")
-            raise e
+            raise Exception(f"Unexpected {ordinal(token_number)} token '{value}' at line {line_number}.") from e
     
     def type(self, value: str):
         if ParserStates.FUNCTION_RETURN_TYPE_OR_GLOBAL_VARIABLE_TYPE == self.state:
@@ -137,12 +132,12 @@ class Parser:
             self.state = ParserStates.VARIABLE_ASSIGNMENT_OR_SEMICOLON
             self.current_variable.name = value
             self.variable_table.add(self.current_variable)
-            self.expression_analyzer.add_identifier_operand(self.current_variable)
+            self.expression_parser.add_identifier_operand(self.current_variable)
         elif ParserStates.EXPRESSION == self.state or ParserStates.GLOBAL_EXPRESSION == self.state:
-            self.expression_analyzer.add_identifier_operand(value)
+            self.expression_parser.add_identifier_operand(value)
         elif ParserStates.STATEMENT == self.state:
             self.state = ParserStates.EXPRESSION
-            self.expression_analyzer.add_identifier_operand(value)
+            self.expression_parser.add_identifier_operand(value)
         else:
             raise Exception()
 
@@ -154,9 +149,9 @@ class Parser:
             self.variable_table.increase_scope()
         elif ParserStates.EXPRESSION_BRACKET_START == self.state:
             self.state = ParserStates.EXPRESSION
-            self.expression_analyzer.add_opened_bracket()
+            self.expression_parser.add_opened_bracket()
         elif ParserStates.EXPRESSION == self.state or ParserStates.GLOBAL_EXPRESSION == self.state:
-            self.expression_analyzer.add_opened_bracket()
+            self.expression_parser.add_opened_bracket()
         elif ParserStates.FOR_OPENED_BRACKET == self.state:
             self.state = ParserStates.STATEMENT
             self.for_counter += 1
@@ -169,10 +164,10 @@ class Parser:
         elif ParserStates.FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET == self.state:
             self.state = ParserStates.FUNCTION_BODY_OPENED
         elif ParserStates.EXPRESSION == self.state or ParserStates.GLOBAL_EXPRESSION == self.state:
-            self.expression_analyzer.add_closed_bracket()
-            if self.scope_type_stack[-1] in self.bracket_expression_scopes and self.expression_analyzer.is_expression_valid():
+            self.expression_parser.add_closed_bracket()
+            if self.scope_type_stack[-1] in self.bracket_expression_scopes and self.expression_parser.is_expression_valid():
                 self.state = ParserStates.OPENED_CURLY_BRACKET
-                self.current_function.body += self.expression_analyzer.retrieve_expression()
+                self.current_function.body += self.expression_parser.retrieve_expression()
                 if self.scope_type_stack[-1] == ScopeTypes.FOR_HEADER:
                     self.scope_type_stack.append(ScopeTypes.FOR_BODY)
         else:
@@ -224,7 +219,7 @@ class Parser:
     def integer(self, value: str):
         value = int(value)
         if ParserStates.EXPRESSION == self.state or ParserStates.GLOBAL_EXPRESSION == self.state:
-            self.expression_analyzer.add_constant_operand(Types.INT, value)
+            self.expression_parser.add_constant_operand(Types.INT, value)
         else:
             raise Exception()
 
@@ -239,17 +234,17 @@ class Parser:
         elif ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
             self.current_variable = Variable(self.global_variable_or_function_type, self.global_variable_or_function_name)
             self.variable_table.add(self.current_variable)
-            self.expression_analyzer.add_identifier_operand(self.global_variable_or_function_name)
-            self.expression_analyzer.forbid_identifiers()
+            self.expression_parser.add_identifier_operand(self.global_variable_or_function_name)
+            self.expression_parser.forbid_identifiers()
             self.state = ParserStates.GLOBAL_EXPRESSION
         elif ParserStates.EXPRESSION != self.state:
             raise Exception()
 
-        self.expression_analyzer.add_assignment()
+        self.expression_parser.add_assignment()
 
     def operator(self, value: str):
         if ParserStates.EXPRESSION == self.state or ParserStates.GLOBAL_EXPRESSION == self.state:
-            self.expression_analyzer.add_operator(value)
+            self.expression_parser.add_operator(value)
         else:
             raise Exception()
 
@@ -260,8 +255,8 @@ class Parser:
             self.current_variable = None
             self.state = ParserStates.STATEMENT
         elif ParserStates.EXPRESSION == self.state:
-            self.expression_analyzer.add_semicolon()
-            self.current_function.body += self.expression_analyzer.retrieve_expression()
+            self.expression_parser.add_semicolon()
+            self.current_function.body += self.expression_parser.retrieve_expression()
             self.current_function.body.append(InnerAlphabet.EXPRESSION_END)
             if self.for_counter == 1:
                 self.for_counter += 1
@@ -269,15 +264,15 @@ class Parser:
             elif self.for_counter == 2:
                 self.for_counter = 0
                 self.state = ParserStates.EXPRESSION
-                self.expression_analyzer.add_opened_bracket()
+                self.expression_parser.add_opened_bracket()
                 self.scope_type_stack[-1] = ScopeTypes.FOR_HEADER
             else:
                 self.state = ParserStates.STATEMENT
         elif ParserStates.GLOBAL_EXPRESSION == self.state:
-            self.expression_analyzer.add_semicolon()
-            self.global_expressions.add(self.expression_analyzer.retrieve_expression())
+            self.expression_parser.add_semicolon()
+            self.global_expressions.add(self.expression_parser.retrieve_expression())
             self.global_expressions.add(InnerAlphabet.EXPRESSION_END)
-            self.expression_analyzer.allow_identifiers()
+            self.expression_parser.allow_identifiers()
             self.current_variable.set_usage(VariableUsage.DECLARATION_WITH_ASSIGNMENT)
             self.state = ParserStates.FUNCTION_RETURN_TYPE_OR_GLOBAL_VARIABLE_TYPE
         elif ParserStates.SEMICOLON == self.state:
@@ -293,6 +288,6 @@ class Parser:
             self.state = ParserStates.FUNCTION_PARAMETER_TYPE
             self.current_variable = None
         elif ParserStates.EXPRESSION == self.state:
-            self.expression_analyzer.add_comma()
+            self.expression_parser.add_comma()
         else:
             raise Exception()
