@@ -141,6 +141,8 @@ class Operators(Enum):
             return HighAssemblyInstructions.MOV
         elif self == Operators.PARAMETER_ASSIGNMENT:
             return HighAssemblyInstructions.PUSH
+        elif self == Operators.UNARY_MINUS:
+            return HighAssemblyInstructions.NEG
         else:
             raise Exception(f"Operator {self} does not have a high assembly instruction.")
 

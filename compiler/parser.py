@@ -80,14 +80,14 @@ class Parser:
             self.global_variable_or_function_type = value
         elif ParserStates.FUNCTION_PARAMETER_TYPE_OR_CLOSED_BRACKET == self.state:
             self.state = ParserStates.FUNCTION_PARAMETER_NAME
-            self.current_function.parameters.append(Variable(value))
+            self.current_function.add_parameter(Variable(value))
         elif ParserStates.FUNCTION_PARAMETER_TYPE == self.state:
             self.state = ParserStates.FUNCTION_PARAMETER_NAME
-            self.current_function.parameters.append(Variable(value))
+            self.current_function.add_parameter(Variable(value))
         elif ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state:
             self.state = ParserStates.VARIABLE_NAME
+            self.variable_offset -= 1
             self.current_variable = Variable(value, self.variable_offset)
-            self.variable_offset += 1
         else:
             raise Exception()
 
@@ -128,11 +128,11 @@ class Parser:
             self.global_variable_or_function_name = value
         elif ParserStates.FUNCTION_PARAMETER_NAME == self.state:
             self.state = ParserStates.FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET
-            self.current_function.parameters[-1].name = value
+            self.current_function.parameters[-1].set_name(value)
             self.variable_table.add(self.current_function.parameters[-1])
         elif ParserStates.VARIABLE_NAME == self.state:
             self.state = ParserStates.VARIABLE_ASSIGNMENT_OR_SEMICOLON
-            self.current_variable.name = value
+            self.current_variable.set_name(value)
             self.variable_table.add(self.current_variable)
             self.expression_parser.add_identifier_operand(self.current_variable.name)
         elif ParserStates.EXPRESSION == self.state or ParserStates.GLOBAL_EXPRESSION == self.state:

@@ -9,6 +9,7 @@ from variable_table import VariableTable
 from scanner import Scanner
 from parser import Parser
 from global_expressions import GlobalExpressions
+from writer import Writer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file_name", type=str, help="Name of a file to be compiled.")
@@ -28,9 +29,10 @@ if "__main__" == __name__:
                     variable_table=variable_table, global_expressions=global_expressions)
     semantic_analyzer = SemanticAnalyzer(function_declaration_table=function_declaration_table, function_call_table=function_call_table,
                                          variable_table=variable_table)
-    register_file = RegisterFile(number_of_registers=7)
+    writer = Writer()
+    register_file = RegisterFile(number_of_registers=6, writer=writer)
     high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
-                                                    register_file=register_file)
+                                                    register_file=register_file, writer=writer)
 
     try:
         for expression in scanner.scan():
