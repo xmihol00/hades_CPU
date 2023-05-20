@@ -3,3 +3,4 @@
 *.ghw
 __pycache__
 log.txt
+stderr_log.txt

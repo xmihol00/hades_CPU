@@ -16,3 +16,5 @@ class SemanticAnalyzer():
 
     def analyze(self):
         self.check_function_calls()
+        if not self.function_declaration_table.main_exists():
+            raise Exception("Function 'main' must be declared and must not have any parameters.")

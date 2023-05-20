@@ -29,6 +29,37 @@ class Types(Enum):
     INT = "int"
     BOOLEAN = "bool"
 
+
+class HighAssemblyInstructions(Enum):
+    LOAD = "LOAD"
+    STORE = "STORE"
+    MOV = "MOV"
+    PUSH = "PUSH"
+    POP = "POP"
+    ADD = "ADD"
+    SUB = "SUB"
+    MUL = "MUL"
+    CALL = "CALL"
+    RETURN = "RET"
+    OR = "OR"
+    AND = "AND"
+    XOR = "XOR"
+    NOT = "NOT"
+    NEG = "NEG"
+    SHL = "SHL"
+    SHR = "SHR"
+    ROL = "ROL"
+    ROR = "ROR"
+    LT = "LT"
+    LTE = "LTE"
+    GT = "GT"
+    GTE = "GTE"
+    EQ = "EQ"
+    NEQ = "NEQ"
+
+    def __str__(self) -> str:
+        return f"{self.value}"
+
 class Operators(Enum):
     LOGICAL_NOT = "!"                   # precedence 11
     BITWISE_NOT = "~"
@@ -67,6 +98,51 @@ class Operators(Enum):
     PARAMETER_ASSIGNMENT = ":="
     PARAMETER_POSSIBLE_ASSIGNMENT = "?="
 
+    def to_high_assembly_instruction(self) -> HighAssemblyInstructions:
+        if self == Operators.PLUS:
+            return HighAssemblyInstructions.ADD
+        elif self == Operators.MINUS:
+            return HighAssemblyInstructions.SUB
+        elif self == Operators.MULTIPLY:
+            return HighAssemblyInstructions.MUL
+        elif self == Operators.LOGICAL_OR:
+            return HighAssemblyInstructions.OR
+        elif self == Operators.LOGICAL_AND:
+            return HighAssemblyInstructions.AND
+        elif self == Operators.BITWISE_XOR:
+            return HighAssemblyInstructions.XOR
+        elif self == Operators.BITWISE_NOT:
+            return HighAssemblyInstructions.NOT
+        elif self == Operators.BITWISE_OR:
+            return HighAssemblyInstructions.OR
+        elif self == Operators.BITWISE_AND:
+            return HighAssemblyInstructions.AND
+        elif self == Operators.RIGHT_SHIFT:
+            return HighAssemblyInstructions.SHR
+        elif self == Operators.LEFT_SHIFT:
+            return HighAssemblyInstructions.SHL
+        elif self == Operators.RIGHT_ROTATION_SHIFT:
+            return HighAssemblyInstructions.ROR
+        elif self == Operators.LEFT_ROTATION_SHIFT:
+            return HighAssemblyInstructions.ROL
+        elif self == Operators.LOGICAL_LESS:
+            return HighAssemblyInstructions.LT
+        elif self == Operators.LOGICAL_LESS_OR_EQUAL:
+            return HighAssemblyInstructions.LTE
+        elif self == Operators.LOGICAL_GREATER:
+            return HighAssemblyInstructions.GT
+        elif self == Operators.LOGICAL_GREATER_OR_EQUAL:
+            return HighAssemblyInstructions.GTE
+        elif self == Operators.LOGICAL_EQUAL:
+            return HighAssemblyInstructions.EQ
+        elif self == Operators.LOGICAL_NOT_EQUAL:
+            return HighAssemblyInstructions.NEQ
+        elif self == Operators.ASSIGNMENT:
+            return HighAssemblyInstructions.MOV
+        elif self == Operators.PARAMETER_ASSIGNMENT:
+            return HighAssemblyInstructions.PUSH
+        else:
+            raise Exception(f"Operator {self} does not have a high assembly instruction.")
 
 class VariableUsage(Enum):
     DECLARATION = 1
@@ -75,7 +151,7 @@ class VariableUsage(Enum):
     EXPRESSION = 4
 
 PRINT_INDENT = ""
-class InnerAlphabet(Enum):
+class InternalAlphabet(Enum):
     EXPRESSION_END = 0
     FUNCTION_START = 1
     FUNCTION_END = 2
@@ -86,13 +162,13 @@ class InnerAlphabet(Enum):
         global PRINT_INDENT
 
         old_indent = PRINT_INDENT
-        if self == InnerAlphabet.SCOPE_INCREMENT or self == InnerAlphabet.FUNCTION_START:
+        if self == InternalAlphabet.SCOPE_INCREMENT or self == InternalAlphabet.FUNCTION_START:
             PRINT_INDENT += "  "
-        elif self == InnerAlphabet.SCOPE_DECREMENT or self == InnerAlphabet.FUNCTION_END:
+        elif self == InternalAlphabet.SCOPE_DECREMENT or self == InternalAlphabet.FUNCTION_END:
             PRINT_INDENT = PRINT_INDENT[:-2]
             old_indent = PRINT_INDENT
 
-        pre_new_line = f"\n{old_indent}" if self != InnerAlphabet.EXPRESSION_END else ''
+        pre_new_line = f"\n{old_indent}" if self != InternalAlphabet.EXPRESSION_END else ''
         return f"{pre_new_line}{self.__class__.__name__}.{self.name}\n{PRINT_INDENT}"
 
 class ScopeTypes(Enum):
@@ -104,3 +180,12 @@ class ScopeTypes(Enum):
     FOR_HEADER = 6
     FOR_BODY = 7
     BLOCK = 8
+
+class RegisterStates(Enum):
+    FREE = 1
+    USED = 2
+    EMPTY = 3
+
+class PushedTypes(Enum):
+    SAVED_REGISTER = 1
+    FUNCTION_PARAMETER = 2

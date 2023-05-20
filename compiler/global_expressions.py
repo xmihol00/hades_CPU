@@ -1,11 +1,11 @@
-from enums import InnerAlphabet
+from enums import InternalAlphabet
 
 class GlobalExpressions():
     def __init__(self) -> None:
         self.expressions = []
     
-    def add(self, expression: list|InnerAlphabet):
-        if isinstance(expression, InnerAlphabet):
+    def add(self, expression: list|InternalAlphabet):
+        if isinstance(expression, InternalAlphabet):
             self.expressions.append(expression)
         else:
             self.expressions += expression

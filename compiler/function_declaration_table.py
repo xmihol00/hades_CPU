@@ -14,6 +14,9 @@ class FunctionDeclarationTable():
         if name in self.functions:
             return len(self.functions[name].parameters) == number_of_parameters
         return False
+
+    def main_exists(self) -> bool:
+        return "main" in self.functions and len(self.functions["main"].parameters) == 0
     
     def __str__(self) -> str:
         return "\n\n".join(['\n'.join(filter(lambda x: not re.match(r"^\s*$", x), str(function).split('\n'))) for function in self.functions.values()])

@@ -1,11 +1,16 @@
-from enums import Types, VariableUsage
+from enums import InternalAlphabet, Keywords, Operators, Types, VariableUsage
 
 class Function():
     def __init__(self, return_type: str = None, name: str = None):
         self.return_type = Types(return_type)
         self.name = name
-        self.parameters = []
-        self.body = []
+        self.parameters: list[Variable] = []
+        self.body: list[Variable|Constant|ReturnValue|IntermediateResult|FunctionCall|InternalAlphabet|Types|Operators|Keywords] = []
+    
+    def assign_parameters_offset(self):
+        number_of_parameters = len(self.parameters)
+        for i, parameter in enumerate(self.parameters):
+            parameter.offset = i - number_of_parameters
     
     def __str__(self) -> str:
         return f"{self.return_type} {self.__class__.__name__}.{self.name}({', '.join([str(parameter).strip() for parameter in self.parameters])}) {' '.join([str(expression) for expression in self.body])}"
@@ -22,12 +27,13 @@ class FunctionCall():
         return f"{self.__class__.__name__}.{self.name}({','.join([str(parameter) for parameter in self.number_of_parameters])})"
 
 class Variable():
-    def __init__(self, type: str = None, name: str = None, usage: VariableUsage = None):
+    def __init__(self, type: str = None, offset: int = None, name: str = None, usage: VariableUsage = None):
         self.type = None
         if type:
             self.type = Types(type)
         self.name = name
         self.usage = usage
+        self.offset = offset
     
     def set_usage(self, usage: VariableUsage):
         if self.type and usage == VariableUsage.ASSIGNMENT:

@@ -1,5 +1,7 @@
 import argparse
 import sys
+from high_assembly_generator import HighAssemblyGenerator
+from registers import RegisterFile
 from semantic_analyzer import SemanticAnalyzer
 from function_call_table import FunctionCallTable
 from function_declaration_table import FunctionDeclarationTable
@@ -26,22 +28,29 @@ if "__main__" == __name__:
                     variable_table=variable_table, global_expressions=global_expressions)
     semantic_analyzer = SemanticAnalyzer(function_declaration_table=function_declaration_table, function_call_table=function_call_table,
                                          variable_table=variable_table)
+    register_file = RegisterFile(number_of_registers=7)
+    high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
+                                                    register_file=register_file)
 
     try:
         for expression in scanner.scan():
             parser.parse(*expression)
         
         semantic_analyzer.analyze()
+        print(function_declaration_table)
+        variable_table.reset_scope_counter()
+        high_assembly_generator.generate()
+
     except Exception as e:
-        if args.debug:
-            print("Currently defined function:", file=sys.stderr)
-            print(parser.current_function, end="\n\n", file=sys.stderr)
-            print("Current parser state:", file=sys.stderr)
-            print(parser.state, end="\n\n", file=sys.stderr)
-            print("Current expression parser state:", file=sys.stderr)
-            print(parser.expression_parser.state, end="\n\n", file=sys.stderr)
-            print("Current expression:", file=sys.stderr)
-            print(parser.expression_parser.expression, end="\n\n", file=sys.stderr)
+        #if args.debug:
+            #print("Currently defined function:", file=sys.stderr)
+            #print(parser.current_function, end="\n\n", file=sys.stderr)
+            #print("Current parser state:", file=sys.stderr)
+            #print(parser.state, end="\n\n", file=sys.stderr)
+            #print("Current expression parser state:", file=sys.stderr)
+            #print(parser.expression_parser.state, end="\n\n", file=sys.stderr)
+            #print("Current expression:", file=sys.stderr)
+            #print(parser.expression_parser.expression, end="\n\n", file=sys.stderr)
 
         if args.debug:
             raise e
@@ -50,15 +59,16 @@ if "__main__" == __name__:
             print(e, file=sys.stderr)
             exit(1)
     
-    print("Internal global code representation:")
-    print(global_expressions)
-    
-    print("Internal function code representation:")
-    print(function_declaration_table)
+    if False:
+        print("Internal global code representation:", file=sys.stderr)
+        print(global_expressions, file=sys.stderr)
 
-    print("\nVariable table:")
-    print(variable_table)
+        print("Internal function code representation:", file=sys.stderr)
+        print(function_declaration_table, file=sys.stderr)
 
-    print("Function call table:")
-    print(function_call_table)
+        print("\nVariable table:", file=sys.stderr)
+        print(variable_table, file=sys.stderr)
+
+        print("Function call table:", file=sys.stderr)
+        print(function_call_table, file=sys.stderr)
 
