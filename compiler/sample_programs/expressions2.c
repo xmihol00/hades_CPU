@@ -5,7 +5,7 @@ int main()
     int b = 4 - 2;
     int c = 3;
     int d = 4;
-    int e = (a + b) * ((c + 1) * (d - 1));
+    int e = (a + b) * ((c + 1) * ((d + b) * ((a + b) * (c + d))));
 
     return 0;
 }

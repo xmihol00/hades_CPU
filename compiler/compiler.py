@@ -32,14 +32,17 @@ if "__main__" == __name__:
     writer = Writer()
     register_file = RegisterFile(number_of_registers=6, writer=writer)
     high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
-                                                    register_file=register_file, writer=writer)
+                                                    global_code=global_expressions, register_file=register_file, writer=writer)
 
     try:
         for expression in scanner.scan():
             parser.parse(*expression)
         
         semantic_analyzer.analyze()
-        print(function_declaration_table)
+        if args.debug:
+            print(global_expressions)
+            print(function_declaration_table)
+            print()
         variable_table.reset_scope_counter()
         high_assembly_generator.generate()
 

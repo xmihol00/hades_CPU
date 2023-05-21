@@ -1,3 +1,4 @@
+from global_expressions import GlobalExpressions
 from writer import Writer
 from enums import InternalAlphabet, Keywords, Operators, HighAssemblyInstructions, Types
 from constructs import Function, IntermediateResult, ReturnValue, Variable, Constant
@@ -64,10 +65,11 @@ INTERMEDIATE_RESULT_OPERATORS = [
 ]
 
 class HighAssemblyGenerator():
-    def __init__(self, function_declaration_table: FunctionDeclarationTable, variable_table: VariableTable, 
+    def __init__(self, function_declaration_table: FunctionDeclarationTable, variable_table: VariableTable, global_code: GlobalExpressions,
                 register_file: RegisterFile, writer: Writer) -> None:
         self.function_declaration_table = function_declaration_table
         self.variable_table = variable_table
+        self.global_code = global_code
         self.register_file = register_file
         self.writer = writer
 
@@ -90,6 +92,13 @@ class HighAssemblyGenerator():
         self.for_last_statement_stack = []
         
     def generate(self):
+        for global_command in self.global_code.expressions: # FIXME: quite ugly solution
+            if isinstance(global_command, Variable):
+                variable = global_command
+            elif isinstance(global_command, Constant):
+                self.writer.raw(f"{variable.label}: {global_command.value}", f"global constant {variable.name}")
+        self.writer.new_line()
+
         for function in self.function_declaration_table.functions.values():
             self.writer.label(f"${function.name}", f"{function.pretty_comment()}")
             self.register_file.create_stack_frame(self.variable_table.number_of_variables_in_function(function.name) - function.number_of_parameters)
@@ -153,6 +162,7 @@ class HighAssemblyGenerator():
 
     def _handle_return_value(self, command: ReturnValue, function: Function, i: int):
         self.writer.instruction(f"{HighAssemblyInstructions.CALL} {command.function.name}", command.function.comment)
+        self.register_file.parameter_popped(command.function.number_of_parameters)
         self.registers[self.register_index] = self.register_file.get_return_value(command.function, isinstance(function.body[i + 1], ReturnValue))
         self.register_index += 1
 
@@ -170,8 +180,9 @@ class HighAssemblyGenerator():
             self.intermediate_result_counter += 1
         else:
             self.register_file.clear_last_instruction()
-            if command in FIRST_OPERAND_OPERATORS:
+            if command in FIRST_OPERAND_OPERATORS: # currently only PUSH
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.registers[0]}", f"push {function.body[i - 1].comment}")
+                self.register_file.parameter_pushed()
             elif command in BOTH_OPERAND_OPERATORS:
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.registers[0]} {self.registers[1]}",
                                         f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")

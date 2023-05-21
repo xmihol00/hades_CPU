@@ -7,14 +7,15 @@ class Construct():
         self.token_number = token_number
     
 class Variable(Construct):
-    def __init__(self, type: str = None, offset: int = None, name: str = None, usage: VariableUsage = None):
+    def __init__(self, type: str = None, stack_offset: int = None, name: str = None, usage: VariableUsage = None, label: str = None):
         super().__init__(name)
         self.type = None
         if type:
             self.type = Types(type)
         self.name = name
         self.usage = usage
-        self.offset = offset
+        self.stack_offset = stack_offset
+        self.label = label
     
     def set_usage(self, usage: VariableUsage):
         if self.type and usage == VariableUsage.ASSIGNMENT:
@@ -25,6 +26,9 @@ class Variable(Construct):
     def set_name(self, name: str):
         self.name = name
         self.comment = name
+    
+    def set_label(self, label: str):
+        self.label = label
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
@@ -40,7 +44,7 @@ class Function(Construct):
     
     def assign_parameters_offset(self):
         for i, parameter in enumerate(self.parameters):
-            parameter.offset = self.number_of_parameters - i + 1
+            parameter.stack_offset = self.number_of_parameters - i + 1
     
     def add_parameter(self, parameter: Variable):
         self.parameters.append(parameter)
@@ -48,7 +52,7 @@ class Function(Construct):
         self.comment = f"{self.name}({'.' * self.number_of_parameters})"
     
     def pretty_comment(self):
-        return f"{self.name}({', '.join([parameter.name for parameter in self.parameters])})"
+        return f"{self.return_type.value} {self.name}({', '.join([parameter.name for parameter in self.parameters])})"
         
     def __str__(self) -> str:
         return f"{self.return_type} {self.__class__.__name__}.{self.name}({', '.join([str(parameter).strip() for parameter in self.parameters])}) {' '.join([str(expression) for expression in self.body])}"
@@ -67,7 +71,7 @@ class FunctionCall(Construct):
         return f"{self.__class__.__name__}.{self.name}(...)"
 
 class Constant(Construct):
-    def __init__(self, type: str = None, value: str|int|float|bool = None):
+    def __init__(self, type: str = None, value: int = None):
         super().__init__(value)
         self.type = None
         if type:
