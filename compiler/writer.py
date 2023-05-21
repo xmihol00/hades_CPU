@@ -5,6 +5,7 @@ class Writer():
     def __init__(self, in_memory: bool = False, output_file: TextIOWrapper|None = sys.stdout, indent: str = "   "):
         self.indent = indent
         self.output_file = output_file
+        self.additional_indent = ""
         self.instruction_write_function = self._write_in_file_instruction
         self.label_write_function = self._write_in_file_instruction
         self.label_write_function = self._write_in_file_label
@@ -12,13 +13,22 @@ class Writer():
             self.memory = []
             self.instruction_write_function = self._write_in_memory_instruction
             self.label_write_function = self._write_in_memory_label
-        
+    
+    def increase_indent(self):
+        self.additional_indent += self.indent
+    
+    def decrease_indent(self):
+        self.additional_indent = self.additional_indent[:-len(self.indent)]
+    
+    def comment(self, comment: str):
+        if self.output_file != None:
+            print(f"; {comment}", file=self.output_file)
 
-    def write_instruction(self, instruction: str, comment: str = ""):
+    def instruction(self, instruction: str, comment: str = ""):
         self.instruction_write_function(instruction, comment)
 
-    def write_label(self, label: str):
-        self.label_write_function(label)
+    def label(self, label: str, comment: str = ""):
+        self.label_write_function(label, comment)
 
     def retrieve_memory(self) -> list[str]:
         return self.memory
@@ -30,13 +40,14 @@ class Writer():
     def _write_in_memory_instruction(self, instruction: str, _):
         self.memory.append(instruction)
 
-    def _write_in_file_instruction(self, instruction: str, comment: str = ""):
-        padding = " " * ((30 - len(instruction)) * (len(comment) > 0))
-        print(f"{self.indent}{instruction}{padding}{'# ' if comment else ''}{comment}", file=self.output_file)
+    def _write_in_file_instruction(self, instruction: str, comment: str):
+        padding = " " * ((40 - len(instruction + self.indent + self.additional_indent)) * (len(comment) > 0))
+        print(f"{self.additional_indent}{self.indent}{instruction}{padding}{'; ' if comment else ''}{comment}", file=self.output_file)
     
-    def _write_in_file_label(self, label: str):
-        print(f"{label}:", file=self.output_file)
+    def _write_in_file_label(self, label: str, comment: str):
+        padding = " " * ((40 - len(label + self.additional_indent) - 1) * (len(comment) > 0))
+        print(f"{self.additional_indent}{label}:{padding}{'; ' if comment else ''}{comment}", file=self.output_file)
     
-    def _write_in_memory_label(self, label: str):
+    def _write_in_memory_label(self, label: str, _):
         self.memory.append(f"{label}:")
     

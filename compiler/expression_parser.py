@@ -200,6 +200,10 @@ class ExpressionParser:
         return (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and 
             self.current_precedence == -1 and len(self.operator_stack) == 0 and len(self.bracket_stack) == 0)
     
+    def add_equal_zero_jump(self):
+        self.expression.append(self.operand_stack.pop())
+        self.expression.append(InternalAlphabet.EQUAL_ZERO_JUMP)
+    
     def retrieve_expression(self) -> list:
         if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and 
             self.current_precedence == -1 and len(self.operator_stack) == 0 and len(self.bracket_stack) == 0):

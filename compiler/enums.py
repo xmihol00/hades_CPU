@@ -16,26 +16,40 @@ class Tokens(Enum):
     COMMA = 13
 
 class Keywords(Enum):
+    def __init__(self, value) -> None:
+        super().__init__()
+        self.comment = ""
+
     RETURN = "return"
     IF = "if"
     ELSE = "else"
-    ELSE_IF = "else if"
+    ELSE_IF = "else_if"
     WHILE = "while"
     FOR = "for"
     BREAK = "break"
+
+    def set_comment(self, comment: str):
+        self.comment = comment
+    
+    def to_label(self, function_name: str, scope_ids: list[int], else_if_counter: int = None):
+        if self.value == Keywords.ELSE_IF.value:
+            return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids))}.{else_if_counter}"
+        else:
+            return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids))}"
 
 class Types(Enum):
     VOID = "void"
     INT = "int"
     BOOLEAN = "bool"
 
-
 class HighAssemblyInstructions(Enum):
     LOAD = "LOAD"
     STORE = "STORE"
     MOV = "MOV"
     PUSH = "PUSH"
+    PUSHA = "PUSHA"
     POP = "POP"
+    POPA = "POPA"
     ADD = "ADD"
     SUB = "SUB"
     MUL = "MUL"
@@ -56,6 +70,8 @@ class HighAssemblyInstructions(Enum):
     GTE = "GTE"
     EQ = "EQ"
     NEQ = "NEQ"
+    JZ = "JZ"
+    JMP = "JMP"
 
     def __str__(self) -> str:
         return f"{self.value}"
@@ -159,6 +175,7 @@ class InternalAlphabet(Enum):
     FUNCTION_END = 2
     SCOPE_INCREMENT = 3
     SCOPE_DECREMENT = 4
+    EQUAL_ZERO_JUMP = 5
 
     def __str__(self) -> str:
         global PRINT_INDENT
@@ -170,8 +187,9 @@ class InternalAlphabet(Enum):
             PRINT_INDENT = PRINT_INDENT[:-2]
             old_indent = PRINT_INDENT
 
-        pre_new_line = f"\n{old_indent}" if self != InternalAlphabet.EXPRESSION_END else ''
-        return f"{pre_new_line}{self.__class__.__name__}.{self.name}\n{PRINT_INDENT}"
+        pre_new_line = f"\n{old_indent}" if self != InternalAlphabet.EXPRESSION_END and self != InternalAlphabet.EQUAL_ZERO_JUMP else ''
+        post_new_line = f"\n{PRINT_INDENT}" if self != InternalAlphabet.EQUAL_ZERO_JUMP else ''
+        return f"{pre_new_line}{self.__class__.__name__}.{self.name}{post_new_line}"
 
 class ScopeTypes(Enum):
     GLOBAL = 1

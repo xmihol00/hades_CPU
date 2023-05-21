@@ -6,9 +6,6 @@ class Construct():
         self.line_number = line_number
         self.token_number = token_number
     
-    def to_comment(self):
-        return self.comment
-
 class Variable(Construct):
     def __init__(self, type: str = None, offset: int = None, name: str = None, usage: VariableUsage = None):
         super().__init__(name)
@@ -38,7 +35,7 @@ class Function(Construct):
         self.return_type = Types(return_type)
         self.name = name
         self.parameters: list[Variable] = []
-        self.body: list[Variable|Constant|ReturnValue|IntermediateResult|FunctionCall|InternalAlphabet|Types|Operators|Keywords] = []
+        self.body: list[Variable|Constant|ReturnValue|IntermediateResult|InternalAlphabet|Types|Operators|Keywords] = []
         self.number_of_parameters = 0
     
     def assign_parameters_offset(self):
@@ -49,6 +46,9 @@ class Function(Construct):
         self.parameters.append(parameter)
         self.number_of_parameters += 1
         self.comment = f"{self.name}({'.' * self.number_of_parameters})"
+    
+    def pretty_comment(self):
+        return f"{self.name}({', '.join([parameter.name for parameter in self.parameters])})"
         
     def __str__(self) -> str:
         return f"{self.return_type} {self.__class__.__name__}.{self.name}({', '.join([str(parameter).strip() for parameter in self.parameters])}) {' '.join([str(expression) for expression in self.body])}"
