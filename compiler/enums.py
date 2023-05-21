@@ -205,7 +205,3 @@ class RegisterStates(Enum):
     FREE = 1
     USED = 2
     EMPTY = 3
-
-class PushedTypes(Enum):
-    SAVED_REGISTER = 1
-    FUNCTION_PARAMETER = 2

@@ -1,5 +1,5 @@
 from typing import Callable
-from enums import PushedTypes, RegisterStates, HighAssemblyInstructions
+from enums import RegisterStates, HighAssemblyInstructions
 from constructs import Construct, Function, Variable, Constant, IntermediateResult, ReturnValue
 from writer import Writer
 
@@ -24,15 +24,7 @@ class Register():
         self.value = None
         self.usage = 0
         self.written = False
-        
-class PushedValue():
-    def __init__(self, type: PushedTypes, esp_offset: int = None, intermediate_operand_number: int = None) -> None:
-        if intermediate_operand_number and not isinstance(intermediate_operand_number, int):
-            raise Exception("Only intermediate operands and function parameters can be pushed.")
-        self.value = intermediate_operand_number
-        self.esp_offset = esp_offset
-        self.type = type
-    
+            
 class RegisterFile():
     def __init__(self, number_of_registers: int, writer: Writer) -> None:
         if number_of_registers < 5:
@@ -46,8 +38,6 @@ class RegisterFile():
         self.writer = writer
         self.intermediate_results_counter = 0
         self.usage_counter = 0
-        self.stack_offset = 0
-        self.pushed_values_on_stack: list[PushedValue] = []
         self.used_registers_in_instruction: list[Register] = []
         self.last_assigned_register: Register = None
         self.register_string = ", ".join([register.name for register in self.registers][:-1]) + " and " + self.registers[-1].name
@@ -81,22 +71,11 @@ class RegisterFile():
         elif isinstance(operand, IntermediateResult):
             intermediate_registers = list(filter(lambda register: register.value == operand.number, self.registers))
             if len(intermediate_registers) == 0:
-                pushed_registers = list(filter(lambda pushed_register: pushed_register.value == operand.number, self.pushed_values_on_stack))
-                if len(pushed_registers):
-                    pushed_register = pushed_registers[0]
-                    register = self._free_or_empty_register()
-                    if register is None:
-                        register = self._push_least_recently_used()
-                        self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} [{self.ESP.name}{self.stack_offset - pushed_register.esp_offset:+}]",
-                                                      f"load intermediate_result_{operand.number}")
-                    else:
-                        self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} [{self.ESP.name}{self.stack_offset - pushed_register.esp_offset:+}]",
-                                                      f"load intermediate_result_{operand.number}")
-                        pushed_registers[0] = None
-                    pushed_register.value = None
-                    self._clear_stack()
+                register = self._free_or_empty_register()
+                if register is None:
+                    raise Exception("No free or empty register found.")
                 else:
-                    raise Exception("Intermediate result not found in registers nor stack.")
+                    self.writer.instruction(f"{HighAssemblyInstructions.POP} {register.name}", f"pop intermediate_result_{operand.number}")
             elif len(intermediate_registers) == 1:
                 register = intermediate_registers[0]
             else:
@@ -162,17 +141,7 @@ class RegisterFile():
             self.writer.comment("return value already in EAX")
         else:
             self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EAX.name} {self.last_assigned_register.name}", return_comment)
-    
-    def parameter_pushed(self, number_of_parameters: int = 1):
-        for _ in range(number_of_parameters):
-            self.stack_offset += 1
-            self.pushed_values_on_stack.append(PushedValue(PushedTypes.FUNCTION_PARAMETER))
-
-    def parameter_popped(self, number_of_parameters: int = 1):
-        for _ in range(number_of_parameters):
-            self.stack_offset -= 1
-            self.pushed_values_on_stack.pop()
-    
+        
     def create_stack_frame(self, number_of_variables: int):
         self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {self.EBP.name}", "stack frame, base pointer")
         self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EBP.name} {self.ESP.name}", "stack frame, stack pointer")
@@ -221,18 +190,5 @@ class RegisterFile():
             
     def _push_least_recently_used(self) -> Register:
         register = sorted(self.registers, key=lambda register: register.usage)[0] # select the least recently used intermediate result
-        self.stack_offset += 1
-        self.pushed_values_on_stack.append(PushedValue(PushedTypes.SAVED_REGISTER, self.stack_offset, register.value))
         self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {register.name}", f"push intermediate_result_{register.value}")
         return register
-    
-    def _clear_stack(self):
-        cleared_counter = 0
-        while (len(self.pushed_values_on_stack) > 0 and self.pushed_values_on_stack[-1].type == PushedTypes.SAVED_REGISTER and 
-               self.pushed_values_on_stack[-1].value is None): # remove retrieved intermediate results from the stack
-            self.pushed_values_on_stack.pop()
-            self.stack_offset -= 1
-            cleared_counter += 1
-        
-        if cleared_counter > 0: # clear the stack
-            self.writer.instruction(f"{HighAssemblyInstructions.ADD} {self.ESP.name} {self.ESP.name} {cleared_counter}", "stack cleared from intermediate results")
