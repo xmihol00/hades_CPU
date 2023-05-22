@@ -71,7 +71,10 @@ class HighAssemblyInstructions(Enum):
     EQ = "EQ"
     NEQ = "NEQ"
     JZ = "JZ"
+    JNZ = "JNZ"
     JMP = "JMP"
+    IN = "IN"
+    OUT = "OUT"
 
     def __str__(self) -> str:
         return f"{self.value}"
@@ -100,12 +103,28 @@ class HighAssemblyInstructions(Enum):
                 r"(^\s*" + self.value + r"\s+\[([a-z_][a-z0-9_]*)(\+|\-)(\d+)\]\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" + # LOAD <memory> <register>          (7 groups)
                 r"(^\s*" + self.value + r"\s+@([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"                  # LOAD <global variable> <register> (5 groups)
             )
+        elif self == HighAssemblyInstructions.CALL:
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # CALL <function label> (4 groups)
+        elif self == HighAssemblyInstructions.RETURN:
+            return r"(^\s*" + self.value + r"\s+(\d+)\s*(;\s*(.*))*$)|"                  # RETURN <number of cleared parameters from the stack> (4 groups)
+        elif self == HighAssemblyInstructions.JMP:
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # JMP <label> (4 groups)
+        elif self == HighAssemblyInstructions.JZ or self == HighAssemblyInstructions.JNZ:
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_\.]*)\s*(;\s*(.*))*$)|" # JZ/JNZ <register> <label> (5 groups)
+        elif self == HighAssemblyInstructions.NOT or self == HighAssemblyInstructions.NEG:
+            # TODO: solve immediate value
+            return (
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +        # NOT/NEG <register> <constant> (5 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"   # NOT/NEG <register> <register> (5 groups)
+            )
+        elif self == HighAssemblyInstructions.IN or self == HighAssemblyInstructions.OUT:
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(\d+)\s*(;\s*(.*))*$)|"     # IN/OUT <register> <positive constant> (5 groups)
         else:
-            return self._ALU_instruction_to_regex(self.value)
+            return self._ALU_instruction_to_regex()
     
-    def _ALU_instruction_to_regex(self, instruction: str):
+    def _ALU_instruction_to_regex(self):
         return (
-            r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +         # <ALU instruction> <register> <register> <constant> (6 groups)
+            r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +      # <ALU instruction> <register> <register> <constant> (6 groups)
             r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" # <ALU instruction> <register> <register> <register> (6 groups)
         )
 
@@ -277,6 +296,26 @@ class TargetAssemblyInstructions(Enum):
     CSHLI = "CSHLI"
     CSHR = "CSHR"
     CSHRI = "CSHRI"
+    JAL = "JAL"
+    JMP = "JMP"
+    JREG = "JREG"
+    BEQZ = "BEQZ"
+    BNEZ = "BNEZ"
+    BOV = "BOV"
+    SEQ = "SEQ"
+    SEQI = "SEQI"
+    SNE = "SNE"
+    SNEI = "SNEI"
+    SLT = "SLT"
+    SLTI = "SLTI"
+    SLE = "SLE"
+    SLEI = "SLEI"
+    SGT = "SGT"
+    SGTI = "SGTI"
+    SGR = "SGE"
+    SGRI = "SGEI"
+    IN = "IN"
+    OUT = "OUT"
 
     def __str__(self) -> str:
         return self.value

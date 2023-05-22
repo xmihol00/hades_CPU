@@ -196,7 +196,7 @@ class HighAssemblyGenerator():
                 self.register_file.assign_return_register(lambda x: self._find_intermediate_result(function, i, x))
                 self.register_file.store_global_variables()
                 self.register_file.destroy_stack_frame()
-                self.writer.instruction(f"{HighAssemblyInstructions.RETURN} {function.number_of_parameters}", f"clean {function.number_of_parameters} function parameter{'s' if function.number_of_parameters != 1 else ''} from the stack")
+                self.writer.instruction(f"{HighAssemblyInstructions.RETURN} {function.number_of_parameters}", f"clean {function.number_of_parameters} function parameter{'s' if function.number_of_parameters != 1 else ''} from the stack and return")
                 self.register_file.invalidate()
             elif self.for_part1:
                 self.for_part1 = False

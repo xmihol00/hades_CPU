@@ -7,6 +7,7 @@ class Writer():
         self.output_file = output_file
         self.additional_indent = ""
         self.memory = []
+        self.in_file = in_file
 
         if self.output_file == None and in_file:
             raise ValueError("Cannot write to file if no file is provided.")
@@ -48,7 +49,7 @@ class Writer():
         self.label_write_function(label, comment)
     
     def new_line(self):
-        if self.output_file != None:
+        if self.in_file and self.output_file != None:
             print(file=self.output_file)
     
     def raw(self, text: str, comment: str = ""):
