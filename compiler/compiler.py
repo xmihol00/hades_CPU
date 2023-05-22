@@ -1,5 +1,6 @@
 import argparse
 import sys
+from target_assembly_generator import TargetAssemblyGenerator
 from high_assembly_generator import HighAssemblyGenerator
 from registers import RegisterFile
 from semantic_analyzer import SemanticAnalyzer
@@ -29,10 +30,13 @@ if "__main__" == __name__:
                     variable_table=variable_table, global_expressions=global_expressions)
     semantic_analyzer = SemanticAnalyzer(function_declaration_table=function_declaration_table, function_call_table=function_call_table,
                                          variable_table=variable_table)
-    writer = Writer()
-    register_file = RegisterFile(number_of_registers=6, writer=writer)
+    high_assembly_writer = Writer(in_file=True, in_memory=True)
+    register_file = RegisterFile(number_of_registers=7, writer=high_assembly_writer)
     high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
-                                                    global_code=global_expressions, register_file=register_file, writer=writer)
+                                                    global_code=global_expressions, register_file=register_file, writer=high_assembly_writer)
+    target_assembly_writer = Writer(in_file=True, in_memory=False)
+    target_assembly_generator = TargetAssemblyGenerator(high_assembly_code=high_assembly_writer.retrieve_memory(), 
+                                                        writer=target_assembly_writer)
 
     try:
         for expression in scanner.scan():
@@ -40,22 +44,29 @@ if "__main__" == __name__:
         
         semantic_analyzer.analyze()
         if args.debug:
-            print(global_expressions)
-            print(function_declaration_table)
-            print()
+            print("Internal global code representation:", file=sys.stderr)
+            print(global_expressions, file=sys.stderr)
+            print("Internal function code representation:", file=sys.stderr)
+            print(function_declaration_table, file=sys.stderr)
+            print("\nVariable table:", file=sys.stderr)
+            print(variable_table, file=sys.stderr)
+            print("Function call table:", file=sys.stderr)
+            print(function_call_table, file=sys.stderr)
+
         variable_table.reset_scope_counter()
         high_assembly_generator.generate()
+        target_assembly_generator.generate()
 
     except Exception as e:
-        #if args.debug:
-            #print("Currently defined function:", file=sys.stderr)
-            #print(parser.current_function, end="\n\n", file=sys.stderr)
-            #print("Current parser state:", file=sys.stderr)
-            #print(parser.state, end="\n\n", file=sys.stderr)
-            #print("Current expression parser state:", file=sys.stderr)
-            #print(parser.expression_parser.state, end="\n\n", file=sys.stderr)
-            #print("Current expression:", file=sys.stderr)
-            #print(parser.expression_parser.expression, end="\n\n", file=sys.stderr)
+        if args.debug:
+            print("Currently defined function:", file=sys.stderr)
+            print(parser.current_function, end="\n\n", file=sys.stderr)
+            print("Current parser state:", file=sys.stderr)
+            print(parser.state, end="\n\n", file=sys.stderr)
+            print("Current expression parser state:", file=sys.stderr)
+            print(parser.expression_parser.state, end="\n\n", file=sys.stderr)
+            print("Current expression:", file=sys.stderr)
+            print(parser.expression_parser.expression, end="\n\n", file=sys.stderr)
 
         if args.debug:
             raise e
@@ -63,17 +74,4 @@ if "__main__" == __name__:
             print("Error:", file=sys.stderr)
             print(e, file=sys.stderr)
             exit(1)
-    
-    if False:
-        print("Internal global code representation:", file=sys.stderr)
-        print(global_expressions, file=sys.stderr)
-
-        print("Internal function code representation:", file=sys.stderr)
-        print(function_declaration_table, file=sys.stderr)
-
-        print("\nVariable table:", file=sys.stderr)
-        print(variable_table, file=sys.stderr)
-
-        print("Function call table:", file=sys.stderr)
-        print(function_call_table, file=sys.stderr)
-
+        

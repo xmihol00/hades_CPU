@@ -27,14 +27,14 @@ class Register():
             
 class RegisterFile():
     def __init__(self, number_of_registers: int, writer: Writer) -> None:
-        if number_of_registers < 5:
-            raise Exception("Number of registers must be at least 6.")
+        if number_of_registers < 7:
+            raise Exception("Number of registers must be at least 7.")
         self.number_of_registers = number_of_registers
+        self.registers = [Register(f"r{i}") for i in range(1, number_of_registers - 3)]
         self.EAX = Register("eax", RegisterStates.USED)
-        self.registers = [Register(f"r{i}") for i in range(2, number_of_registers - 1)]
+        self.EDX = Register("edx", RegisterStates.USED)
         self.ESP = Register("esp", RegisterStates.USED)
         self.EBP = Register("ebp", RegisterStates.USED)
-        self.EDX = Register("edx", RegisterStates.USED)
         self.writer = writer
         self.intermediate_results_counter = 0
         self.usage_counter = 0
@@ -75,7 +75,7 @@ class RegisterFile():
                 if register is None:
                     raise Exception("No free or empty register found.")
                 else:
-                    self.writer.instruction(f"{HighAssemblyInstructions.POP} {register.name}", f"pop intermediate_result_{operand.number}")
+                    self.writer.instruction(f"{HighAssemblyInstructions.POP} {register.name}", f"pop {operand.comment}")
             elif len(intermediate_registers) == 1:
                 register = intermediate_registers[0]
             else:
@@ -135,7 +135,7 @@ class RegisterFile():
             if intermediate_result:
                 return_comment = f"return {intermediate_result.comment}"
             else:
-                return_comment = f"return intermediate_result_{self.last_assigned_register.value}"
+                return_comment = f"return {self.last_assigned_register.name}"
         
         if self.last_assigned_register.name == self.EAX.name:
             self.writer.comment("return value already in EAX")
@@ -143,10 +143,10 @@ class RegisterFile():
             self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EAX.name} {self.last_assigned_register.name}", return_comment)
         
     def create_stack_frame(self, number_of_variables: int):
-        self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {self.EBP.name}", "stack frame, base pointer")
-        self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EBP.name} {self.ESP.name}", "stack frame, stack pointer")
+        self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {self.EBP.name}", "stack frame, store base pointer")
+        self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EBP.name} {self.ESP.name}", "stack frame, set base pointer")
         if number_of_variables > 0: # space for local variables
-            self.writer.instruction(f"{HighAssemblyInstructions.SUB} {self.ESP.name} {self.ESP.name} {number_of_variables}", "stack frame, space for local variables")
+            self.writer.instruction(f"{HighAssemblyInstructions.SUB} {self.ESP.name} {self.ESP.name} {number_of_variables}", "stack frame, make space for local variables")
 
         self.writer.instruction(f"{HighAssemblyInstructions.PUSHA}", f"stack frame, push {self.register_string}")
     
@@ -161,7 +161,17 @@ class RegisterFile():
     def store_written(self):
         for register in self.registers:
             if isinstance(register.value, Variable) and register.written:
-                self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.EBP.name}{register.value.stack_offset:+}] {register.name}", f"store {register.value.name}") 
+                if register.value.global_scope:
+                    self.writer.instruction(f"{HighAssemblyInstructions.STORE} {register.value.label} {register.name}", f"store {register.value.name}")
+                else:
+                    self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.EBP.name}{register.value.stack_offset:+}] {register.name}", f"store {register.value.name}") 
+                register.empty()
+    
+    def store_global_variables(self):
+        for register in self.registers:
+            if isinstance(register.value, Variable) and register.written:
+                if register.value.global_scope:
+                    self.writer.instruction(f"{HighAssemblyInstructions.STORE} {register.value.label} {register.name}", f"store {register.value.name}")
                 register.empty()
     
     def invalidate(self):
@@ -190,5 +200,5 @@ class RegisterFile():
             
     def _push_least_recently_used(self) -> Register:
         register = sorted(self.registers, key=lambda register: register.usage)[0] # select the least recently used intermediate result
-        self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {register.name}", f"push intermediate_result_{register.value}")
+        self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {register.name}", f"push {register.name}")
         return register

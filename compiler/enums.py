@@ -75,6 +75,39 @@ class HighAssemblyInstructions(Enum):
 
     def __str__(self) -> str:
         return f"{self.value}"
+    
+    def to_regex(self) -> str:
+        if self == HighAssemblyInstructions.PUSH:
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # PUSH <register> (4 groups)
+        elif self == HighAssemblyInstructions.POP:
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # POP <register>  (4 groups)
+        elif self == HighAssemblyInstructions.PUSHA:
+            return r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"  # PUSHA           (3 group)
+        elif self == HighAssemblyInstructions.POPA:
+            return r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"  # POPA            (3 group)
+        elif self == HighAssemblyInstructions.LOAD:
+            return (
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+\[([a-z_][a-z0-9_]*)(\+|\-)(\d+)\]\s*(;\s*(.*))*$)|" + # LOAD <register> <memory>          (7 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+@([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"                  # LOAD <register> <global variable> (5 groups)
+            )
+        elif self == HighAssemblyInstructions.MOV:
+            return (
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +       # LOAD <register> <constant> (5 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # LOAD <register> <register> (5 groups)
+            )
+        elif self == HighAssemblyInstructions.STORE:
+            return (
+                r"(^\s*" + self.value + r"\s+\[([a-z_][a-z0-9_]*)(\+|\-)(\d+)\]\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" + # LOAD <memory> <register>          (7 groups)
+                r"(^\s*" + self.value + r"\s+@([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"                  # LOAD <global variable> <register> (5 groups)
+            )
+        else:
+            return self._ALU_instruction_to_regex(self.value)
+    
+    def _ALU_instruction_to_regex(self, instruction: str):
+        return (
+            r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +         # <ALU instruction> <register> <register> <constant> (6 groups)
+            r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" # <ALU instruction> <register> <register> <register> (6 groups)
+        )
 
 class Operators(Enum):
     LOGICAL_NOT = "!"                   # precedence 11
@@ -205,3 +238,58 @@ class RegisterStates(Enum):
     FREE = 1
     USED = 2
     EMPTY = 3
+
+class TargetAssemblyHelpers(Enum):
+    DATA_LABEL = "@data"
+    CODE_LABEL = "@code"
+    SCOPE_OPEN = "{"
+    SCOPE_CLOSE = "@}\n"
+    CONSTANT_PREFIX = "#"
+    DEFINE_PREFIX = "@def"
+
+    def __str__(self) -> str:
+        return self.value
+
+class TargetAssemblyInstructions(Enum):
+    LOAD = "LOAD"
+    STORE = "STORE"
+    LDI = "LDI"
+    MOV = "MOV"
+    ADD = "ADD"
+    ADDI = "ADDI"
+    SUB = "SUB"
+    SUBI = "SUBI"
+    MUL = "MUL"
+    MULI = "MULI"
+    AND = "AND"
+    ANDI = "ANDI"
+    OR = "OR"
+    ORI = "ORI"
+    XOR = "XOR"
+    XORI = "XORI"
+    XNOR = "XNOR"
+    XNORI = "XNORI"
+    SHL = "SHL"
+    SHLI = "SHLI"
+    SHR = "SHR"
+    SHRI = "SHRI"
+    CSHL = "CSHL"
+    CSHLI = "CSHLI"
+    CSHR = "CSHR"
+    CSHRI = "CSHRI"
+
+    def __str__(self) -> str:
+        return self.value
+
+class TargetAssemblyRegisters(Enum):
+    R0 = "r0"
+    R1 = "r1"
+    R2 = "r2"
+    R3 = "r3"
+    EAX = "@eax"
+    EDX = "@edx"
+    EBP = "@ebp"
+    ESP = "@esp"
+
+    def __str__(self) -> str:
+        return self.value

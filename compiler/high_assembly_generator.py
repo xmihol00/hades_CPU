@@ -170,11 +170,11 @@ class HighAssemblyGenerator():
             result_register = self.register_file.get_for_intermediate_result()
             if command in FIRST_OPERAND_OPERATORS:
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]}", 
-                                        f"intermediate_result_{self.intermediate_result_counter} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
+                                        f"{result_register} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
             elif command in BOTH_OPERAND_OPERATORS:
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]} {self.registers[1]}",
-                                        f"intermediate_result_{self.intermediate_result_counter} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                                        f"{result_register} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
             self.intermediate_result_counter += 1
         else:
@@ -194,6 +194,7 @@ class HighAssemblyGenerator():
             if self.return_expression:
                 self.return_expression = False
                 self.register_file.assign_return_register(lambda x: self._find_intermediate_result(function, i, x))
+                self.register_file.store_global_variables()
                 self.register_file.destroy_stack_frame()
                 self.writer.instruction(f"{HighAssemblyInstructions.RETURN} {function.number_of_parameters}", f"clean {function.number_of_parameters} function parameter{'s' if function.number_of_parameters != 1 else ''} from the stack")
                 self.register_file.invalidate()

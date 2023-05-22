@@ -16,6 +16,7 @@ class Variable(Construct):
         self.usage = usage
         self.stack_offset = stack_offset
         self.label = label
+        self.global_scope = False
     
     def set_usage(self, usage: VariableUsage):
         if self.type and usage == VariableUsage.ASSIGNMENT:
@@ -29,6 +30,8 @@ class Variable(Construct):
     
     def set_label(self, label: str):
         self.label = label
+        if label:
+            self.global_scope = True
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
