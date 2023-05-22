@@ -17,7 +17,7 @@ class TargetAssemblyGenerator():
         self.first_function = True
         self.regex = (
             r"(^\s*@([a-z_][a-z0-9_]*):\s*(\-*\d+)\s*(;\s*(.*))*$)|" +  # @<identifier>: <value> (5 groups)
-            r"(^\s*\$([a-z_][a-z0-9_]*):\s*(;\s*(.*))*$)|" +            # $<identifier>:         (4 groups)
+            r"(^\s*\$([a-z_][a-z0-9_]*):\s*(;\s*(.*))*$)|" +            # $<function name>:      (4 groups)
             HighAssemblyInstructions.PUSH.to_regex() +       # push <register>        (4 groups)
             HighAssemblyInstructions.POP.to_regex() +        # pop <register>         (4 groups)
             HighAssemblyInstructions.PUSHA.to_regex() +      # pusha                  (3 groups)
@@ -36,7 +36,7 @@ class TargetAssemblyGenerator():
             HighAssemblyInstructions.ROR.to_regex() +        # ror <register> <register> <constant|register>     (6 and 6 groups)
             HighAssemblyInstructions.ROL.to_regex() +        # rol <register> <register> <constant|register>     (6 and 6 groups)
             HighAssemblyInstructions.CALL.to_regex() +       # call <function name>                              (4 groups)
-            HighAssemblyInstructions.RETURN.to_regex() +     # ret <number of cleared parameters from the stack> (4 groups)
+            HighAssemblyInstructions.RETURN.to_regex() +     # ret [number of cleared parameters from the stack] (4 or 3 groups)
             HighAssemblyInstructions.JMP.to_regex() +        # jmp <label>                                       (4 groups)
             HighAssemblyInstructions.JZ.to_regex() +         # je  <register> <label>                            (5 groups)
             HighAssemblyInstructions.JNZ.to_regex() +        # jne <register> <label>                            (5 groups)
@@ -51,65 +51,68 @@ class TargetAssemblyGenerator():
             HighAssemblyInstructions.NEG.to_regex() +        # neg <register> <constant|register>                (5 and 5 groups)
             HighAssemblyInstructions.IN.to_regex() +         # in  <register> <positive constant>                (5 groups)
             HighAssemblyInstructions.OUT.to_regex() +        # out <register> <positive constant>                (5 groups)
+            r"(^\s*&([a-z_][a-z0-9_\.]*):\s*(;\s*(.*))*$)|"  # <function name without stack frame>               (4 groups)
             r"(^\s*(;\s*(.*))*$)|"                           # line comment                                      (3 groups)
         )
         self.group_dict = {
-            0: (self.handle_global_variable, 1),
-            5: (self.handle_function_label, 6),
-            9: (self.handle_push, 10),
-            13: (self.handle_pop, 14),
-            17: (self.handle_pusha, 18),
-            20: (self.handle_popa, 21),
-            23: (self.handle_memory_load, 24),
-            30: (self.handle_global_variable_load, 31),
-            35: (self.handle_constant_move, 36),
-            40: (self.handle_register_move, 41),
-            45: (self.handle_memory_store, 46),
-            52: (self.handle_global_variable_store, 53),
-            57: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.ADDI), 58),
-            63: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.ADD), 64),
-            69: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SUBI), 70),
-            75: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SUB), 76),
-            81: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.MULI), 82),
-            87: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.MUL), 88),
-            93: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.ANDI), 94),
-            99: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.AND), 100),
-            105: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.ORI), 106),
-            111: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.OR), 112),
-            117: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.XORI), 118),
-            123: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.XOR), 124),
-            129: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SHLI), 130),
-            135: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SHL), 136),
-            141: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SHRI), 142),
-            147: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SHR), 148),
-            153: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.CSHLI), 154),
-            159: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.CSHL), 160),
-            165: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.CSHRI), 166),
-            171: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.CSHR), 172),
-            177: (self.handle_call, 178),
-            181: (self.handle_return, 182),
-            185: (self.handle_jump, 186),
-            189: (self.handle_jump_if_zero, 190),
-            194: (self.handle_jump_if_not_zero, 195),
-            199: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SEQI), 200),
-            205: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SEQ), 206),
-            211: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SNEI), 212),
-            217: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SNE), 218),
-            223: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLTI), 224),
-            229: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLT), 230),
-            235: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGTI), 236),
-            241: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGT), 242),
-            247: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLEI), 248),
-            253: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLE), 254),
-            259: (lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGRI), 260),
-            265: (lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGR), 266),
-            271: (self.handle_label, 272),
-            275: (self.handle_constant_not, 276),
-            280: (self.handle_register_not, 281),
-            286: (self.handle_constant_negate, 287),
-            292: (self.handle_register_negate, 293),
-            297: (self.handle_input, 298),
-            302: (self.handle_output, 303),
+            0: self.handle_global_variable,
+            5: self.handle_function_label, 
+            9: self.handle_push, 
+            13: self.handle_pop, 
+            17: self.handle_pusha, 
+            20: self.handle_popa, 
+            23: self.handle_memory_load, 
+            30: self.handle_global_variable_load, 
+            35: self.handle_constant_move, 
+            40: self.handle_register_move, 
+            45: self.handle_memory_store, 
+            52: self.handle_global_variable_store, 
+            57: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.ADDI), 
+            63: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.ADD), 
+            69: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SUBI), 
+            75: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SUB), 
+            81: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.MULI), 
+            87: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.MUL), 
+            93: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.ANDI), 
+            99: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.AND), 
+            105: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.ORI), 
+            111: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.OR), 
+            117: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.XORI), 
+            123: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.XOR), 
+            129: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SHLI), 
+            135: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SHL), 
+            141: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SHRI), 
+            147: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SHR), 
+            153: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.CSHLI), 
+            159: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.CSHL), 
+            165: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.CSHRI), 
+            171: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.CSHR), 
+            177: self.handle_call, 
+            181: self.handle_return, 
+            185: self.handle_return_without_value,
+            189: self.handle_jump, 
+            192: self.handle_jump_if_zero, 
+            197: self.handle_jump_if_not_zero, 
+            202: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SEQI), 
+            208: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SEQ), 
+            214: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SNEI), 
+            220: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SNE), 
+            226: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLTI), 
+            232: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLT), 
+            238: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGTI), 
+            244: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGT), 
+            250: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLEI), 
+            256: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLE), 
+            262: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGRI), 
+            268: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGR), 
+            274: self.handle_label, 
+            278: self.handle_constant_not, 
+            283: self.handle_register_not, 
+            288: self.handle_constant_negate, 
+            293: self.handle_register_negate, 
+            298: self.handle_input, 
+            303: self.handle_output, 
+            308: self.handle_function_label_without_stack,
         }
         self.register_definitions = register_definitions
 
@@ -120,9 +123,9 @@ class TargetAssemblyGenerator():
 
         for line in self.source_code:
             match = re.match(self.regex, line, re.IGNORECASE)
-            for i, (handler, shift) in self.group_dict.items():
+            for i, handler in self.group_dict.items():
                 if match.groups()[i]:
-                    handler(match.groups()[shift:])
+                    handler(match.groups()[i + 1:])
         
         self.writer.raw(f"{TargetAssemblyHelpers.SCOPE_CLOSE}")
         self.writer.raw(
@@ -200,6 +203,9 @@ idle:
         self.writer.instruction(f"{TargetAssemblyInstructions.ADDI} {TargetAssemblyRegisters.ESP}, #{cleared_words}", f"decrease stack size by the number of parameters + the return value")
         self.writer.instruction(f"{TargetAssemblyInstructions.JREG} {TargetAssemblyRegisters.EDX}", matches[2])
     
+    def handle_return_without_value(self, matches: tuple[str]):
+        self.writer.instruction(f"{TargetAssemblyInstructions.JREG} {TargetAssemblyRegisters.EDX}", matches[1])
+    
     def handle_jump(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.JMP} #{matches[0]}", matches[2])
     
@@ -235,6 +241,14 @@ idle:
     
     def handle_output(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.OUT} {self.register_map[matches[0]]}, #{matches[1]}", matches[3])
+    
+    def handle_function_label_without_stack(self, matches: tuple[str]):
+        if self.first_function:
+            self.writer.raw(f"{TargetAssemblyHelpers.CODE_LABEL} {matches[0]} {TargetAssemblyHelpers.SCOPE_OPEN}", matches[2])
+            self.first_function = False
+        else:
+            self.writer.raw(f"{TargetAssemblyHelpers.SCOPE_CLOSE}")
+            self.writer.raw(f"{TargetAssemblyHelpers.CODE_LABEL} {matches[0]} {TargetAssemblyHelpers.SCOPE_OPEN}", matches[2])
 
     def handle_line_comment(self, matches: tuple[str]):
         self.writer.comment(matches[1])

@@ -174,6 +174,9 @@ class RegisterFile():
                     self.writer.instruction(f"{HighAssemblyInstructions.STORE} {register.value.label} {register.name}", f"store {register.value.name}")
                 register.empty()
     
+    def get_EAX(self) -> str:
+        return self.EAX.name
+    
     def invalidate(self):
         for register in self.registers:
             register.empty()

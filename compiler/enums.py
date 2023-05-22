@@ -106,13 +106,15 @@ class HighAssemblyInstructions(Enum):
         elif self == HighAssemblyInstructions.CALL:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # CALL <function label> (4 groups)
         elif self == HighAssemblyInstructions.RETURN:
-            return r"(^\s*" + self.value + r"\s+(\d+)\s*(;\s*(.*))*$)|"                  # RETURN <number of cleared parameters from the stack> (4 groups)
+            return (
+                r"(^\s*" + self.value + r"\s+(\d+)\s*(;\s*(.*))*$)|" +    # RETURN <number of cleared parameters from the stack> (4 groups)
+                r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"              # RETURN                                               (3 groups)
+            )                  
         elif self == HighAssemblyInstructions.JMP:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # JMP <label> (4 groups)
         elif self == HighAssemblyInstructions.JZ or self == HighAssemblyInstructions.JNZ:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_\.]*)\s*(;\s*(.*))*$)|" # JZ/JNZ <register> <label> (5 groups)
         elif self == HighAssemblyInstructions.NOT or self == HighAssemblyInstructions.NEG:
-            # TODO: solve immediate value
             return (
                 r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +        # NOT/NEG <register> <constant> (5 groups)
                 r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"   # NOT/NEG <register> <register> (5 groups)

@@ -30,7 +30,7 @@ if "__main__" == __name__:
                     variable_table=variable_table, global_expressions=global_expressions)
     semantic_analyzer = SemanticAnalyzer(function_declaration_table=function_declaration_table, function_call_table=function_call_table,
                                          variable_table=variable_table)
-    high_assembly_writer = Writer(in_file=False, in_memory=True)
+    high_assembly_writer = Writer(in_file=True, in_memory=True)
     register_file = RegisterFile(number_of_registers=7, writer=high_assembly_writer)
     high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
                                                     global_code=global_expressions, register_file=register_file, writer=high_assembly_writer)

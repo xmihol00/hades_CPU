@@ -122,6 +122,13 @@ class HighAssemblyGenerator():
             self.for_part3 = False
             self.current_for_last_statement = []
             self.for_last_statement_stack = []
+        
+        # generate built-in functions FIXME: quite ugly solution
+        self.writer.comment("===================== built-in functions =====================")
+        self.writer.label("&print", "int print(int value)")
+        self.writer.instruction(f"{HighAssemblyInstructions.POP} {self.register_file.get_EAX()}", "pop value from stack")
+        self.writer.instruction(f"{HighAssemblyInstructions.OUT} {self.register_file.get_EAX()} 96", "write the value to the UART")
+        self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
     
     def _generate_function(self, function: Function):
         for i, command in enumerate(function.body):
