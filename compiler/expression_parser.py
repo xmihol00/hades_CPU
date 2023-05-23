@@ -14,7 +14,8 @@ UNARY_OPERATORS = [
     Operators.LOGICAL_NOT,
     Operators.BITWISE_NOT,
     Operators.UNARY_PLUS,
-    Operators.UNARY_MINUS
+    Operators.UNARY_MINUS,
+    Operators.DEREFERENCE
 ]
 
 BINARY_OPERATORS = [
@@ -48,6 +49,7 @@ class ExpressionParser:
             Operators.BITWISE_NOT: 11,
             Operators.UNARY_PLUS: 11,
             Operators.UNARY_MINUS: 11,
+            Operators.DEREFERENCE: 11,
             Operators.MULTIPLY: 10,
             Operators.PLUS: 9,
             Operators.MINUS: 9,
@@ -119,8 +121,14 @@ class ExpressionParser:
 
     def add_operator(self, operator: str):
         operator = Operators(operator)
-        if (operator == Operators.PLUS or operator == Operators.MINUS) and ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state:
-            operator = Operators.UNARY_PLUS if operator == Operators.PLUS else Operators.UNARY_MINUS
+        # convert to unary operator if necessary
+        if operator in BINARY_OPERATORS and ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state:
+            if operator == Operators.PLUS:
+                operator = Operators.UNARY_PLUS
+            elif operator == Operators.MINUS:
+                operator = Operators.UNARY_MINUS
+            elif operator == Operators.MULTIPLY:
+                operator = Operators.DEREFERENCE
 
         precedence = self.operator_precedence[operator]
         if (operator in UNARY_OPERATORS and ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state or

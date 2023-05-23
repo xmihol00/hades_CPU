@@ -135,6 +135,7 @@ class Operators(Enum):
     BITWISE_NOT = "~"
     UNARY_PLUS = "U+"
     UNARY_MINUS = "U-"
+    DEREFERENCE = "U*"
 
     MULTIPLY = "*"                      # precedence 10
 
@@ -169,7 +170,7 @@ class Operators(Enum):
     PARAMETER_POSSIBLE_ASSIGNMENT = "?="
 
     def to_high_assembly_instruction(self) -> HighAssemblyInstructions:
-        if self == Operators.PLUS:
+        if self == Operators.PLUS or self == Operators.UNARY_PLUS:
             return HighAssemblyInstructions.ADD
         elif self == Operators.MINUS:
             return HighAssemblyInstructions.SUB
@@ -213,6 +214,8 @@ class Operators(Enum):
             return HighAssemblyInstructions.PUSH
         elif self == Operators.UNARY_MINUS:
             return HighAssemblyInstructions.NEG
+        elif self == Operators.DEREFERENCE:
+            return HighAssemblyInstructions.LOAD
         else:
             raise Exception(f"Operator {self} does not have a high assembly instruction.")
 

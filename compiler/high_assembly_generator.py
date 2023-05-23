@@ -9,12 +9,16 @@ from variable_table import VariableTable
 FIRST_OPERAND_OPERATORS = [
     Operators.LOGICAL_NOT,
     Operators.BITWISE_NOT,
-    Operators.UNARY_PLUS,
     Operators.UNARY_MINUS,
     Operators.PARAMETER_ASSIGNMENT
 ]
 
-SECOND_OPERAND_OPERATORS = [
+INDIRECT_MEMORY_OPERATORS = [
+    Operators.DEREFERENCE
+]
+
+SPECIAL_OPERATORS = [
+    Operators.UNARY_PLUS
 ]
 
 BOTH_OPERAND_OPERATORS = [
@@ -61,7 +65,8 @@ INTERMEDIATE_RESULT_OPERATORS = [
     Operators.LOGICAL_NOT,
     Operators.BITWISE_NOT,
     Operators.UNARY_PLUS,
-    Operators.UNARY_MINUS
+    Operators.UNARY_MINUS,
+    Operators.DEREFERENCE,
 ]
 
 class HighAssemblyGenerator():
@@ -189,6 +194,7 @@ class HighAssemblyGenerator():
         self.register_index += 1
 
     def _handle_operator(self, command: Operators, function: Function, i: int):
+        # TODO: refactor - reduce duplicate code
         if command in INTERMEDIATE_RESULT_OPERATORS:
             result_register = self.register_file.get_for_intermediate_result()
             if command in FIRST_OPERAND_OPERATORS:
@@ -199,6 +205,14 @@ class HighAssemblyGenerator():
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]} {self.registers[1]}",
                                         f"{result_register} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+            elif command in INDIRECT_MEMORY_OPERATORS:
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} [{self.registers[0]}]", 
+                                        f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
+                self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
+            elif command == Operators.UNARY_PLUS:
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]} 0", 
+                                        f"{command.value.replace('U', '')}{function.body[i - 1].comment} - dummy")
+                self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment} - dummy")
             self.intermediate_result_counter += 1
         else:
             self.register_file.clear_last_instruction()
