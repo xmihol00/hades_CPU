@@ -195,7 +195,7 @@ class RegisterFile():
                 free_register = free_registers[0]
                 if isinstance(free_register.value, Variable): # store the value
                     self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.EBP.name}{free_register.value.stack_offset:+}] {free_register.name}",
-                                                  f"store {free_register.value.name}")
+                                            f"store {free_register.value.name}")
                     free_register.written = False
                 return free_register
             else:

@@ -125,10 +125,24 @@ class HighAssemblyGenerator():
         
         # generate built-in functions FIXME: quite ugly solution
         self.writer.comment("===================== built-in functions =====================")
-        self.writer.label("&print", "int print(int value)")
+        self.writer.label("&putchar", "int putchar(int value), returns the passed value")
         self.writer.instruction(f"{HighAssemblyInstructions.POP} {self.register_file.get_EAX()}", "pop value from stack")
+        self.writer.label("putchar.buffer_full", "while transmit buffer is full")
+        self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 97", "load the status of the UART")
+        self.writer.instruction(f"{HighAssemblyInstructions.AND} {self.register_file.get_EAX()} {self.register_file.get_EAX()} #2", "check if transmit buffer is full")
+        self.writer.instruction(f"{HighAssemblyInstructions.JNZ} {self.register_file.get_EAX()} putchar.buffer_full", "loop if transmit buffer is full")
         self.writer.instruction(f"{HighAssemblyInstructions.OUT} {self.register_file.get_EAX()} 96", "write the value to the UART")
         self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
+        self.writer.new_line()
+
+        self.writer.label("&getchar", "int putchar()")
+        self.writer.label("getchar.no_data", "while data are not available")
+        self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 97", "load the status of the UART")
+        self.writer.instruction(f"{HighAssemblyInstructions.AND} {self.register_file.get_EAX()} {self.register_file.get_EAX()} #1", "check if any data are available")
+        self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_file.get_EAX()} getchar.no_data", "loop if data are not available")
+        self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 96", "read a value from the UART")
+        self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
+        self.writer.new_line()
     
     def _generate_function(self, function: Function):
         for i, command in enumerate(function.body):

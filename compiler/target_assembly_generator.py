@@ -131,8 +131,10 @@ class TargetAssemblyGenerator():
         self.writer.raw(
 """
 @code __init {
-   DPMA                                 ; set data memory access
    DEI                                  ; disable interrupts
+   DPMA                                 ; set data memory access
+   XOR @eax, @eax, @eax                 ; clear eax
+   OUT @eax, #98                        ; set UART to byte mode and to not generate interrupts
    LDI @esp, #0x7FFF                    ; init stack-pointer
    JAL @edx, *main                      ; call main
 idle:
