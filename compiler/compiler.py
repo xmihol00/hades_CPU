@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from target_assembly_generator import TargetAssemblyGenerator
 from high_assembly_generator import HighAssemblyGenerator
@@ -14,12 +15,36 @@ from writer import Writer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file_name", type=str, help="Name of a file to be compiled.")
-parser.add_argument("-d", "--debug", action="store_true", help="Print debug information (stack trace).")
+parser.add_argument("-s", "--same", action="store_true", help="Use input file name for intermediate and output files.")
+parser.add_argument("-i", "--intermediate", type=str, help="Name of a file to write compiled code to high level assembly.")
+parser.add_argument("-o", "--output", type=str, help="Name of a file to write compiled code to HaDes assembly.")
+parser.add_argument("-c", "--compile", action="store_true", help="Compile to binary.")
+parser.add_argument("-d", "--debug", action="store_true", help="Print debug information to stderr.")
 args = parser.parse_args()
 
 if "__main__" == __name__:
+    os.makedirs("build", exist_ok=True)
     with open(args.file_name, "r") as f:
         c_program = f.read()
+
+    if args.same:
+        if '/' in args.file_name:
+            args.file_name = args.file_name[args.file_name.rfind('/') + 1:]
+        args.same = args.file_name[:args.file_name.rfind('.')]
+        args.intermediate = args.file_name[:args.file_name.rfind('.')] + ".asm"
+        args.output = args.file_name[:args.file_name.rfind('.')] + ".has"
+    
+    if args.intermediate:
+        args.intermediate = os.path.join("build", args.intermediate)
+        high_assembly_file = open(args.intermediate, "w")
+    else:
+        high_assembly_file = None
+
+    if args.output:
+        args.output = os.path.join("build", args.output)
+        target_assembly_file = open(args.output, "w")
+    else:
+        target_assembly_file = sys.stdout    
     
     function_declaration_table = FunctionDeclarationTable()
     function_call_table = FunctionCallTable()
@@ -30,11 +55,11 @@ if "__main__" == __name__:
                     variable_table=variable_table, global_expressions=global_expressions)
     semantic_analyzer = SemanticAnalyzer(function_declaration_table=function_declaration_table, function_call_table=function_call_table,
                                          variable_table=variable_table)
-    high_assembly_writer = Writer(in_file=False, in_memory=True)
+    high_assembly_writer = Writer(in_file=args.intermediate, in_memory=True, output_file=high_assembly_file)
     register_file = RegisterFile(number_of_registers=7, writer=high_assembly_writer)
     high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
                                                     global_code=global_expressions, register_file=register_file, writer=high_assembly_writer)
-    target_assembly_writer = Writer(in_file=True, in_memory=False)
+    target_assembly_writer = Writer(in_file=True, in_memory=False, output_file=target_assembly_file)
     target_assembly_generator = TargetAssemblyGenerator(high_assembly_code=high_assembly_writer.retrieve_memory(), 
                                                         writer=target_assembly_writer)
 
@@ -56,6 +81,16 @@ if "__main__" == __name__:
         variable_table.reset_scope_counter()
         high_assembly_generator.generate()
         target_assembly_generator.generate()
+
+        if args.intermediate:
+            high_assembly_file.close()
+        if args.output:
+            target_assembly_file.close()
+        
+        if args.compile and args.output:
+            os.system(f"wine ../_bin/hoasm.exe -I ../_assembler/inc {args.output}")
+            output_file_stripped = args.output[:args.output.rfind('.')]
+            os.system(f"wine ../_bin/hlink.exe -L ../_assembler/inc -o {output_file_stripped}.hix {output_file_stripped}.ho")
 
     except Exception as e:
         if args.debug:

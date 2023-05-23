@@ -31,11 +31,11 @@ class Keywords(Enum):
     def set_comment(self, comment: str):
         self.comment = comment
     
-    def to_label(self, function_name: str, scope_ids: list[int], else_if_counter: int = None):
+    def to_label(self, function_name: str, scope_ids: list[int], scope_index: int, else_if_counter: int = None):
         if self.value == Keywords.ELSE_IF.value:
-            return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids))}.{else_if_counter}"
+            return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids[:scope_index + 1]))}.{else_if_counter}"
         else:
-            return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids))}"
+            return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids[:scope_index + 1]))}"
 
 class Types(Enum):
     VOID = "void"

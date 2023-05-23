@@ -78,9 +78,10 @@ class HighAssemblyGenerator():
         self.registers = ["", ""]
         self.return_expression = False
         self.intermediate_result_counter = 0
-        self.if_scope_ids = [0]
-        self.while_scope_ids = [0]
-        self.for_scope_ids = [0]
+        self.scope_index = -1
+        self.if_scope_ids = []
+        self.while_scope_ids = []
+        self.for_scope_ids = []
         self.current_jump_statement = None
         self.jump_statement_stack = []
         self.else_if_counter = 0
@@ -110,9 +111,10 @@ class HighAssemblyGenerator():
             self.registers = ["", ""]
             self.return_expression = False
             self.intermediate_result_counter = 0
-            self.if_scope_ids = [0]
-            self.while_scope_ids = [0]
-            self.for_scope_ids = [0]
+            self.scope_index = -1
+            self.if_scope_ids = []
+            self.while_scope_ids = []
+            self.for_scope_ids = []
             self.current_jump_statement = None
             self.jump_statement_stack = []
             self.else_if_counter = 0
@@ -224,8 +226,8 @@ class HighAssemblyGenerator():
                 self.for_part2 = True
                 self.register_file.store_written()
                 self.register_file.invalidate()
-                self.writer.comment(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids)} condition")
-                self.writer.label(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids)}_start")
+                self.writer.comment(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids, self.scope_index)} condition")
+                self.writer.label(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids, self.scope_index)}_start")
             elif self.for_part2:
                 self.for_part2 = False
                 self.for_part3 = True
@@ -235,16 +237,13 @@ class HighAssemblyGenerator():
             self.register_index = 0
 
         elif command == InternalAlphabet.EQUAL_ZERO_JUMP:
-            self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.registers[0]} {self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.else_if_counter - 1)}_{'end' if self.current_jump_statement == Keywords.WHILE or self.current_jump_statement == Keywords.FOR else 'skip'}", 
+            self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.registers[0]} {self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_{'end' if self.current_jump_statement == Keywords.WHILE or self.current_jump_statement == Keywords.FOR else 'skip'}", 
                                     f"jump when not {function.body[i - 1].comment}")
-            self.writer.comment(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.else_if_counter - 1)} body")
+            self.writer.comment(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)} body")
 
         elif command == InternalAlphabet.SCOPE_INCREMENT:
             if not self.for_part1 and self.current_jump_statement: # no increment for first 'for' statement or empty statements
                 self.writer.increase_indent()
-                self.if_scope_ids.append(0)
-                self.while_scope_ids.append(0)
-                self.for_scope_ids.append(0)
                 self.else_if_counter_stack.append(self.else_if_counter)
                 self.else_if_counter = 0
                 self.jump_statement_stack.append(self.current_jump_statement)
@@ -255,83 +254,88 @@ class HighAssemblyGenerator():
         elif command == InternalAlphabet.SCOPE_DECREMENT:
             self.current_jump_statement = self.jump_statement_stack.pop()
             if self.current_jump_statement: # no decrement for first 'for' statement or empty statements
-                self.if_scope_ids.pop()
-                self.while_scope_ids.pop()
-                self.for_scope_ids.pop()
                 self.else_if_counter = self.else_if_counter_stack.pop()
 
                 if self.current_jump_statement == Keywords.IF:
                     self.register_file.store_written()
                     self.register_file.invalidate()
                     if function.body[i + 1] == Keywords.ELSE_IF or function.body[i + 1] == Keywords.ELSE:
-                        self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.IF.to_label(function.name, self.if_scope_ids)}_end")
-                    self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids)}_skip")
+                        self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.IF.to_label(function.name, self.if_scope_ids, self.scope_index)}_end")
+                    self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index)}_skip")
                     if function.body[i + 1] != Keywords.ELSE and function.body[i + 1] != Keywords.ELSE_IF:
-                        self.if_scope_ids[-1] += 1
+                        self.if_scope_ids[self.scope_index] += 1
 
                 elif self.current_jump_statement == Keywords.ELSE_IF:
                     self.register_file.store_written()
                     self.register_file.invalidate()
                     if function.body[i + 1] == Keywords.ELSE_IF or function.body[i + 1] == Keywords.ELSE:
-                        self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.IF.to_label(function.name, self.if_scope_ids)}_end")
+                        self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.IF.to_label(function.name, self.if_scope_ids, self.scope_index)}_end")
                     else:
-                        self.if_scope_ids[-1] += 1
-                        self.writer.label(f"{Keywords.IF.to_label(function.name, self.if_scope_ids)}_end")
+                        self.if_scope_ids[self.scope_index] += 1
+                        self.writer.label(f"{Keywords.IF.to_label(function.name, self.if_scope_ids, self.scope_index)}_end")
                         self.writer.new_line()
-                    self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.else_if_counter - 1)}_skip")
+                    self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_skip")
 
                 elif self.current_jump_statement == Keywords.ELSE:
                     self.register_file.store_written()
                     self.register_file.invalidate()
-                    self.writer.label(f"{Keywords.IF.to_label(function.name, self.if_scope_ids)}_end")
+                    self.writer.label(f"{Keywords.IF.to_label(function.name, self.if_scope_ids, self.scope_index)}_end")
                     self.writer.new_line()
-                    self.if_scope_ids[-1] += 1
+                    self.if_scope_ids[self.scope_index] += 1
 
                 elif self.current_jump_statement == Keywords.WHILE:
                     self.register_file.store_written()
                     self.register_file.invalidate()
-                    self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.WHILE.to_label(function.name, self.while_scope_ids)}_start")
-                    self.writer.label(f"{Keywords.WHILE.to_label(function.name, self.while_scope_ids)}_end")
+                    self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.WHILE.to_label(function.name, self.while_scope_ids, self.scope_index)}_start")
+                    self.writer.label(f"{Keywords.WHILE.to_label(function.name, self.while_scope_ids, self.scope_index)}_end")
                     self.writer.new_line()
-                    self.while_scope_ids[-1] += 1
+                    self.while_scope_ids[self.scope_index] += 1
                 
                 elif self.current_jump_statement == Keywords.FOR:
                     saved_for_statement = self.for_last_statement_stack.pop()
-                    self.writer.comment(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids)} increment")
+                    self.writer.comment(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids, self.scope_index)} increment")
                     self._process_last_for_statement(saved_for_statement, function)
                     self.register_file.store_written()
                     self.register_file.invalidate()
-                    self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.FOR.to_label(function.name, self.for_scope_ids)}_start")
-                    self.writer.label(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids)}_end")
+                    self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.FOR.to_label(function.name, self.for_scope_ids, self.scope_index)}_start")
+                    self.writer.label(f"{Keywords.FOR.to_label(function.name, self.for_scope_ids, self.scope_index)}_end")
                     self.writer.new_line()
-                    self.for_scope_ids[-1] += 1
+                    self.for_scope_ids[self.scope_index] += 1
 
                 self.writer.decrease_indent()
+                self.scope_index -= 1
 
     def _handle_keyword(self, command: Keywords, function: Function, i: int):
+        if command == Keywords.IF or command == Keywords.ELSE_IF or command == Keywords.ELSE or command == Keywords.WHILE or command == Keywords.FOR:
+            self.scope_index += 1
+            if self.scope_index == len(self.if_scope_ids):
+                self.if_scope_ids.append(0)
+                self.while_scope_ids.append(0)
+                self.for_scope_ids.append(0)
+
         if command == Keywords.RETURN:
             self.return_expression = True
             self.register_index = 0
         elif command == Keywords.IF:
             self.current_jump_statement = Keywords.IF
             self.writer.new_line()
-            self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.else_if_counter)} header")
+            self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter)} header")
         elif command == Keywords.ELSE_IF:
             self.current_jump_statement = Keywords.ELSE_IF
-            self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.else_if_counter)} header")
+            self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter)} header")
             self.else_if_counter += 1
         elif command == Keywords.ELSE:
             self.current_jump_statement = Keywords.ELSE
-            self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.else_if_counter)}")
+            self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter)}")
         elif command == Keywords.WHILE:
             self.current_jump_statement = Keywords.WHILE
-            self.writer.comment(f"{command.to_label(function.name, self.while_scope_ids)} header")
+            self.writer.comment(f"{command.to_label(function.name, self.while_scope_ids, self.scope_index)} header")
             self.register_file.store_written()
-            self.writer.label(f"{command.to_label(function.name, self.while_scope_ids)}_start")
+            self.writer.label(f"{command.to_label(function.name, self.while_scope_ids, self.scope_index)}_start")
             self.register_file.invalidate()
         elif command == Keywords.FOR:
             self.current_jump_statement = Keywords.FOR
-            self.writer.comment(f"{command.to_label(function.name, self.for_scope_ids)} assignment")
+            self.writer.comment(f"{command.to_label(function.name, self.for_scope_ids, self.scope_index)} assignment")
             self.for_part1 = True
     
     def _process_last_for_statement(self, commands: list[tuple], function: Function):
