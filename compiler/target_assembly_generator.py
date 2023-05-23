@@ -90,7 +90,7 @@ class TargetAssemblyGenerator():
             177: self.handle_call, 
             181: self.handle_return, 
             185: self.handle_return_without_value,
-            189: self.handle_jump, 
+            188: self.handle_jump, 
             192: self.handle_jump_if_zero, 
             197: self.handle_jump_if_not_zero, 
             202: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SEQI), 
@@ -113,6 +113,7 @@ class TargetAssemblyGenerator():
             298: self.handle_input, 
             303: self.handle_output, 
             308: self.handle_function_label_without_stack,
+            312: self.handle_line_comment
         }
         self.register_definitions = register_definitions
 
@@ -135,7 +136,7 @@ class TargetAssemblyGenerator():
    DPMA                                 ; set data memory access
    XOR @eax, @eax, @eax                 ; clear eax
    OUT @eax, #98                        ; set UART to byte mode and to not generate interrupts
-   LDI @esp, #0x7FFF                    ; init stack-pointer
+   LDI @esp, #0xFFF                     ; init the stack pointer
    JAL @edx, *main                      ; call main
 idle:
   JMP #idle                             ; infinite loop after return from main
@@ -188,7 +189,7 @@ idle:
         self.writer.instruction(f"{TargetAssemblyInstructions.LDI} {self.register_map[matches[0]]}, #{matches[1]}", matches[3])
 
     def handle_register_move(self, matches: tuple[str]):
-        self.writer.instruction(f"{TargetAssemblyInstructions.MOV} {self.register_map[matches[0]]}, {self.register_map[matches[1]]}", matches[3])
+        self.writer.instruction(f"{TargetAssemblyInstructions.MOV} {self.register_map[matches[1]]}, {self.register_map[matches[0]]}", matches[3])
 
     def handle_memory_store(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.STORE} {self.register_map[matches[3]]}, {self.register_map[matches[0]]}, #{matches[1] if matches[1] == '-' else ''}{matches[2]}", matches[5])
@@ -209,19 +210,19 @@ idle:
         self.writer.instruction(f"{TargetAssemblyInstructions.JREG} {TargetAssemblyRegisters.EDX}", matches[1])
     
     def handle_jump(self, matches: tuple[str]):
-        self.writer.instruction(f"{TargetAssemblyInstructions.JMP} #{matches[0]}", matches[2])
+        self.writer.instruction(f"{TargetAssemblyInstructions.JMP} #{matches[0].replace('.', '__')}", matches[2])
     
     def handle_jump_if_zero(self, matches: tuple[str]):
-        self.writer.instruction(f"{TargetAssemblyInstructions.BEQZ} {self.register_map[matches[0]]}, #{matches[1].replace('.', '_')}", matches[3])
+        self.writer.instruction(f"{TargetAssemblyInstructions.BEQZ} {self.register_map[matches[0]]}, #{matches[1].replace('.', '__')}", matches[3])
     
     def handle_jump_if_not_zero(self, matches: tuple[str]):
-        self.writer.instruction(f"{TargetAssemblyInstructions.BNEZ} {self.register_map[matches[0]]}, #{matches[1].replace('.', '_')}", matches[3])
+        self.writer.instruction(f"{TargetAssemblyInstructions.BNEZ} {self.register_map[matches[0]]}, #{matches[1].replace('.', '__')}", matches[3])
 
     def handle_jump_if_overflow(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.BOV} #{matches[0]}", matches[2])
     
     def handle_label(self, matches: tuple[str]):
-        self.writer.label(matches[0].replace('.', '_'), matches[2])
+        self.writer.label(matches[0].replace('.', '__'), matches[2])
 
     def handle_constant_not(self, matches: tuple[str]):
         not_value = (~int(matches[1])) & 0xFFFF # limit to 16 bit

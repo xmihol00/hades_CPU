@@ -193,10 +193,12 @@ class RegisterFile():
                 return free_unwritten_registers[0]
             elif len(free_registers) > 0: # then try any free registers
                 free_register = free_registers[0]
-                if isinstance(free_register.value, Variable): # store the value
-                    self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.EBP.name}{free_register.value.stack_offset:+}] {free_register.name}",
-                                            f"store {free_register.value.name}")
-                    free_register.written = False
+                if isinstance(free_register.value, Variable) and free_register.written:
+                    if free_register.value.global_scope:
+                        self.writer.instruction(f"{HighAssemblyInstructions.STORE} {free_register.value.label} {free_register.name}", f"store {free_register.value.name}")
+                    else:
+                        self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.EBP.name}{free_register.value.stack_offset:+}] {free_register.name}", f"store {free_register.value.name}") 
+                    free_register.empty()
                 return free_register
             else:
                 return None

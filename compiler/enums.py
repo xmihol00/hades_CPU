@@ -111,7 +111,7 @@ class HighAssemblyInstructions(Enum):
                 r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"              # RETURN                                               (3 groups)
             )                  
         elif self == HighAssemblyInstructions.JMP:
-            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # JMP <label> (4 groups)
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_\.]*)\s*(;\s*(.*))*$)|"     # JMP <label> (4 groups)
         elif self == HighAssemblyInstructions.JZ or self == HighAssemblyInstructions.JNZ:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_\.]*)\s*(;\s*(.*))*$)|" # JZ/JNZ <register> <label> (5 groups)
         elif self == HighAssemblyInstructions.NOT or self == HighAssemblyInstructions.NEG:
@@ -254,6 +254,19 @@ class ScopeTypes(Enum):
     FOR_HEADER = 6
     FOR_BODY = 7
     BLOCK = 8
+    IF_OPENED = 9
+    WHILE_OPENED = 10
+    FOR_HEADER_OPENED = 6
+
+    def to_opened(self):
+        if self == ScopeTypes.IF:
+            return ScopeTypes.IF_OPENED
+        elif self == ScopeTypes.WHILE:
+            return ScopeTypes.WHILE_OPENED
+        elif self == ScopeTypes.FOR_HEADER:
+            return ScopeTypes.FOR_HEADER_OPENED
+        else:
+            return self
 
 class RegisterStates(Enum):
     FREE = 1

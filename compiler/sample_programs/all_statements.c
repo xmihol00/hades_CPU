@@ -46,6 +46,8 @@ int main()
     global_A = sum(a, b);
     global_B = largest(a, b, c);
     int f = sum_globals();
+    int g = (a + b) + (largest(a, b, c) - sum(global_A, largest(f + a, f + b, f - c) - f)) *  sum_globals();
+
     for (int i = 65; i < 91; i = i + 1) 
     {
         putchar(i);

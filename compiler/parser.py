@@ -174,8 +174,9 @@ class Parser:
         elif ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_closed_bracket()
             if self.scope_type_stack[-1] in self.bracket_expression_scopes and self.expression_parser.is_expression_valid():
+                self.scope_type_stack[-1] = self.scope_type_stack[-1].to_opened()
                 self.state = ParserStates.OPENED_CURLY_BRACKET
-                if self.scope_type_stack[-1] == ScopeTypes.FOR_HEADER:
+                if self.scope_type_stack[-1] == ScopeTypes.FOR_HEADER_OPENED:
                     self.scope_type_stack.append(ScopeTypes.FOR_BODY)
                 else:
                     self.expression_parser.add_equal_zero_jump() # if, else if, while
@@ -222,7 +223,7 @@ class Parser:
             self.state = ParserStates.STATEMENT
             self.current_function.body.append(InternalAlphabet.SCOPE_DECREMENT)
 
-            if popped_scope_type == ScopeTypes.IF:
+            if popped_scope_type == ScopeTypes.IF_OPENED:
                 self.state = ParserStates.STATEMENT_OR_ELSE
             elif popped_scope_type == ScopeTypes.FOR_BODY:
                 self.scope_type_stack.pop()
@@ -272,6 +273,7 @@ class Parser:
                 self.expression_parser.add_equal_zero_jump()
             self.current_function.body += self.expression_parser.retrieve_expression()
             self.current_function.body.append(InternalAlphabet.EXPRESSION_END)
+
             if self.for_counter == 1:
                 self.for_counter += 1
             elif self.for_counter == 2:
@@ -280,6 +282,7 @@ class Parser:
                 self.scope_type_stack[-1] = ScopeTypes.FOR_HEADER
             else:
                 self.state = ParserStates.STATEMENT
+
         elif ParserStates.SEMICOLON == self.state:
             self.state = ParserStates.STATEMENT
         elif ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:

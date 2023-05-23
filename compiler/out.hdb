@@ -1,0 +1,111 @@
+HDDB2
+0 disable interrupts
+1 set data memory access
+2 clear eax
+3 set UART to byte mode and to not generate interrupts
+4 init the stack pointer
+5 call main
+6 infinite loop after return from main
+7 return value, increase stack size to store the return value
+8 return value, store return address
+9 increase stack size for a variable
+10 stack frame, store base pointer
+11 stack frame, set base pointer
+12 stack frame, make space for local variables
+13 stack frame, increase stack size to store general purpose registers
+14 stack frame, store r1
+15 stack frame, store r2
+16 stack frame, store r3
+17 a = 72
+18 increase stack size for a variable
+19 push a
+20 call of putchar(.)
+21 a = 101
+22 increase stack size for a variable
+23 push a
+24 call of putchar(.)
+25 a = 108
+26 increase stack size for a variable
+27 push a
+28 call of putchar(.)
+29 a = 108
+30 increase stack size for a variable
+31 push a
+32 call of putchar(.)
+33 a = 111
+34 increase stack size for a variable
+35 push a
+36 call of putchar(.)
+37 a = 32
+38 increase stack size for a variable
+39 push a
+40 call of putchar(.)
+41 a = 119
+42 increase stack size for a variable
+43 push a
+44 call of putchar(.)
+45 a = 111
+46 increase stack size for a variable
+47 push a
+48 call of putchar(.)
+49 a = 114
+50 increase stack size for a variable
+51 push a
+52 call of putchar(.)
+53 a = 108
+54 increase stack size for a variable
+55 push a
+56 call of putchar(.)
+57 a = 100
+58 increase stack size for a variable
+59 push a
+60 call of putchar(.)
+61 a = 33
+62 increase stack size for a variable
+63 push a
+64 call of putchar(.)
+65 a = 10
+66 increase stack size for a variable
+67 push a
+68 call of putchar(.)
+69 store a
+70 load constant
+71 jump when not 1
+72 call of getchar()
+73 b = getchar()
+74 increase stack size for a variable
+75 push b
+76 call of putchar(.)
+77 b = putchar(.)
+78 store b
+80 load constant
+81 return 0
+82 stack frame, restore r3
+83 stack frame, restore r2
+84 stack frame, restore r1
+85 stack frame, clear stack from general purpose registers
+86 stack frame, restore stack pointer
+87 stack frame, restore base pointer
+88 clear a variable from the stack
+89 return value, load return value from stack
+90 decrease stack size by the number of parameters + the return value
+91 clean 0 function parameters from the stack and return
+92 load the status of the UART
+93 check if any data are available
+94 loop if data are not available
+95 read a value from the UART
+96 return
+97 load the status of the UART
+98 check if transmit buffer is full
+99 loop if transmit buffer is full
+100 pop the value from stack
+101 clear a variable from the stack
+102 write the value to the UART
+103 return
+@LABEL@ 0 __init
+@LABEL@ 6 __init:idle
+@LABEL@ 7 main
+@LABEL@ 70 main:main__while_0_start
+@LABEL@ 80 main:main__while_0_end
+@LABEL@ 92 getchar:getchar__no_data
+@LABEL@ 97 putchar:putchar__buffer_full
