@@ -8,7 +8,8 @@ from constructs import FunctionCall, IntermediateResult, ReturnValue, Variable, 
 class ExpressionParserStates(Enum):
     UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET = 1
     BINARY_OPERATOR_OR_CLOSED_BRACKET = 2
-    FUNCTION_CALL = 3
+    BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET = 3
+    FUNCTION_CALL = 4
 
 UNARY_OPERATORS = [
     Operators.LOGICAL_NOT,
@@ -79,6 +80,7 @@ class ExpressionParser:
         self.state = ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET
         self.current_precedence = -1
         self.bracket_stack: tuple = []
+        self.squared_bracket_stack: tuple = []
         self.expression = []
         self.operand_stack: list[Variable|IntermediateResult|Constant] = []
         self.operator_stack: list[Operators] = []
@@ -94,7 +96,10 @@ class ExpressionParser:
         self.identifiers = False
     
     def add_assignment(self):
-        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state:
+        if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or 
+            ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state):
+            if len(self.expression) and self.expression[-1] == Operators.OFFSET_DEREFERENCE:
+                self.expression[-1] = Operators.ASSIGNMENT_OFFSET_DEREFERENCE
             self._pop_stacks_insert_expression(self.operator_precedence[Operators.ASSIGNMENT])
             self.operator_stack.append(Operators.ASSIGNMENT)
             self.current_precedence = self.operator_precedence[Operators.ASSIGNMENT]
@@ -107,7 +112,7 @@ class ExpressionParser:
             variable = self.variable_table.find(operand)
             if variable:
                 self.operand_stack.append(variable)
-                self.state = ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET
+                self.state = ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET
             else:
                 self.state = ExpressionParserStates.FUNCTION_CALL
                 self.new_function_call = FunctionCall(name=operand)
@@ -135,7 +140,8 @@ class ExpressionParser:
 
         precedence = self.operator_precedence[operator]
         if (operator in UNARY_OPERATORS and ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state or
-            operator in BINARY_OPERATORS and ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state):
+            operator in BINARY_OPERATORS and (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or
+                                              ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state)):
             self.state = ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET if operator in BINARY_OPERATORS else self.state
             self._pop_stacks_insert_expression(precedence)
             self.operator_stack.append(operator)
@@ -159,7 +165,8 @@ class ExpressionParser:
             raise Exception()
 
     def add_closed_bracket(self):
-        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state:
+        if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or 
+            ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state):
             self._pop_stacks_insert_expression(-1)
             if len(self.bracket_stack) > 0 and len(self.operand_stack) == 1:
                 if self.current_function_call:
@@ -186,9 +193,47 @@ class ExpressionParser:
             self.operand_stack.append(return_value)
         else:
             raise Exception()
+    
+    def add_opened_square_bracket(self):
+        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state:
+            self.squared_bracket_stack.append((self.current_precedence, self.operator_stack, self.operand_stack, 
+                                               self.current_function_call, len(self.bracket_stack)))
+            self.operator_stack = []
+            self.operand_stack = []
+            self.current_precedence = -1
+            self.current_function_call = None
+            self.state = ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET
+        else:
+            raise Exception()
+
+    def add_closed_square_bracket(self):
+        if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or 
+            ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state):
+            self._pop_stacks_insert_expression(-1)
+            scope_result = self.operand_stack.pop()
+            (self.current_precedence, self.operator_stack, 
+             self.operand_stack, self.current_function_call, 
+             saved_opened_bracket_count) = self.squared_bracket_stack.pop()
+            
+            if len(self.bracket_stack) != saved_opened_bracket_count:
+                raise Exception()
+            
+            index_variable = self.operand_stack.pop()
+            self.expression.append(index_variable)
+            self.expression.append(scope_result)
+            self.expression.append(Operators.OFFSET_DEREFERENCE)
+
+            self.operand_stack.append(IntermediateResult(self.intermediate_result_counter))
+            self.intermediate_result_counter += 1
+
+            self.state = ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET
+        else:
+            raise Exception()
+
 
     def add_semicolon(self):
-        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET:
+        if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET or 
+            ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state):
             self._pop_stacks_insert_expression(-1)
             if len(self.operand_stack) and not len(self.operator_stack) and isinstance(self.operand_stack[-1], ReturnValue):
                 self.expression.append(self.operand_stack.pop())
@@ -196,7 +241,8 @@ class ExpressionParser:
             raise Exception()
     
     def add_comma(self):
-        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and self.current_function_call:
+        if (self.current_function_call and (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or
+                                            ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state)):
             self._pop_stacks_insert_expression(-1)
             self.current_function_call.add_parameter()
             self.operand_stack.pop()
@@ -208,16 +254,16 @@ class ExpressionParser:
             raise Exception()
     
     def is_expression_valid(self) -> bool:
-        return (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and 
-            self.current_precedence == -1 and len(self.operator_stack) == 0 and len(self.bracket_stack) == 0)
+        return ((ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or 
+                 ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state) and 
+                self.current_precedence == -1 and len(self.operator_stack) == 0 and len(self.bracket_stack) == 0)
     
     def add_equal_zero_jump(self):
         self.expression.append(self.operand_stack.pop())
         self.expression.append(InternalAlphabet.EQUAL_ZERO_JUMP)
     
     def retrieve_expression(self) -> list:
-        if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state and 
-            self.current_precedence == -1 and len(self.operator_stack) == 0 and len(self.bracket_stack) == 0):
+        if self.is_expression_valid():
             if len(self.operand_stack) and (isinstance(self.operand_stack[-1], Variable) or isinstance(self.operand_stack[-1], Constant)):
                 self.expression.append(self.operand_stack.pop())
             expression = self.expression

@@ -142,6 +142,8 @@ class Operators(Enum):
     UNARY_MINUS = "U-"
     DEREFERENCE = "U*"
     ASSIGNMENT_DEREFERENCE = "U*="
+    OFFSET_DEREFERENCE = "[]"
+    OFFSET_ASSIGNMENT_DEREFERENCE = "[]="
 
     MULTIPLY = "*"                      # precedence 10
 
@@ -176,7 +178,7 @@ class Operators(Enum):
     PARAMETER_POSSIBLE_ASSIGNMENT = "?="
 
     def to_high_assembly_instruction(self) -> HighAssemblyInstructions:
-        if self == Operators.PLUS or self == Operators.UNARY_PLUS:
+        if self == Operators.PLUS or self == Operators.UNARY_PLUS or self == Operators.OFFSET_DEREFERENCE:
             return HighAssemblyInstructions.ADD
         elif self == Operators.MINUS:
             return HighAssemblyInstructions.SUB

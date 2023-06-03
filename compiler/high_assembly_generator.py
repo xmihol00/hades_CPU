@@ -42,6 +42,7 @@ BOTH_OPERAND_OPERATORS = [
     Operators.LOGICAL_AND,
     Operators.LOGICAL_OR,
     Operators.ASSIGNMENT,
+    Operators.OFFSET_DEREFERENCE,
 ]
 
 INTERMEDIATE_RESULT_OPERATORS = [
@@ -69,6 +70,7 @@ INTERMEDIATE_RESULT_OPERATORS = [
     Operators.UNARY_MINUS,
     Operators.DEREFERENCE,
     Operators.ASSIGNMENT_DEREFERENCE,
+    Operators.OFFSET_DEREFERENCE,
 ]
 
 class HighAssemblyGenerator():
@@ -210,9 +212,17 @@ class HighAssemblyGenerator():
                                         f"{result_register.name} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
             elif command in BOTH_OPERAND_OPERATORS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} {self.register_names[1]}",
-                                        f"{result_register.name} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
-                self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                if command == Operators.OFFSET_DEREFERENCE:
+                    self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} {self.register_names[1]}",
+                                            f"{result_register.name} = {function.body[i - 2].comment} + {function.body[i - 1].comment}")
+                    self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {result_register.name} [{result_register.name}]",
+                                            f"{result_register.name} = {function.body[i - 2].comment}[{function.body[i - 1].comment}]")
+                    self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment}[{function.body[i - 1].comment}]")
+                else:
+                    self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} {self.register_names[1]}",
+                                            f"{result_register.name} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                    self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                    
             elif command in INDIRECT_MEMORY_OPERATORS:
                 if command == Operators.ASSIGNMENT_DEREFERENCE:
                     self.register_file.written_intermediate_result(result_register, self.registers[0])

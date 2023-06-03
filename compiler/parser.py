@@ -240,12 +240,16 @@ class Parser:
         if ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON == self.state:
             self.state = ParserStates.MEMORY_SIZE_CONSTANT
             self.current_variable.type = Types.PTR
+        elif ParserStates.EXPRESSION == self.state:
+            self.expression_parser.add_opened_square_bracket()
         else:
             raise Exception()
 
     def closed_square_bracket(self, _: str):
         if ParserStates.CLOSED_SQUARED_BRACKET == self.state:
             self.state = ParserStates.SEMICOLON
+        elif ParserStates.EXPRESSION == self.state:
+            self.expression_parser.add_closed_square_bracket()
         else:
             raise Exception()
         
