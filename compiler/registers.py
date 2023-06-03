@@ -1,5 +1,5 @@
 from typing import Callable
-from enums import RegisterStates, HighAssemblyInstructions
+from enums import RegisterStates, HighAssemblyInstructions, Types
 from constructs import Construct, Function, Variable, Constant, IntermediateResult, ReturnValue
 from writer import Writer
 
@@ -11,7 +11,7 @@ class Register():
         self.usage = 0
         self.written = False
     
-    def populate(self, value: Variable|Constant|int, usage: int):
+    def populate(self, value: Variable|Constant|IntermediateResult, usage: int):
         self.value = value
         self.usage = usage
         self.state = RegisterStates.USED
@@ -43,7 +43,7 @@ class RegisterFile():
         self.register_string = ", ".join([register.name for register in self.registers][:-1]) + " and " + self.registers[-1].name
         self.register_string_reversed = ", ".join([register.name for register in reversed(self.registers[1:])]) + " and " + self.registers[0].name
 
-    def load_operand(self, operand: Variable|Constant|IntermediateResult, with_value = True) -> str:
+    def load_operand(self, operand: Variable|Constant|IntermediateResult, with_value = True) -> Register:
         if isinstance(operand, Constant) or isinstance(operand, Variable):
             already_loaded_registers = list(filter(lambda register: register.value == operand, self.registers))
             if len(already_loaded_registers) > 0:
@@ -57,19 +57,26 @@ class RegisterFile():
                 self.usage_counter += 1
             
                 if isinstance(operand, Constant):
-                    self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {operand.value}", f"load constant")
+                    self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {operand.value}", f"{register.name} = {operand.value}")
                 elif isinstance(operand, Variable) and with_value:
                     if operand.stack_offset:
-                        self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} [{self.EBP.name}{operand.stack_offset:+}]", f"load {operand.name}")
+                        if operand.type == Types.INT:
+                            self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} [{self.EBP.name}{operand.stack_offset:+}]", f"{register.name} = {operand.name}")
+                        elif operand.type == Types.PTR:
+                            self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {self.EBP.name}", f"get base address of {operand.name}")
+                            self.writer.instruction(f"{HighAssemblyInstructions.ADD} {register.name} {register.name} {operand.stack_offset}", f"add stack offset of {operand.name}")
                     else:
-                        self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} {operand.label}", f"load {operand.name}")
+                        if operand.type == Types.INT:
+                            self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} {operand.label}", f"{register.name} = {operand.name}")
+                        elif operand.type == Types.PTR:
+                            self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {operand.label}", f"{register.name} = &{operand.name}")
 
             self.used_registers_in_instruction.append(register)
             self.last_assigned_register = register
-            return register.name
+            return register
               
         elif isinstance(operand, IntermediateResult):
-            intermediate_registers = list(filter(lambda register: register.value == operand.number, self.registers))
+            intermediate_registers = list(filter(lambda register: isinstance(register.value, IntermediateResult) and register.value.number == operand.number, self.registers))
             if len(intermediate_registers) == 0:
                 register = self._free_or_empty_register()
                 if register is None:
@@ -83,9 +90,9 @@ class RegisterFile():
             
             self.used_registers_in_instruction.append(register)
             self.last_assigned_register = register
-            return register.name
+            return register
 
-    def get_return_value(self, function: Function, next_function_call: bool = False) -> str:
+    def get_return_value(self, function: Function, next_function_call: bool = False) -> Register:
         if next_function_call: # two functions are called in a singe instruction, first result must be stored in EDX
             self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EDX.name} {self.EAX.name}", f"{function.name}(...) return value temporary stored")
             return_register = self.EDX
@@ -93,23 +100,28 @@ class RegisterFile():
             return_register = self.EAX
         
         self.last_assigned_register = return_register
-        return return_register.name
+        return return_register
     
-    def get_for_intermediate_result(self) -> str:
+    def get_for_intermediate_result(self) -> Register:
         for register in self.used_registers_in_instruction: # allow registers used in last instruction to be used again
-            register.clear()
+            if not isinstance(register.value, IntermediateResult) or not register.value.address_register:
+                register.clear()
         self.used_registers_in_instruction = []
 
         register = self._free_or_empty_register()
         if register is None: # no empty register, some must be pushed to the stack
             register = self._push_least_recently_used()
-                        
-        register.populate(self.intermediate_results_counter, self.usage_counter)
+        
+        intermediate_result = IntermediateResult(self.intermediate_results_counter)
+        register.populate(intermediate_result, self.usage_counter)
         self.intermediate_results_counter += 1
         self.usage_counter += 1
 
         self.last_assigned_register = register
-        return register.name
+        return register
+    
+    def written_intermediate_result(self, intermediate_result_register: Register, address_register: Register):
+        intermediate_result_register.value.address_register = address_register
     
     def write_register(self, register_name: str):
         register = list(filter(lambda register: register.name == register_name, self.registers))[0]
@@ -123,19 +135,21 @@ class RegisterFile():
     def expression_end(self):
         self.intermediate_results_counter = 0
         for register in self.registers:
-            if isinstance(register.value, int): # invalidate all intermediate results
+            if isinstance(register.value, IntermediateResult): # invalidate all intermediate results
+                if register.value.address_register:
+                    self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{register.value.address_register.name}] {register.name}", f"store *{register.value.address_register.value.name}") 
                 register.empty()
     
     def assign_return_register(self, intermediate_result_lookup: Callable[[int], IntermediateResult]):
         # if-elif is here just to print a comment in the assembly code, it does not affect the code itself
-        if isinstance(self.last_assigned_register.value, Construct):
-            return_comment = f"return {self.last_assigned_register.value.comment}"
-        elif isinstance(self.last_assigned_register.value, int):
-            intermediate_result = intermediate_result_lookup(self.last_assigned_register.value)
+        if isinstance(self.last_assigned_register.value, IntermediateResult):
+            intermediate_result = intermediate_result_lookup(self.last_assigned_register.value.number)
             if intermediate_result:
                 return_comment = f"return {intermediate_result.comment}"
             else:
                 return_comment = f"return {self.last_assigned_register.name}"
+        elif isinstance(self.last_assigned_register.value, Construct):
+            return_comment = f"return {self.last_assigned_register.value.comment}"
         
         if self.last_assigned_register.name == self.EAX.name:
             self.writer.comment("return value already in EAX")

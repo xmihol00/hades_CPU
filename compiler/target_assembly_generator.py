@@ -180,7 +180,10 @@ idle:
         self.writer.instruction(f"{TargetAssemblyInstructions.ADDI} {TargetAssemblyRegisters.ESP}, #3", "stack frame, clear stack from general purpose registers")
 
     def handle_memory_load(self, matches: tuple[str]):
-        self.writer.instruction(f"{TargetAssemblyInstructions.LOAD} {self.register_map[matches[0]]}, {self.register_map[matches[1]]}, #{matches[2] if matches[2] == '-' else ''}{matches[3]}", matches[5])
+        matches = list(matches[:6])
+        matches[2] = matches[2] if matches[2] == '-' else ''
+        matches[3] = matches[3] if matches[3] else 0
+        self.writer.instruction(f"{TargetAssemblyInstructions.LOAD} {self.register_map[matches[0]]}, {self.register_map[matches[1]]}, #{matches[2]}{matches[3]}", matches[5])
 
     def handle_global_variable_load(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.LOAD} {self.register_map[matches[0]]}, {TargetAssemblyRegisters.R0}, *d*{matches[1]}", matches[3])
@@ -192,6 +195,9 @@ idle:
         self.writer.instruction(f"{TargetAssemblyInstructions.MOV} {self.register_map[matches[1]]}, {self.register_map[matches[0]]}", matches[3])
 
     def handle_memory_store(self, matches: tuple[str]):
+        matches = list(matches[:6])
+        matches[1] = matches[1] if matches[1] == '-' else ''
+        matches[2] = matches[2] if matches[2] else 0
         self.writer.instruction(f"{TargetAssemblyInstructions.STORE} {self.register_map[matches[3]]}, {self.register_map[matches[0]]}, #{matches[1] if matches[1] == '-' else ''}{matches[2]}", matches[5])
 
     def handle_global_variable_store(self, matches: tuple[str]):

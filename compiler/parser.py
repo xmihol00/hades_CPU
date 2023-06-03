@@ -19,7 +19,7 @@ class ParserStates(Enum):
     FUNCTION_BODY_OPENED = 8
     STATEMENT = 9
     VARIABLE_NAME = 10
-    VARIABLE_ASSIGNMENT_OR_SEMICOLON = 11
+    VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON = 11
     EXPRESSION = 12
     EXPRESSION_BRACKET_START = 13
     OPENED_CURLY_BRACKET = 14
@@ -27,6 +27,8 @@ class ParserStates(Enum):
     IF_OR_OPENED_CURLY_BRACKET = 16
     FOR_OPENED_BRACKET = 17
     SEMICOLON = 18
+    MEMORY_SIZE_CONSTANT = 19
+    CLOSED_SQUARED_BRACKET = 20
     
 class Parser:
     def __init__(self, function_declaration_table: FunctionDeclarationTable, function_call_table: FunctionCallTable, 
@@ -43,6 +45,8 @@ class Parser:
             Tokens.CLOSED_BRACKET: self.closed_bracket,
             Tokens.OPENED_CURLY_BRACKET: self.opened_curly_bracket,
             Tokens.CLOSED_CURLY_BRACKET: self.closed_curly_bracket,
+            Tokens.OPENED_SQUARE_BRACKET: self.opened_square_bracket,
+            Tokens.CLOSED_SQUARE_BRACKET: self.closed_square_bracket,
             Tokens.INTEGER: self.integer,
             Tokens.BOOLEAN: self.boolean,
             Tokens.ASSIGNMENT: self.assignment,
@@ -90,7 +94,7 @@ class Parser:
             self.current_function.add_parameter(Variable(value))
         elif ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state:
             self.state = ParserStates.VARIABLE_NAME
-            self.variable_offset -= 1
+            self.variable_offset -= self.current_variable.stack_size if self.current_variable else 1
             self.current_variable = Variable(value, self.variable_offset)
         else:
             raise Exception()
@@ -137,9 +141,10 @@ class Parser:
             self.current_function.parameters[-1].set_name(value)
             self.variable_table.add(self.current_function.parameters[-1])
         elif ParserStates.VARIABLE_NAME == self.state:
-            self.state = ParserStates.VARIABLE_ASSIGNMENT_OR_SEMICOLON
+            self.state = ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON
             self.current_variable.set_name(value)
             self.variable_table.add(self.current_variable)
+            self.current_function.add_variable(self.current_variable)
             self.expression_parser.add_identifier_operand(self.current_variable.name)
         elif ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_identifier_operand(value)
@@ -229,43 +234,65 @@ class Parser:
                 self.scope_type_stack.pop()
                 self.variable_table.decrease_scope()
                 self.current_function.body.append(InternalAlphabet.SCOPE_DECREMENT)
+    
+    def opened_square_bracket(self, _: str):
+        if ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON == self.state:
+            self.state = ParserStates.MEMORY_SIZE_CONSTANT
+            self.current_variable.type = Types.PTR
+        else:
+            raise Exception()
+
+    def closed_square_bracket(self, _: str):
+        if ParserStates.CLOSED_SQUARED_BRACKET == self.state:
+            self.state = ParserStates.SEMICOLON
+        else:
+            raise Exception()
         
     def integer(self, value: str):
         value = int(value)
         if ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_constant_operand(Types.INT, value)
+        elif ParserStates.MEMORY_SIZE_CONSTANT == self.state:
+            self.state = ParserStates.CLOSED_SQUARED_BRACKET
+            self.current_variable.set_stack_size(value)
         else:
             raise Exception()
 
     def boolean(self, value: str):
-        pass
+        if value == "true":
+            self.integer("1")
+        elif value == "false":
+            self.integer("0")
 
     def assignment(self, _: str):
-        if ParserStates.VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
+        if ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON == self.state:
             self.state = ParserStates.EXPRESSION
             self.current_variable.set_usage(VariableUsage.DECLARATION_WITH_ASSIGNMENT)
-            self.current_variable = None
         elif ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
             self.current_variable = Variable(self.global_variable_or_function_type, None, self.global_variable_or_function_name)
             self.variable_table.add(self.current_variable)
+            self.current_function.add_variable(self.current_variable)
             self.global_assignment_mode = True
             return
-        elif ParserStates.EXPRESSION != self.state:
+        elif ParserStates.EXPRESSION == self.state:
+            self.expression_parser.add_assignment()
+        else:
             raise Exception()
 
-        self.expression_parser.add_assignment()
 
     def operator(self, value: str):
         if ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_operator(value)
+        elif ParserStates.STATEMENT == self.state and value == '*': # dereference
+            self.expression_parser.add_operator(Operators.ASSIGNMENT_DEREFERENCE.value)
+            self.state = ParserStates.EXPRESSION
         else:
             raise Exception()
 
     def semicolon(self, _: str):
-        if ParserStates.VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
+        if ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON == self.state:
             self.current_variable.set_usage(VariableUsage.DECLARATION)
             self.expression_parser.retrieve_expression()
-            self.current_variable = None
             self.state = ParserStates.STATEMENT
         elif ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_semicolon()
@@ -285,16 +312,18 @@ class Parser:
 
         elif ParserStates.SEMICOLON == self.state:
             self.state = ParserStates.STATEMENT
+            self.expression_parser.retrieve_expression()
         elif ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
             self.state = ParserStates.FUNCTION_RETURN_TYPE_OR_GLOBAL_VARIABLE_TYPE
-            self.variable_table.add(Variable(self.global_variable_or_function_type, None, self.global_variable_or_function_name, VariableUsage.DECLARATION))
+            variable = Variable(self.global_variable_or_function_type, None, self.global_variable_or_function_name, VariableUsage.DECLARATION)
+            self.variable_table.add(variable)
+            self.current_function.add_variable(variable)
         else:
             raise Exception()
     
     def comma(self, _: str):
         if ParserStates.FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET == self.state:
             self.state = ParserStates.FUNCTION_PARAMETER_TYPE
-            self.current_variable = None
         elif ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_comma()
         else:
@@ -310,7 +339,6 @@ class Parser:
             self.state = ParserStates.FUNCTION_RETURN_TYPE_OR_GLOBAL_VARIABLE_TYPE
             self.global_assignment_mode = False
             self.current_variable.set_label(f"@{self.current_variable.name}")
-            self.current_variable = None
         elif Tokens.CLOSED_BRACKET == token or Tokens.OPENED_BRACKET == token or Tokens.INTEGER == token or Tokens.OPERATOR == token:
             self.global_assignment_string += value
         else:

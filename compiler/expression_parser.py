@@ -15,7 +15,8 @@ UNARY_OPERATORS = [
     Operators.BITWISE_NOT,
     Operators.UNARY_PLUS,
     Operators.UNARY_MINUS,
-    Operators.DEREFERENCE
+    Operators.DEREFERENCE,
+    Operators.ASSIGNMENT_DEREFERENCE
 ]
 
 BINARY_OPERATORS = [
@@ -50,6 +51,7 @@ class ExpressionParser:
             Operators.UNARY_PLUS: 11,
             Operators.UNARY_MINUS: 11,
             Operators.DEREFERENCE: 11,
+            Operators.ASSIGNMENT_DEREFERENCE: 11,
             Operators.MULTIPLY: 10,
             Operators.PLUS: 9,
             Operators.MINUS: 9,
@@ -92,7 +94,8 @@ class ExpressionParser:
         self.identifiers = False
     
     def add_assignment(self):
-        if len(self.operand_stack) == 1 and len(self.operator_stack) == 0 and len(self.expression) == 0:
+        if ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state:
+            self._pop_stacks_insert_expression(self.operator_precedence[Operators.ASSIGNMENT])
             self.operator_stack.append(Operators.ASSIGNMENT)
             self.current_precedence = self.operator_precedence[Operators.ASSIGNMENT]
             self.state = ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET

@@ -3,7 +3,7 @@ import re
 
 class FunctionDeclarationTable():
     def __init__(self):
-        self.functions = {}
+        self.functions: list[Function] = {}
     
     def add(self, function: Function):
         if function.name in self.functions:

@@ -17,6 +17,7 @@ class Variable(Construct):
         self.stack_offset = stack_offset
         self.label = label
         self.global_scope = False
+        self.stack_size = 1
     
     def set_usage(self, usage: VariableUsage):
         if self.type and usage == VariableUsage.ASSIGNMENT:
@@ -33,6 +34,14 @@ class Variable(Construct):
         if label:
             self.global_scope = True
     
+    def set_stack_size(self, stack_size: int|str):
+        if isinstance(stack_size, str):
+            self.stack_size = int(stack_size)
+        else:
+            self.stack_size = stack_size
+        
+        self.stack_offset -= self.stack_size - 1
+    
     def __str__(self) -> str:
         return f"{self.__class__.__name__}.{self.name}"
 
@@ -42,17 +51,26 @@ class Function(Construct):
         self.return_type = Types(return_type)
         self.name = name
         self.parameters: list[Variable] = []
+        self.variables: list[Variable] = []
         self.body: list[Variable|Constant|ReturnValue|IntermediateResult|InternalAlphabet|Types|Operators|Keywords] = []
         self.number_of_parameters = 0
     
     def assign_parameters_offset(self):
-        for i, parameter in enumerate(self.parameters):
-            parameter.stack_offset = self.number_of_parameters - i + 1
+        offset = 0
+        for parameter in self.parameters:
+            offset += parameter.stack_size
+            parameter.stack_offset = offset
     
     def add_parameter(self, parameter: Variable):
         self.parameters.append(parameter)
         self.number_of_parameters += 1
         self.comment = f"{self.name}({'.' * self.number_of_parameters})"
+
+    def add_variable(self, variable: Variable):
+        self.variables.append(variable)
+    
+    def stack_size(self):
+        return sum([variable.stack_size for variable in self.variables])
     
     def pretty_comment(self):
         return f"{self.return_type.value} {self.name}({', '.join([parameter.name for parameter in self.parameters])})"
@@ -88,6 +106,7 @@ class IntermediateResult(Construct):
     def __init__(self, number: int):
         super().__init__(f"intermediate_result_{number}")
         self.number = number
+        self.address_register = None
     
     def set_comment(self, comment: str):
         self.comment = f"({comment})"

@@ -7,17 +7,12 @@ class VariableTable():
         self.current_scope = None
         self.scope_ids: int = []
         self.current_scope_index = 0
-        self.scope_variable_counts: dict[str, int] = {}
-        self.current_scope_variable_counter = 0
     
     def increase_scope(self):
         if self.current_scope_index == len(self.scope_ids):
             self.scope_ids.append(0)
         else:
             self.scope_ids[self.current_scope_index] += 1
-
-        if self.current_scope_index == 1:
-            self.current_scope_variable_counter = 0
 
         self.current_scope_index += 1
         self.current_scope = {}
@@ -26,16 +21,12 @@ class VariableTable():
     def decrease_scope(self, function_name: str = None):
         self.scopes['_'.join(map(lambda x: str(x), self.scope_ids[:self.current_scope_index]))] = self.current_scope
         self.current_scope_index -= 1
-        if self.current_scope_index == 1 and function_name:
-            self.scope_variable_counts[function_name] = self.current_scope_variable_counter
-            self.current_scope_variable_counter = 0
         self.current_scope = self.scopes['_'.join(map(lambda x: str(x), self.scope_ids[:self.current_scope_index]))]
 
     def add(self, variable: Variable):
         if variable.name in self.current_scope:
             raise Exception(f"Variable {variable.name} already exists.")
         self.current_scope[variable.name] = variable
-        self.current_scope_variable_counter += 1
     
     def find(self, name: str) -> Variable:
         for i in range(self.current_scope_index, 0, -1):
@@ -58,9 +49,6 @@ class VariableTable():
         for i in range(len(self.scope_ids)):
             self.scope_ids[i] = 0
     
-    def number_of_variables_in_function(self, function_name: str) -> int:
-        return self.scope_variable_counts[function_name]
-
     def __str__(self) -> str:
         summary_string = ""
         indent = ""

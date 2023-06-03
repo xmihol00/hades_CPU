@@ -2,7 +2,7 @@ from global_expressions import GlobalExpressions
 from writer import Writer
 from enums import InternalAlphabet, Keywords, Operators, HighAssemblyInstructions, Types
 from constructs import Function, IntermediateResult, ReturnValue, Variable, Constant
-from registers import RegisterFile
+from registers import Register, RegisterFile
 from function_declaration_table import FunctionDeclarationTable
 from variable_table import VariableTable
 
@@ -14,7 +14,8 @@ FIRST_OPERAND_OPERATORS = [
 ]
 
 INDIRECT_MEMORY_OPERATORS = [
-    Operators.DEREFERENCE
+    Operators.DEREFERENCE,
+    Operators.ASSIGNMENT_DEREFERENCE
 ]
 
 SPECIAL_OPERATORS = [
@@ -67,6 +68,7 @@ INTERMEDIATE_RESULT_OPERATORS = [
     Operators.UNARY_PLUS,
     Operators.UNARY_MINUS,
     Operators.DEREFERENCE,
+    Operators.ASSIGNMENT_DEREFERENCE,
 ]
 
 class HighAssemblyGenerator():
@@ -80,7 +82,8 @@ class HighAssemblyGenerator():
 
         # state variables
         self.register_index = 0
-        self.registers = ["", ""]
+        self.registers: list[Register] = [None, None]
+        self.register_names: list[str] = [None, None]
         self.return_expression = False
         self.intermediate_result_counter = 0
         self.scope_index = -1
@@ -106,14 +109,16 @@ class HighAssemblyGenerator():
         self.writer.new_line()
 
         for function in self.function_declaration_table.functions.values():
+            function: Function = function
             self.writer.label(f"${function.name}", f"{function.pretty_comment()}")
-            self.register_file.create_stack_frame(self.variable_table.number_of_variables_in_function(function.name) - function.number_of_parameters)
+            self.register_file.create_stack_frame(function.stack_size())
             self._generate_function(function)
             self.writer.new_line()
 
             # reset state
             self.register_index = 0
-            self.registers = ["", ""]
+            self.registers = [None, None]
+            self.register_names = [None, None]
             self.return_expression = False
             self.intermediate_result_counter = 0
             self.scope_index = -1
@@ -177,20 +182,23 @@ class HighAssemblyGenerator():
 
     def _handle_variable_or_intermediate_result(self, command: Variable|IntermediateResult, function: Function, i: int):
         self.registers[self.register_index] = self.register_file.load_operand(command, function.body[i + 2] != Operators.ASSIGNMENT)
+        self.register_names[self.register_index] = self.registers[self.register_index].name
         self.register_index += 1
 
     def _handle_constant(self, command: Constant, function: Function, i: int):
         if function.body[i + 1] == Operators.PARAMETER_ASSIGNMENT:
-            self.registers[self.register_index] = command.value
+            self.register_names[self.register_index] = command.value
         elif self.register_index == 0:
             self.registers[self.register_index] = self.register_file.load_operand(command)
+            self.register_names[self.register_index] = self.registers[self.register_index].name
         else:
-            self.registers[self.register_index] = command.value
+            self.register_names[self.register_index] = command.value
         self.register_index += 1
 
     def _handle_return_value(self, command: ReturnValue, function: Function, i: int):
         self.writer.instruction(f"{HighAssemblyInstructions.CALL} {command.function.name}", command.function.comment)
         self.registers[self.register_index] = self.register_file.get_return_value(command.function, isinstance(function.body[i + 1], ReturnValue))
+        self.register_names[self.register_index] = self.registers[self.register_index].name
         self.register_index += 1
 
     def _handle_operator(self, command: Operators, function: Function, i: int):
@@ -198,31 +206,34 @@ class HighAssemblyGenerator():
         if command in INTERMEDIATE_RESULT_OPERATORS:
             result_register = self.register_file.get_for_intermediate_result()
             if command in FIRST_OPERAND_OPERATORS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]}", 
-                                        f"{result_register} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]}", 
+                                        f"{result_register.name} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
             elif command in BOTH_OPERAND_OPERATORS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]} {self.registers[1]}",
-                                        f"{result_register} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} {self.register_names[1]}",
+                                        f"{result_register.name} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
             elif command in INDIRECT_MEMORY_OPERATORS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} [{self.registers[0]}]", 
-                                        f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
+                if command == Operators.ASSIGNMENT_DEREFERENCE:
+                    self.register_file.written_intermediate_result(result_register, self.registers[0])
+                    command = Operators.DEREFERENCE
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} [{self.register_names[0]}]", 
+                                        f"{result_register.name} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
                 self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
             elif command == Operators.UNARY_PLUS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register} {self.registers[0]} 0", 
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} 0", 
                                         f"{command.value.replace('U', '')}{function.body[i - 1].comment} - dummy")
                 self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment} - dummy")
             self.intermediate_result_counter += 1
         else:
             self.register_file.clear_last_instruction()
             if command in FIRST_OPERAND_OPERATORS: # currently only PUSH
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.registers[0]}", f"push {function.body[i - 1].comment}")
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]}", f"push {function.body[i - 1].comment}")
             elif command in BOTH_OPERAND_OPERATORS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.registers[0]} {self.registers[1]}",
+                self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]} {self.register_names[1]}",
                                         f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                 if command == Operators.ASSIGNMENT:
-                    self.register_file.write_register(self.registers[0])
+                    self.register_file.write_register(self.register_names[0])
 
         self.register_index = 0
 
@@ -251,9 +262,20 @@ class HighAssemblyGenerator():
             self.register_index = 0
 
         elif command == InternalAlphabet.EQUAL_ZERO_JUMP:
-            self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.registers[0]} {self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_{'end' if self.current_jump_statement == Keywords.WHILE or self.current_jump_statement == Keywords.FOR else 'skip'}", 
-                                    f"jump when not {function.body[i - 1].comment}")
-            self.writer.comment(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)} body")
+            if self.current_jump_statement == Keywords.IF or self.current_jump_statement == Keywords.ELSE_IF or self.current_jump_statement == Keywords.ELSE:
+                self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_names[0]} {self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_{'end' if self.current_jump_statement == Keywords.WHILE or self.current_jump_statement == Keywords.FOR else 'skip'}", 
+                                        f"jump when not {function.body[i - 1].comment}")
+                self.writer.comment(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)} body")
+            elif self.current_jump_statement == Keywords.WHILE:
+                self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_names[0]} {self.current_jump_statement.to_label(function.name, self.while_scope_ids, self.scope_index)}_end", 
+                                        f"jump when not {function.body[i - 1].comment}")
+                self.writer.comment(f"{self.current_jump_statement.to_label(function.name, self.while_scope_ids, self.scope_index)} body")
+            elif self.current_jump_statement == Keywords.FOR:
+                self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_names[0]} {self.current_jump_statement.to_label(function.name, self.for_scope_ids, self.scope_index)}_end", 
+                                        f"jump when not {function.body[i - 1].comment}")
+                self.writer.comment(f"{self.current_jump_statement.to_label(function.name, self.for_scope_ids, self.scope_index)} body")
+            else:
+                raise Exception("Unknown jump statement")
 
         elif command == InternalAlphabet.SCOPE_INCREMENT:
             if not self.for_part1 and self.current_jump_statement: # no increment for first 'for' statement or empty statements

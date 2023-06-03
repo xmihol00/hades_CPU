@@ -8,12 +8,14 @@ class Tokens(Enum):
     CLOSED_BRACKET = 5
     OPENED_CURLY_BRACKET = 6
     CLOSED_CURLY_BRACKET = 7
-    INTEGER = 8
-    BOOLEAN = 9
-    OPERATOR = 10
-    ASSIGNMENT = 11
-    SEMICOLON = 12
-    COMMA = 13
+    OPENED_SQUARE_BRACKET = 8
+    CLOSED_SQUARE_BRACKET = 9
+    INTEGER = 10
+    BOOLEAN = 11
+    OPERATOR = 12
+    ASSIGNMENT = 13
+    SEMICOLON = 14
+    COMMA = 15
 
 class Keywords(Enum):
     def __init__(self, value) -> None:
@@ -40,7 +42,7 @@ class Keywords(Enum):
 class Types(Enum):
     VOID = "void"
     INT = "int"
-    BOOLEAN = "bool"
+    PTR = "ptr"
 
 class HighAssemblyInstructions(Enum):
     LOAD = "LOAD"
@@ -90,8 +92,9 @@ class HighAssemblyInstructions(Enum):
             return r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"  # POPA            (3 group)
         elif self == HighAssemblyInstructions.LOAD:
             return (
-                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+\[([a-z_][a-z0-9_]*)(\+|\-)(\d+)\]\s*(;\s*(.*))*$)|" + # LOAD <register> <memory>          (7 groups)
-                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+@([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"                  # LOAD <register> <global variable> (5 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+\[([a-z_][a-z0-9_]*)"
+                    r"(?:(\+|\-)(\d+)){0,1}\]\s*(;\s*(.*))*$)|" +                                        # LOAD <register> <memory>          (7 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+@([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # LOAD <register> <global variable> (5 groups)
             )
         elif self == HighAssemblyInstructions.MOV:
             return (
@@ -100,8 +103,9 @@ class HighAssemblyInstructions(Enum):
             )
         elif self == HighAssemblyInstructions.STORE:
             return (
-                r"(^\s*" + self.value + r"\s+\[([a-z_][a-z0-9_]*)(\+|\-)(\d+)\]\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" + # LOAD <memory> <register>          (7 groups)
-                r"(^\s*" + self.value + r"\s+@([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"                  # LOAD <global variable> <register> (5 groups)
+                r"(^\s*" + self.value + r"\s+\[([a-z_][a-z0-9_]*)(?:(\+|\-)(\d+)){0,1}\]"
+                    r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" +                                         # STORE <memory> <register>          (7 groups)
+                r"(^\s*" + self.value + r"\s+@([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" # STORE <global variable> <register> (5 groups)
             )
         elif self == HighAssemblyInstructions.CALL:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # CALL <function label> (4 groups)
@@ -136,6 +140,7 @@ class Operators(Enum):
     UNARY_PLUS = "U+"
     UNARY_MINUS = "U-"
     DEREFERENCE = "U*"
+    ASSIGNMENT_DEREFERENCE = "U*="
 
     MULTIPLY = "*"                      # precedence 10
 
@@ -214,7 +219,7 @@ class Operators(Enum):
             return HighAssemblyInstructions.PUSH
         elif self == Operators.UNARY_MINUS:
             return HighAssemblyInstructions.NEG
-        elif self == Operators.DEREFERENCE:
+        elif self == Operators.DEREFERENCE or self == Operators.ASSIGNMENT_DEREFERENCE:
             return HighAssemblyInstructions.LOAD
         else:
             raise Exception(f"Operator {self} does not have a high assembly instruction.")
