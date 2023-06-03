@@ -52,7 +52,8 @@ class Parser:
             Tokens.ASSIGNMENT: self.assignment,
             Tokens.OPERATOR: self.operator,
             Tokens.SEMICOLON: self.semicolon,
-            Tokens.COMMA: self.comma
+            Tokens.COMMA: self.comma,
+            Tokens.CHARACTER: self.character,
         }
         self.state = ParserStates.FUNCTION_RETURN_TYPE_OR_GLOBAL_VARIABLE_TYPE
         self.scope_number = 0
@@ -264,10 +265,27 @@ class Parser:
         elif value == "false":
             self.integer("0")
 
+    def character(self, value: str):
+        if ParserStates.EXPRESSION == self.state:
+            if len(value) == 3:
+                character = ord(value[1])
+            elif len(value) == 5:
+                character = int(value[2:4])
+            elif len(value) == 6:
+                character = int(value[2:5])
+            elif value[2] in "0123456789":
+                character = int(value[2])
+            else:
+                character = ord(value[2])
+            self.expression_parser.add_constant_operand(Types.INT, character)
+        else:
+            raise Exception()
+
     def assignment(self, _: str):
         if ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON == self.state:
             self.state = ParserStates.EXPRESSION
             self.current_variable.set_usage(VariableUsage.DECLARATION_WITH_ASSIGNMENT)
+            self.expression_parser.add_assignment()
         elif ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
             self.current_variable = Variable(self.global_variable_or_function_type, None, self.global_variable_or_function_name)
             self.variable_table.add(self.current_variable)

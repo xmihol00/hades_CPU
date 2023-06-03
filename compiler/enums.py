@@ -16,6 +16,7 @@ class Tokens(Enum):
     ASSIGNMENT = 13
     SEMICOLON = 14
     COMMA = 15
+    CHARACTER = 16
 
 class Keywords(Enum):
     def __init__(self, value) -> None:

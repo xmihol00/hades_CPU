@@ -17,6 +17,7 @@ class Scanner:
             r"(=)|" +                                                               # assignment
             r"(;)|" +                                                               # semicolon
             r"(,)|" +                                                               # comma
+            r"('.'|'\\.'|'\\\d\d'|'\\\d\d\d')|" +                                   # character
             r"([^\s]*?)|"                                                           # not a whitespace
         )
         self.program = program
