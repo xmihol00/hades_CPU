@@ -3,8 +3,8 @@ int main()
 {
     int array[26];
     int tuple[3];
-    tuple[0] = 1;
-    tuple[1] = 2;
+    tuple[0] = true;
+    tuple[true] = 2;
     
     for (int i = 0; i < 26; i = i + 1)
     {

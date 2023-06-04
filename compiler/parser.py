@@ -41,6 +41,7 @@ class Parser:
         self.callback_table = { 
             Tokens.KEYWORD: self.keyword,
             Tokens.TYPE: self.type,
+            Tokens.BOOLEAN: self.boolean,
             Tokens.IDENTIFIER: self.identifier,
             Tokens.OPENED_BRACKET: self.opened_bracket,
             Tokens.CLOSED_BRACKET: self.closed_bracket,
@@ -49,7 +50,6 @@ class Parser:
             Tokens.OPENED_SQUARE_BRACKET: self.opened_square_bracket,
             Tokens.CLOSED_SQUARE_BRACKET: self.closed_square_bracket,
             Tokens.INTEGER: self.integer,
-            Tokens.BOOLEAN: self.boolean,
             Tokens.ASSIGNMENT: self.assignment,
             Tokens.OPERATOR: self.operator,
             Tokens.SEMICOLON: self.semicolon,
@@ -96,7 +96,7 @@ class Parser:
             self.current_function.add_parameter(Variable(value))
         elif ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state:
             self.state = ParserStates.VARIABLE_NAME
-            self.variable_offset -= self.current_variable.stack_size if self.current_variable else 1
+            self.variable_offset -= self.current_variable.stack_size if self.current_variable else 2
             self.current_variable = Variable(value, self.variable_offset)
         else:
             raise Exception()
@@ -150,7 +150,7 @@ class Parser:
             self.expression_parser.add_identifier_operand(self.current_variable.name)
         elif ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_identifier_operand(value)
-        elif ParserStates.STATEMENT == self.state:
+        elif ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state:
             self.state = ParserStates.EXPRESSION
             self.expression_parser.add_identifier_operand(value)
         else:
@@ -254,26 +254,27 @@ class Parser:
         else:
             raise Exception()
         
-    def integer(self, value: str):
-        value = int(value)
+    def integer(self, value: str|Constant):
+        if isinstance(value, str):
+            value = Constant(type=Types.INT, value=int(value), comment=value)
+
         if ParserStates.EXPRESSION == self.state:
-            self.expression_parser.add_constant_operand(Types.INT, value)
+            self.expression_parser.add_constant_operand(value)
         elif ParserStates.MEMORY_SIZE_CONSTANT == self.state:
             self.state = ParserStates.CLOSED_SQUARED_BRACKET
-            self.current_variable.set_stack_size(value)
+            self.current_variable.set_stack_size(value.value)
         else:
             raise Exception()
 
     def boolean(self, value: str):
-        if value == "true":
-            self.integer("1")
-        elif value == "false":
-            self.integer("0")
+        operand = Constant(type=Types.INT, value=int(value == "true"), comment=value)
+        self.integer(operand)
 
     def character(self, value: str):
         character = ord(ast.literal_eval(value))
         if ParserStates.EXPRESSION == self.state:
-            self.expression_parser.add_constant_operand(Types.INT, character)
+            operand = Constant(type=Types.INT, value=character, comment=value)
+            self.integer(operand)
         else:
             raise Exception()
 

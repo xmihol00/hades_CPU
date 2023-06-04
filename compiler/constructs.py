@@ -56,7 +56,7 @@ class Function(Construct):
         self.number_of_parameters = 0
     
     def assign_parameters_offset(self):
-        offset = 0
+        offset = 1
         for parameter in self.parameters:
             offset += parameter.stack_size
             parameter.stack_offset = offset
@@ -70,7 +70,7 @@ class Function(Construct):
         self.variables.append(variable)
     
     def stack_size(self):
-        return sum([variable.stack_size for variable in self.variables])
+        return sum([variable.stack_size for variable in self.variables]) + 1
     
     def pretty_comment(self):
         return f"{self.return_type.value} {self.name}({', '.join([parameter.name for parameter in self.parameters])})"
@@ -92,8 +92,9 @@ class FunctionCall(Construct):
         return f"{self.__class__.__name__}.{self.name}(...)"
 
 class Constant(Construct):
-    def __init__(self, type: str = None, value: int = None):
-        super().__init__(value)
+    def __init__(self, type: str = None, value: int = None, comment: str = None):
+        comment = comment if comment else value
+        super().__init__(comment) 
         self.type = None
         if type:
             self.type = Types(type)

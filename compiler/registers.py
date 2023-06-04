@@ -92,15 +92,20 @@ class RegisterFile():
             self.last_assigned_register = register
             return register
 
-    def get_return_value(self, function: Function, next_function_call: bool = False) -> Register:
+    def get_return_value(self, function: Function, next_function_call: bool = False) -> Register|None:
         if next_function_call: # two functions are called in a singe instruction, first result must be stored in EDX
-            self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EDX.name} {self.EAX.name}", f"{function.name}(...) return value temporary stored")
-            return_register = self.EDX
+            self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.EBP.name}-1] {self.EAX.name}", f"temporary storing {function.name}(...) return value")
+            return None
         else:
-            return_register = self.EAX
-        
-        self.last_assigned_register = return_register
-        return return_register
+            self.last_assigned_register = self.EAX
+            return self.EAX
+    
+    def resolve_register_names(self, register_names: list[str]):
+        for i, register_name in enumerate(register_names):
+            if register_name is None:
+                self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {self.EDX.name} [{self.EBP.name}-1]", f"loading temporary stored return value")
+                register_names[i] = self.EDX.name
+                return
     
     def get_for_intermediate_result(self) -> Register:
         for register in self.used_registers_in_instruction: # allow registers used in last instruction to be used again
@@ -160,7 +165,7 @@ class RegisterFile():
         self.writer.instruction(f"{HighAssemblyInstructions.PUSH} {self.EBP.name}", "stack frame, store base pointer")
         self.writer.instruction(f"{HighAssemblyInstructions.MOV} {self.EBP.name} {self.ESP.name}", "stack frame, set base pointer")
         if number_of_variables > 0: # space for local variables
-            self.writer.instruction(f"{HighAssemblyInstructions.SUB} {self.ESP.name} {self.ESP.name} {number_of_variables}", "stack frame, make space for local variables")
+            self.writer.instruction(f"{HighAssemblyInstructions.SUB} {self.ESP.name} {self.ESP.name} {number_of_variables}", "stack frame, space for local variables and temporary return value")
 
         self.writer.instruction(f"{HighAssemblyInstructions.PUSHA}", f"stack frame, push {self.register_string}")
     

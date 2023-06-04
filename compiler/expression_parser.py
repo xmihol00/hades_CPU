@@ -119,9 +119,8 @@ class ExpressionParser:
         else:
             raise Exception()
     
-    def add_constant_operand(self, type: Types, operand: str|bool|int):
+    def add_constant_operand(self, operand: Constant):
         if ExpressionParserStates.UNARY_OPERATOR_OR_OPERAND_OR_OPENED_BRACKET == self.state:
-            operand = Constant(type=type, value=operand)
             self.operand_stack.append(operand)
             self.state = ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET
         else:

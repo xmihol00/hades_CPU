@@ -204,10 +204,11 @@ class HighAssemblyGenerator():
     def _handle_return_value(self, command: ReturnValue, function: Function, i: int):
         self.writer.instruction(f"{HighAssemblyInstructions.CALL} {command.function.name}", command.function.comment)
         self.registers[self.register_index] = self.register_file.get_return_value(command.function, isinstance(function.body[i + 1], ReturnValue))
-        self.register_names[self.register_index] = self.registers[self.register_index].name
+        self.register_names[self.register_index] = self.registers[self.register_index].name if self.registers[self.register_index] else None
         self.register_index += 1
 
     def _handle_operator(self, command: Operators, function: Function, i: int):
+        self.register_file.resolve_register_names(self.register_names)
         # TODO: refactor - reduce duplicate code
         if command in INTERMEDIATE_RESULT_OPERATORS:
             result_register = self.register_file.get_for_intermediate_result()
@@ -284,6 +285,7 @@ class HighAssemblyGenerator():
             self.register_index = 0
 
         elif command == InternalAlphabet.EQUAL_ZERO_JUMP:
+            self.register_file.resolve_register_names(self.register_names)
             if self.current_jump_statement == Keywords.IF or self.current_jump_statement == Keywords.ELSE_IF or self.current_jump_statement == Keywords.ELSE:
                 self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_names[0]} {self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_{'end' if self.current_jump_statement == Keywords.WHILE or self.current_jump_statement == Keywords.FOR else 'skip'}", 
                                         f"jump when not {function.body[i - 1].comment}")
@@ -378,6 +380,7 @@ class HighAssemblyGenerator():
             self.current_jump_statement = Keywords.IF
             self.writer.new_line()
             self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter)} header")
+            self.register_file.store_written()
         elif command == Keywords.ELSE_IF:
             self.current_jump_statement = Keywords.ELSE_IF
             self.writer.comment(f"{command.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter)} header")
