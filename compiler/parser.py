@@ -7,6 +7,7 @@ from utils import ordinal
 from constructs import Constant, Function, Variable
 from enums import Operators, Types, VariableUsage, Tokens, InternalAlphabet, Keywords, ScopeTypes
 from expression_parser import ExpressionParser
+import ast
 
 class ParserStates(Enum):
     FUNCTION_RETURN_TYPE_OR_GLOBAL_VARIABLE_TYPE = 1
@@ -270,17 +271,8 @@ class Parser:
             self.integer("0")
 
     def character(self, value: str):
+        character = ord(ast.literal_eval(value))
         if ParserStates.EXPRESSION == self.state:
-            if len(value) == 3:
-                character = ord(value[1])
-            elif len(value) == 5:
-                character = int(value[2:4])
-            elif len(value) == 6:
-                character = int(value[2:5])
-            elif value[2] in "0123456789":
-                character = int(value[2])
-            else:
-                character = ord(value[2])
             self.expression_parser.add_constant_operand(Types.INT, character)
         else:
             raise Exception()

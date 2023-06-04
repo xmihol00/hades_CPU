@@ -17,7 +17,7 @@ class Scanner:
             r"(=)|" +                                                               # assignment
             r"(;)|" +                                                               # semicolon
             r"(,)|" +                                                               # comma
-            r"('.'|'\\.'|'\\\d\d'|'\\\d\d\d')|" +                                   # character
+            r"('.'|'\\.'|'\\[0-7]{1,3}'|'\\x[\da-fA-F]{2}')|" +                     # character
             r"([^\s]*?)|"                                                           # not a whitespace
         )
         self.program = program

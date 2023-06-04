@@ -25,8 +25,9 @@ int main()
 
     int a = 3;
     tuple[(tuple[1] - tuple[0]) * a] = '#'; 
-    putchar('\10');
+    putchar('\x0A');
     putchar(tuple[(tuple[1] - tuple[0]) * a]);
+    putchar('\n');
 
     return 0;
 }
