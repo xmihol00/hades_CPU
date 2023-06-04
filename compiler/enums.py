@@ -41,9 +41,9 @@ class Keywords(Enum):
             return f"{function_name}.{self.value}_{'_'.join(map(str, scope_ids[:scope_index + 1]))}"
 
 class Types(Enum):
-    VOID = "void"
     INT = "int"
     PTR = "ptr"
+    ARRAY = "array"
 
 class HighAssemblyInstructions(Enum):
     LOAD = "LOAD"

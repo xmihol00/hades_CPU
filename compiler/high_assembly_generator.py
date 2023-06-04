@@ -233,11 +233,13 @@ class HighAssemblyGenerator():
                     
             elif command in INDIRECT_MEMORY_OPERATORS:
                 if command == Operators.ASSIGNMENT_DEREFERENCE:
-                    self.register_file.written_intermediate_result(result_register, self.registers[0])
-                    command = Operators.DEREFERENCE
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} [{self.register_names[0]}]", 
-                                        f"{result_register.name} = {command.value.replace('U', '')}{function.body[i - 1].comment}")
-                self._set_intermediate_result_comment(function, i + 1, f"{command.value.replace('U', '')}{function.body[i - 1].comment}")
+                    self.array_assignment = True
+                    self.writer.instruction(f"{Operators.ASSIGNMENT.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]}", 
+                                            f"{result_register.name} = *{function.body[i - 1].comment}")
+                else:
+                    self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} [{self.register_names[0]}]", 
+                                            f"{result_register.name} = *{function.body[i - 1].comment}")
+                self._set_intermediate_result_comment(function, i + 1, f"*{function.body[i - 1].comment}", False)
             elif command == Operators.UNARY_PLUS:
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} 0", 
                                         f"{command.value.replace('U', '')}{function.body[i - 1].comment} - dummy")
@@ -251,7 +253,7 @@ class HighAssemblyGenerator():
                 if command == Operators.ASSIGNMENT and self.array_assignment:
                     self.array_assignment = False
                     self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.register_names[0]}] {self.register_names[1]}",
-                                            f"*{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                                            f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                 else:
                     self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]} {self.register_names[1]}",
                                             f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
@@ -415,15 +417,15 @@ class HighAssemblyGenerator():
                 self._handle_keyword(command, function, i)
 
 # functions to print better comments
-    def _set_intermediate_result_comment(self, function: Function, function_index: int, comment: str):
+    def _set_intermediate_result_comment(self, function: Function, function_index: int, comment: str, bracket: bool = True):
         for command in function.body[function_index:]:
             if isinstance(command, IntermediateResult) and command.number == self.intermediate_result_counter:
-                command.set_comment(comment)
+                command.set_comment(comment, bracket)
                 return
         
         for command in reversed(function.body[:function_index + 1]):
             if isinstance(command, Keywords) and command == Keywords.RETURN:
-                command.set_comment(comment)
+                command.set_comment(comment, bracket)
                 return
     
     def _find_intermediate_result(self, function: Function, function_index: int, number: int) -> IntermediateResult:

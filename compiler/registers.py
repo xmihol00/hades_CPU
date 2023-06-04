@@ -60,16 +60,16 @@ class RegisterFile():
                     self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {operand.value}", f"{register.name} = {operand.value}")
                 elif isinstance(operand, Variable) and with_value:
                     if operand.stack_offset:
-                        if operand.type == Types.INT:
-                            self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} [{self.EBP.name}{operand.stack_offset:+}]", f"{register.name} = {operand.name}")
-                        elif operand.type == Types.PTR:
+                        if operand.type == Types.ARRAY:
                             self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {self.EBP.name}", f"get base address of {operand.name}")
                             self.writer.instruction(f"{HighAssemblyInstructions.ADD} {register.name} {register.name} {operand.stack_offset}", f"add stack offset of {operand.name}")
+                        else:
+                            self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} [{self.EBP.name}{operand.stack_offset:+}]", f"{register.name} = {operand.name}")
                     else:
-                        if operand.type == Types.INT:
-                            self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} {operand.label}", f"{register.name} = {operand.name}")
-                        elif operand.type == Types.PTR:
+                        if operand.type == Types.ARRAY:
                             self.writer.instruction(f"{HighAssemblyInstructions.MOV} {register.name} {operand.label}", f"{register.name} = &{operand.name}")
+                        else:
+                            self.writer.instruction(f"{HighAssemblyInstructions.LOAD} {register.name} {operand.label}", f"{register.name} = {operand.name}")
 
             self.used_registers_in_instruction.append(register)
             self.last_assigned_register = register
@@ -141,7 +141,7 @@ class RegisterFile():
         self.intermediate_results_counter = 0
         for register in self.registers:
             if isinstance(register.value, IntermediateResult): # invalidate all intermediate results
-                if register.value.address_register:
+                if register.value.address_register and register.written:
                     self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{register.value.address_register.name}] {register.name}", f"store *{register.value.address_register.value.name}") 
                 register.empty()
     

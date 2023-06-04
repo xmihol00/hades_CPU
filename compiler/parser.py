@@ -15,21 +15,23 @@ class ParserStates(Enum):
     FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON = 3
     FUNCTION_PARAMETER_TYPE_OR_CLOSED_BRACKET = 4
     FUNCTION_PARAMETER_TYPE = 5
-    FUNCTION_PARAMETER_NAME = 6
-    FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET = 7
-    FUNCTION_BODY_OPENED = 8
-    STATEMENT = 9
-    VARIABLE_NAME = 10
-    VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON = 11
-    EXPRESSION = 12
-    EXPRESSION_BRACKET_START = 13
-    OPENED_CURLY_BRACKET = 14
-    STATEMENT_OR_ELSE = 15
-    IF_OR_OPENED_CURLY_BRACKET = 16
-    FOR_OPENED_BRACKET = 17
-    SEMICOLON = 18
-    MEMORY_SIZE_CONSTANT = 19
-    CLOSED_SQUARED_BRACKET = 20
+    FUNCTION_PARAMETER_NAME_OR_POINTER = 6
+    FUNCTION_PARAMETER_NAME = 7
+    FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET = 8
+    FUNCTION_BODY_OPENED = 9
+    STATEMENT = 10
+    VARIABLE_NAME_OR_POINTER = 11
+    VARIABLE_NAME = 12
+    VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON = 13
+    EXPRESSION = 14
+    EXPRESSION_BRACKET_START = 15
+    OPENED_CURLY_BRACKET = 16
+    STATEMENT_OR_ELSE = 17
+    IF_OR_OPENED_CURLY_BRACKET = 18
+    FOR_OPENED_BRACKET = 19
+    SEMICOLON = 20
+    MEMORY_SIZE_CONSTANT = 21
+    CLOSED_SQUARED_BRACKET = 22
     
 class Parser:
     def __init__(self, function_declaration_table: FunctionDeclarationTable, function_call_table: FunctionCallTable, 
@@ -89,13 +91,13 @@ class Parser:
             self.state = ParserStates.FUNCTION_NAME_OR_GLOBAL_VARIABLE_NAME
             self.global_variable_or_function_type = value
         elif ParserStates.FUNCTION_PARAMETER_TYPE_OR_CLOSED_BRACKET == self.state:
-            self.state = ParserStates.FUNCTION_PARAMETER_NAME
+            self.state = ParserStates.FUNCTION_PARAMETER_NAME_OR_POINTER
             self.current_function.add_parameter(Variable(value))
         elif ParserStates.FUNCTION_PARAMETER_TYPE == self.state:
-            self.state = ParserStates.FUNCTION_PARAMETER_NAME
+            self.state = ParserStates.FUNCTION_PARAMETER_NAME_OR_POINTER
             self.current_function.add_parameter(Variable(value))
         elif ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state:
-            self.state = ParserStates.VARIABLE_NAME
+            self.state = ParserStates.VARIABLE_NAME_OR_POINTER
             self.variable_offset -= self.current_variable.stack_size if self.current_variable else 2
             self.current_variable = Variable(value, self.variable_offset)
         else:
@@ -138,11 +140,11 @@ class Parser:
         if ParserStates.FUNCTION_NAME_OR_GLOBAL_VARIABLE_NAME == self.state:
             self.state = ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON
             self.global_variable_or_function_name = value
-        elif ParserStates.FUNCTION_PARAMETER_NAME == self.state:
+        elif ParserStates.FUNCTION_PARAMETER_NAME == self.state or ParserStates.FUNCTION_PARAMETER_NAME_OR_POINTER == self.state:
             self.state = ParserStates.FUNCTION_PARAMETERS_COMMA_OR_CLOSED_BRACKET
             self.current_function.parameters[-1].set_name(value)
             self.variable_table.add(self.current_function.parameters[-1])
-        elif ParserStates.VARIABLE_NAME == self.state:
+        elif ParserStates.VARIABLE_NAME == self.state or ParserStates.VARIABLE_NAME_OR_POINTER == self.state:
             self.state = ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON
             self.current_variable.set_name(value)
             self.variable_table.add(self.current_variable)
@@ -240,7 +242,7 @@ class Parser:
     def opened_square_bracket(self, _: str):
         if ParserStates.VARIABLE_ASSIGNMENT_OR_OPENED_SQUARE_BRACKET_OR_SEMICOLON == self.state:
             self.state = ParserStates.MEMORY_SIZE_CONSTANT
-            self.current_variable.type = Types.PTR
+            self.current_variable.type = Types.ARRAY
         elif ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_opened_square_bracket()
         else:
@@ -294,13 +296,18 @@ class Parser:
         else:
             raise Exception()
 
-
     def operator(self, value: str):
         if ParserStates.EXPRESSION == self.state:
             self.expression_parser.add_operator(value)
-        elif ParserStates.STATEMENT == self.state and value == '*': # dereference
+        elif (ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state) and value == '*': # dereference
             self.expression_parser.add_operator(Operators.ASSIGNMENT_DEREFERENCE.value)
             self.state = ParserStates.EXPRESSION
+        elif ParserStates.VARIABLE_NAME_OR_POINTER == self.state and value == '*': # pointer
+            self.current_variable.type = Types.PTR
+            self.state = ParserStates.VARIABLE_NAME
+        elif ParserStates.FUNCTION_PARAMETER_NAME_OR_POINTER == self.state and value == '*': # pointer
+            self.current_function.parameters[-1].type = Types.PTR
+            self.state = ParserStates.FUNCTION_PARAMETER_NAME
         else:
             raise Exception()
 

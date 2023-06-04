@@ -57,7 +57,7 @@ class Function(Construct):
     
     def assign_parameters_offset(self):
         offset = 1
-        for parameter in self.parameters:
+        for parameter in reversed(self.parameters):
             offset += parameter.stack_size
             parameter.stack_offset = offset
     
@@ -109,8 +109,11 @@ class IntermediateResult(Construct):
         self.number = number
         self.address_register = None
     
-    def set_comment(self, comment: str):
-        self.comment = f"({comment})"
+    def set_comment(self, comment: str, brackets: bool = True):
+        if brackets:
+            self.comment = f"({comment})"
+        else:
+            self.comment = comment
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}.{self.number}"
