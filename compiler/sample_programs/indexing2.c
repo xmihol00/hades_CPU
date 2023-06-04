@@ -15,5 +15,7 @@ int main()
         putchar(array[a - 2]);
     }
 
+    array[a - 2] = 'Q' + 1 * a; 
+
     return a + b + array;
 }

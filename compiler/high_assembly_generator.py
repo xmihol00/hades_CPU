@@ -43,6 +43,7 @@ BOTH_OPERAND_OPERATORS = [
     Operators.LOGICAL_OR,
     Operators.ASSIGNMENT,
     Operators.OFFSET_DEREFERENCE,
+    Operators.OFFSET_ASSIGNMENT_DEREFERENCE
 ]
 
 INTERMEDIATE_RESULT_OPERATORS = [
@@ -71,6 +72,7 @@ INTERMEDIATE_RESULT_OPERATORS = [
     Operators.DEREFERENCE,
     Operators.ASSIGNMENT_DEREFERENCE,
     Operators.OFFSET_DEREFERENCE,
+    Operators.OFFSET_ASSIGNMENT_DEREFERENCE
 ]
 
 class HighAssemblyGenerator():
@@ -101,6 +103,7 @@ class HighAssemblyGenerator():
         self.for_part3 = False
         self.current_for_last_statement = []
         self.for_last_statement_stack = []
+        self.array_assignment = False
         
     def generate(self):
         for global_command in self.global_code.expressions: # FIXME: quite ugly solution
@@ -136,6 +139,7 @@ class HighAssemblyGenerator():
             self.for_part3 = False
             self.current_for_last_statement = []
             self.for_last_statement_stack = []
+            self.array_assignment = False
         
         # generate built-in functions FIXME: quite ugly solution
         self.writer.comment("===================== built-in functions =====================")
@@ -219,6 +223,9 @@ class HighAssemblyGenerator():
                                             f"{result_register.name} = {function.body[i - 2].comment}[{function.body[i - 1].comment}]")
                     self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment}[{function.body[i - 1].comment}]")
                 else:
+                    if command == Operators.OFFSET_ASSIGNMENT_DEREFERENCE:
+                        command = Operators.PLUS
+                        self.array_assignment = True
                     self.writer.instruction(f"{command.to_high_assembly_instruction()} {result_register.name} {self.register_names[0]} {self.register_names[1]}",
                                             f"{result_register.name} = {function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                     self._set_intermediate_result_comment(function, i + 1, f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
@@ -240,10 +247,15 @@ class HighAssemblyGenerator():
             if command in FIRST_OPERAND_OPERATORS: # currently only PUSH
                 self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]}", f"push {function.body[i - 1].comment}")
             elif command in BOTH_OPERAND_OPERATORS:
-                self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]} {self.register_names[1]}",
-                                        f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
-                if command == Operators.ASSIGNMENT:
-                    self.register_file.write_register(self.register_names[0])
+                if command == Operators.ASSIGNMENT and self.array_assignment:
+                    self.array_assignment = False
+                    self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.register_names[0]}] {self.register_names[1]}",
+                                            f"*{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                else:
+                    self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]} {self.register_names[1]}",
+                                            f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                    if command == Operators.ASSIGNMENT:
+                        self.register_file.write_register(self.register_names[0])
 
         self.register_index = 0
 

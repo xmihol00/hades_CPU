@@ -84,7 +84,10 @@ class HighAssemblyInstructions(Enum):
     
     def to_regex(self) -> str:
         if self == HighAssemblyInstructions.PUSH:
-            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # PUSH <register> (4 groups)
+            return (
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" + # PUSH <register> (4 groups)
+                r"(^\s*" + self.value + r"\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|"          # PUSH <constant> (4 groups)
+            )
         elif self == HighAssemblyInstructions.POP:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # POP <register>  (4 groups)
         elif self == HighAssemblyInstructions.PUSHA:
@@ -99,14 +102,16 @@ class HighAssemblyInstructions(Enum):
             )
         elif self == HighAssemblyInstructions.MOV:
             return (
-                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +       # LOAD <register> <constant> (5 groups)
-                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # LOAD <register> <register> (5 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|" +       # MOV <register> <constant> (5 groups)
+                r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # MOV <register> <register> (5 groups)
             )
         elif self == HighAssemblyInstructions.STORE:
             return (
                 r"(^\s*" + self.value + r"\s+\[([a-z_][a-z0-9_]*)(?:(\+|\-)(\d+)){0,1}\]"
-                    r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" +                                         # STORE <memory> <register>          (7 groups)
-                r"(^\s*" + self.value + r"\s+@([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" # STORE <global variable> <register> (5 groups)
+                    r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" +                                           # STORE <memory> <register>          (7 groups)
+                r"(^\s*" + self.value + r"\s+@([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|" + # STORE <global variable> <register> (5 groups)
+                r"(^\s*" + self.value + r"\s+\[([a-z_][a-z0-9_]*)(?:(\+|\-)(\d+)){0,1}\]"                 # STORE <memory> <constant>          (7 groups)
+                    r"\s+(-{0,1}\d+)\s*(;\s*(.*))*$)|"
             )
         elif self == HighAssemblyInstructions.CALL:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # CALL <function label> (4 groups)
@@ -178,7 +183,7 @@ class Operators(Enum):
     PARAMETER_POSSIBLE_ASSIGNMENT = "?="
 
     def to_high_assembly_instruction(self) -> HighAssemblyInstructions:
-        if self == Operators.PLUS or self == Operators.UNARY_PLUS or self == Operators.OFFSET_DEREFERENCE:
+        if self == Operators.PLUS or self == Operators.UNARY_PLUS or self == Operators.OFFSET_DEREFERENCE or self == Operators.OFFSET_ASSIGNMENT_DEREFERENCE:
             return HighAssemblyInstructions.ADD
         elif self == Operators.MINUS:
             return HighAssemblyInstructions.SUB

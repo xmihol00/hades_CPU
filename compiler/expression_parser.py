@@ -99,7 +99,7 @@ class ExpressionParser:
         if (ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET == self.state or 
             ExpressionParserStates.BINARY_OPERATOR_OR_CLOSED_BRACKET_OR_OPENED_SQUARED_BRACKET == self.state):
             if len(self.expression) and self.expression[-1] == Operators.OFFSET_DEREFERENCE:
-                self.expression[-1] = Operators.ASSIGNMENT_OFFSET_DEREFERENCE
+                self.expression[-1] = Operators.OFFSET_ASSIGNMENT_DEREFERENCE
             self._pop_stacks_insert_expression(self.operator_precedence[Operators.ASSIGNMENT])
             self.operator_stack.append(Operators.ASSIGNMENT)
             self.current_precedence = self.operator_precedence[Operators.ASSIGNMENT]
