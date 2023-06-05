@@ -114,53 +114,54 @@ class HighAssemblyGenerator():
         self.writer.new_line()
 
         for function in self.function_declaration_table.functions.values():
-            function: Function = function
-            self.writer.label(f"${function.name}", f"{function.pretty_comment()}")
-            self.register_file.create_stack_frame(function.stack_size())
-            self._generate_function(function)
-            self.writer.new_line()
+            if len(function.body) > 0:
+                function: Function = function
+                self.writer.label(f"${function.name}", f"{function.pretty_comment()}")
+                self.register_file.create_stack_frame(function.stack_size())
+                self._generate_function(function)
+                self.writer.new_line()
 
-            # reset state
-            self.register_index = 0
-            self.registers = [None, None]
-            self.register_names = [None, None]
-            self.return_expression = False
-            self.intermediate_result_counter = 0
-            self.scope_index = -1
-            self.if_scope_ids = []
-            self.while_scope_ids = []
-            self.for_scope_ids = []
-            self.current_jump_statement = None
-            self.jump_statement_stack = []
-            self.else_if_counter = 0
-            self.else_if_counter_stack = []
-            self.for_part1 = False
-            self.for_part2 = False
-            self.for_part3 = False
-            self.current_for_last_statement = []
-            self.for_last_statement_stack = []
-            self.array_assignment = False
+                # reset state
+                self.register_index = 0
+                self.registers = [None, None]
+                self.register_names = [None, None]
+                self.return_expression = False
+                self.intermediate_result_counter = 0
+                self.scope_index = -1
+                self.if_scope_ids = []
+                self.while_scope_ids = []
+                self.for_scope_ids = []
+                self.current_jump_statement = None
+                self.jump_statement_stack = []
+                self.else_if_counter = 0
+                self.else_if_counter_stack = []
+                self.for_part1 = False
+                self.for_part2 = False
+                self.for_part3 = False
+                self.current_for_last_statement = []
+                self.for_last_statement_stack = []
+                self.array_assignment = False
         
         # generate built-in functions FIXME: quite ugly solution
-        self.writer.comment("===================== built-in functions =====================")
-        self.writer.label("&putchar", "int putchar(int value), returns the passed value")
-        self.writer.label("putchar.buffer_full", "while transmit buffer is full")
-        self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 97", "load the status of the UART")
-        self.writer.instruction(f"{HighAssemblyInstructions.AND} {self.register_file.get_EAX()} {self.register_file.get_EAX()} 2", "check if transmit buffer is full")
-        self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_file.get_EAX()} putchar.buffer_full", "loop if transmit buffer is full")
-        self.writer.instruction(f"{HighAssemblyInstructions.POP} {self.register_file.get_EAX()}", "pop the value from stack")
-        self.writer.instruction(f"{HighAssemblyInstructions.OUT} {self.register_file.get_EAX()} 96", "write the value to the UART")
-        self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
-        self.writer.new_line()
-
-        self.writer.label("&getchar", "int putchar()")
-        self.writer.label("getchar.no_data", "while data are not available")
-        self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 97", "load the status of the UART")
-        self.writer.instruction(f"{HighAssemblyInstructions.AND} {self.register_file.get_EAX()} {self.register_file.get_EAX()} 1", "check if any data are available")
-        self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_file.get_EAX()} getchar.no_data", "loop if data are not available")
-        self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 96", "read a value from the UART")
-        self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
-        self.writer.new_line()
+        #self.writer.comment("===================== built-in functions =====================")
+        #self.writer.label("&putchar", "int putchar(int value), returns the passed value")
+        #self.writer.label("putchar.buffer_full", "while transmit buffer is full")
+        #self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 97", "load the status of the UART")
+        #self.writer.instruction(f"{HighAssemblyInstructions.AND} {self.register_file.get_EAX()} {self.register_file.get_EAX()} 2", "check if transmit buffer is full")
+        #self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_file.get_EAX()} putchar.buffer_full", "loop if transmit buffer is full")
+        #self.writer.instruction(f"{HighAssemblyInstructions.POP} {self.register_file.get_EAX()}", "pop the value from stack")
+        #self.writer.instruction(f"{HighAssemblyInstructions.OUT} {self.register_file.get_EAX()} 96", "write the value to the UART")
+        #self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
+        #self.writer.new_line()
+#
+        #self.writer.label("&getchar", "int putchar()")
+        #self.writer.label("getchar.no_data", "while data are not available")
+        #self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 97", "load the status of the UART")
+        #self.writer.instruction(f"{HighAssemblyInstructions.AND} {self.register_file.get_EAX()} {self.register_file.get_EAX()} 1", "check if any data are available")
+        #self.writer.instruction(f"{HighAssemblyInstructions.JZ} {self.register_file.get_EAX()} getchar.no_data", "loop if data are not available")
+        #self.writer.instruction(f"{HighAssemblyInstructions.IN} {self.register_file.get_EAX()} 96", "read a value from the UART")
+        #self.writer.instruction(f"{HighAssemblyInstructions.RETURN}", "return")
+        #self.writer.new_line()
     
     def _generate_function(self, function: Function):
         for i, command in enumerate(function.body):
@@ -367,6 +368,9 @@ class HighAssemblyGenerator():
                 self.writer.decrease_indent()
                 self.scope_index -= 1
 
+        elif command == InternalAlphabet.FUNCTION_END:
+            self.writer.raw(f"{HighAssemblyInstructions.EOF} ; end of function {function.name}")
+
     def _handle_keyword(self, command: Keywords, function: Function, i: int):
         if command == Keywords.IF or command == Keywords.ELSE_IF or command == Keywords.ELSE or command == Keywords.WHILE or command == Keywords.FOR:
             self.scope_index += 1
@@ -425,7 +429,7 @@ class HighAssemblyGenerator():
         
         for command in reversed(function.body[:function_index + 1]):
             if isinstance(command, Keywords) and command == Keywords.RETURN:
-                command.set_comment(comment, bracket)
+                command.set_comment(comment)
                 return
     
     def _find_intermediate_result(self, function: Function, function_index: int, number: int) -> IntermediateResult:

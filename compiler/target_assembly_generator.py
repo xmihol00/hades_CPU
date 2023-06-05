@@ -52,7 +52,8 @@ class TargetAssemblyGenerator():
             HighAssemblyInstructions.IN.to_regex() +         # in  <register> <positive constant>                (5 groups)
             HighAssemblyInstructions.OUT.to_regex() +        # out <register> <positive constant>                (5 groups)
             r"(^\s*&([a-z_][a-z0-9_\.]*):\s*(;\s*(.*))*$)|"  # <function name without stack frame>               (4 groups)
-            r"(^\s*(;\s*(.*))*$)|"                           # line comment                                      (3 groups)
+            r"(^\s*(;\s*(.*))*$)|" +                         # line comment                                      (3 groups)
+            HighAssemblyInstructions.EOF.to_regex()          # eof                                               (3 groups)
         )
         self.group_dict = { # TODO: refactor
             0: self.handle_global_variable,
@@ -115,7 +116,8 @@ class TargetAssemblyGenerator():
             309: self.handle_input, 
             314: self.handle_output, 
             319: self.handle_function_label_without_stack,
-            323: self.handle_line_comment
+            323: self.handle_line_comment,
+            326: self.handle_end_of_function,
         }
         self.register_definitions = register_definitions
 
@@ -130,7 +132,8 @@ class TargetAssemblyGenerator():
                 if match.groups()[i]:
                     handler(match.groups()[i + 1:])
         
-        self.writer.raw(f"{TargetAssemblyHelpers.SCOPE_CLOSE}")
+        if not self.first_function:
+            self.writer.raw(f"{TargetAssemblyHelpers.SCOPE_CLOSE}")
         self.writer.raw(
 """
 @code __init {
@@ -275,6 +278,10 @@ idle:
 
     def handle_line_comment(self, matches: tuple[str]):
         self.writer.comment(matches[1])
+
+    def handle_end_of_function(self, matches: tuple[str]):
+        self.writer.raw(f"@}} {matches[0]}\n")
+        self.first_function = True
     
     def _handle_constant_ALU_instruction(self, matches: tuple[str], instruction: TargetAssemblyInstructions):
         self.writer.instruction(f"{instruction} {self.register_map[matches[0]]}, {self.register_map[matches[1]]}, #{matches[2]}", matches[4])
@@ -286,5 +293,4 @@ idle:
         self.writer.raw(f"{TargetAssemblyHelpers.CODE_LABEL} {matches[0]} {TargetAssemblyHelpers.SCOPE_OPEN}", matches[2])
         self.writer.instruction(f"{TargetAssemblyInstructions.SUBI} {TargetAssemblyRegisters.ESP}, #1", "return value, increase stack size to store the return value")
         self.writer.instruction(f"{TargetAssemblyInstructions.STORE} {TargetAssemblyRegisters.EDX}, {TargetAssemblyRegisters.ESP}, #0", "return value, store return address")
-
         

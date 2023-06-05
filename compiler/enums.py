@@ -78,6 +78,7 @@ class HighAssemblyInstructions(Enum):
     JMP = "JMP"
     IN = "IN"
     OUT = "OUT"
+    EOF = "EOF"
 
     def __str__(self) -> str:
         return f"{self.value}"
@@ -131,6 +132,8 @@ class HighAssemblyInstructions(Enum):
             )
         elif self == HighAssemblyInstructions.IN or self == HighAssemblyInstructions.OUT:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(\d+)\s*(;\s*(.*))*$)|"     # IN/OUT <register> <positive constant> (5 groups)
+        elif self == HighAssemblyInstructions.EOF:
+            return r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"  # EOF (3 group)
         else:
             return self._ALU_instruction_to_regex()
     

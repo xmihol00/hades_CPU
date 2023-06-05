@@ -46,14 +46,14 @@ class Variable(Construct):
         return f"{self.__class__.__name__}.{self.name}"
 
 class Function(Construct):
-    def __init__(self, return_type: str = None, name: str = None):
+    def __init__(self, return_type: str = None, name: str = None, number_of_parameters: int = 0):
         super().__init__(f"{name}()")
         self.return_type = Types(return_type)
         self.name = name
         self.parameters: list[Variable] = []
         self.variables: list[Variable] = []
         self.body: list[Variable|Constant|ReturnValue|IntermediateResult|InternalAlphabet|Types|Operators|Keywords] = []
-        self.number_of_parameters = 0
+        self.number_of_parameters = number_of_parameters
     
     def assign_parameters_offset(self):
         offset = 1

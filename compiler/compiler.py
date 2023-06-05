@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import json
 from target_assembly_generator import TargetAssemblyGenerator
 from high_assembly_generator import HighAssemblyGenerator
 from registers import RegisterFile
@@ -12,22 +13,37 @@ from scanner import Scanner
 from parser import Parser
 from global_expressions import GlobalExpressions
 from writer import Writer
+from constructs import Function
 
 parser = argparse.ArgumentParser()
-parser.add_argument("file_name", type=str, help="Name of a file to be compiled.")
-parser.add_argument("-s", "--same", action="store_true", help="Use input file name for intermediate and output files.")
+parser.add_argument("file_names", nargs='+', type=str, help="Names of files to be compiled.")
+parser.add_argument("-a", "--assembly", nargs='+', type=str, help="Names of configuration files with linkable high level assembly.")
+parser.add_argument("-s", "--same", action="store_true", help="Use the name of first input file as names for output files.")
 parser.add_argument("-i", "--intermediate", type=str, help="Name of a file to write compiled code to high level assembly.")
 parser.add_argument("-o", "--output", type=str, help="Name of a file to write compiled code to HaDes assembly.")
 parser.add_argument("-c", "--compile", action="store_true", help="Compile to binary.")
+parser.add_argument("-nl", "--no_library", action="store_true", help="Do not include library functions.")
+parser.add_argument("-nb", "--no_build_in", action="store_true", help="Do not include build in functions.")
 parser.add_argument("-d", "--debug", action="store_true", help="Print debug information to stderr.")
 args = parser.parse_args()
 
 if "__main__" == __name__:
-    os.makedirs("build", exist_ok=True)
-    with open(args.file_name, "r") as f:
-        c_program = f.read()
+    c_program = ""
+    os.makedirs(os.path.join(os.path.dirname(__file__), "build"), exist_ok=True)
+    for file_name in args.file_names:
+        with open(file_name, "r") as f:
+            c_program += f.read()
+    
+    if not args.no_library:
+        # include library functions in *.c files in lib directory
+        path_to_lib = os.path.join(os.path.dirname(__file__), "lib")
+        for file_name in os.listdir(path_to_lib):
+            if file_name.endswith(".c"):
+                with open(os.path.join(path_to_lib, file_name), "r") as f:
+                    c_program += f.read()
 
     if args.same:
+        args.file_name = args.file_names[0]
         if '/' in args.file_name:
             args.file_name = args.file_name[args.file_name.rfind('/') + 1:]
         args.same = args.file_name[:args.file_name.rfind('.')]
@@ -35,18 +51,47 @@ if "__main__" == __name__:
         args.output = args.file_name[:args.file_name.rfind('.')] + ".has"
     
     if args.intermediate:
-        args.intermediate = os.path.join("build", args.intermediate)
+        args.intermediate = os.path.join(os.path.dirname(__file__), "build", args.intermediate)
         high_assembly_file = open(args.intermediate, "w")
     else:
         high_assembly_file = None
 
     if args.output:
-        args.output = os.path.join("build", args.output)
+        args.output = os.path.join(os.path.dirname(__file__), "build", args.output)
         target_assembly_file = open(args.output, "w")
     else:
         target_assembly_file = sys.stdout    
     
     function_declaration_table = FunctionDeclarationTable()
+    high_assembly_writer = Writer(in_file=args.intermediate, in_memory=True, output_file=high_assembly_file)
+
+    if not args.no_build_in:
+        # include build in functions in *.asm files in lib directory described by *.json files
+        path_to_lib = os.path.join(os.path.dirname(__file__), "lib")
+        for file_name in os.listdir(path_to_lib):
+            if file_name.endswith(".json"):
+                with open(os.path.join(path_to_lib, file_name), "r") as f:
+                    asm_config = json.load(f)
+                    file_name = asm_config["file_name"]
+                    with open(os.path.join(path_to_lib, file_name), "r") as f:
+                        for line in f.readlines():
+                            high_assembly_writer.raw(line[:-1])
+                    
+                    for function in asm_config["functions"]:
+                        function_declaration_table.add(Function(name=function["name"], number_of_parameters=function["number_of_parameters"], return_type=function["return_type"]))
+
+    if args.assembly:
+        for assembly_file in args.assembly:
+            with open(assembly_file, "r") as f:
+                asm_config = json.load(f)
+                file_name = asm_config["file_name"]
+                with open(file_name, "r") as f:
+                    for line in f.readlines():
+                        high_assembly_writer.raw(line[:-1])
+
+                for function in asm_config["functions"]:
+                    function_declaration_table.add(Function(name=function["name"], number_of_parameters=function["number_of_parameters"], return_type=function["return_type"]))
+
     function_call_table = FunctionCallTable()
     variable_table = VariableTable()
     global_expressions = GlobalExpressions()
@@ -55,7 +100,6 @@ if "__main__" == __name__:
                     variable_table=variable_table, global_expressions=global_expressions)
     semantic_analyzer = SemanticAnalyzer(function_declaration_table=function_declaration_table, function_call_table=function_call_table,
                                          variable_table=variable_table)
-    high_assembly_writer = Writer(in_file=args.intermediate, in_memory=True, output_file=high_assembly_file)
     register_file = RegisterFile(number_of_registers=7, writer=high_assembly_writer)
     high_assembly_generator = HighAssemblyGenerator(function_declaration_table=function_declaration_table, variable_table=variable_table, 
                                                     global_code=global_expressions, register_file=register_file, writer=high_assembly_writer)

@@ -1,11 +1,21 @@
 
-int print(int *string)
+int print1(int *string)
 {
     int i = 0;
     while (string[i] != 0)
     {
         putchar(string[i]);
         i = i + 1;
+    }
+    return 0;
+}
+
+int print2(int *string)
+{
+    while (*string != 0)
+    {
+        putchar(*string);
+        string = string + 1;
     }
     return 0;
 }
@@ -28,7 +38,8 @@ int main()
     string[12] = '\n';
     string[13] = 0;
 
-    print(string);
+    print1(string);
+    print2(string);
 
     return 0;
 }

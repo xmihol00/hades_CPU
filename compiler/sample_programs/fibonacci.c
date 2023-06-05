@@ -20,5 +20,8 @@ int main()
     putchar(fib6 + '0');
     putchar('\n');
 
+    putnum(fibonacci(10));
+    putchar('\n');
+
     return fib5 + fib6;
 }
