@@ -4,6 +4,5 @@
 __pycache__
 log.txt
 stderr_log.txt
-*.asm
 compiler/build/
 index_sum.py
