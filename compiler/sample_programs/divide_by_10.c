@@ -1,17 +1,5 @@
 #include "stdbool.h"
 
-int fibonacci(int n)
-{
-    if (n < 2)
-    {
-        return n;
-    }
-    else
-    {
-        return fibonacci(n - 1) + fibonacci(n - 2);
-    }
-}
-
 int main()
 {
     while (true)
@@ -40,16 +28,17 @@ int main()
         putnum(number);
         putchar('\n');
 
-        int result = fibonacci(number);
-        prompt[0] = 'F';
-        prompt[1] = '_';
-        prompt[2] = '\0';
-        print(prompt);
+        int result = div10(number);
         putnum(number);
         prompt[0] = ' ';
-        prompt[1] = '=';
+        prompt[1] = '/';
         prompt[2] = ' ';
-        prompt[3] = '\0';
+        prompt[3] = '1';
+        prompt[4] = '0';
+        prompt[5] = ' ';
+        prompt[6] = '=';
+        prompt[7] = ' ';
+        prompt[8] = '\0';
         print(prompt);
         putnum(result);
         putchar('\n');
