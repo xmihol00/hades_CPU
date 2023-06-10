@@ -22,39 +22,43 @@ class TargetAssemblyGenerator():
             HighAssemblyInstructions.POP.to_regex() +        # pop <register>                    (4 groups)
             HighAssemblyInstructions.PUSHA.to_regex() +      # pusha                             (3 groups)
             HighAssemblyInstructions.POPA.to_regex() +       # popa                              (3 groups)
-            HighAssemblyInstructions.LOAD.to_regex() +       # load <register> <memory|global variable>          (7 and 5 groups)
-            HighAssemblyInstructions.MOV.to_regex() +        # move <register> <constant|register>               (5 and 5 groups)
-            HighAssemblyInstructions.STORE.to_regex() +      # store <memory|global variable> <register>         (7 and 5 groups)
-            HighAssemblyInstructions.ADD.to_regex() +        # add <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.SUB.to_regex() +        # sub <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.MUL.to_regex() +        # mul <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.AND.to_regex() +        # and <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.OR.to_regex() +         # or  <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.XOR.to_regex() +        # xor <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.SHL.to_regex() +        # shl <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.SHR.to_regex() +        # shr <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.ROR.to_regex() +        # ror <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.ROL.to_regex() +        # rol <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.CALL.to_regex() +       # call <function name>                              (4 groups)
-            HighAssemblyInstructions.RETURN.to_regex() +     # ret [number of cleared parameters from the stack] (4 or 3 groups)
-            HighAssemblyInstructions.JMP.to_regex() +        # jmp <label>                                       (4 groups)
-            HighAssemblyInstructions.JZ.to_regex() +         # je  <register> <label>                            (5 groups)
-            HighAssemblyInstructions.JNZ.to_regex() +        # jne <register> <label>                            (5 groups)
-            HighAssemblyInstructions.EQ.to_regex() +         # eq  <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.NEQ.to_regex() +        # neq <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.LT.to_regex() +         # lt  <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.GT.to_regex() +         # gt  <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.LTE.to_regex() +        # lte <register> <register> <constant|register>     (6 and 6 groups)
-            HighAssemblyInstructions.GTE.to_regex() +        # gte <register> <register> <constant|register>     (6 and 6 groups)
-            r"(^\s*([a-z_][a-z0-9_\.]*):\s*(;\s*(.*))*$)|" + # <label>:                                          (4 groups)
-            HighAssemblyInstructions.NOT.to_regex() +        # not <register> <constant|register>                (5 and 5 groups)
-            HighAssemblyInstructions.NEG.to_regex() +        # neg <register> <constant|register>                (5 and 5 groups)
-            HighAssemblyInstructions.IN.to_regex() +         # in  <register> <positive constant>                (5 groups)
-            HighAssemblyInstructions.OUT.to_regex() +        # out <register> <positive constant>                (5 groups)
-            r"(^\s*&([a-z_][a-z0-9_\.]*):\s*(;\s*(.*))*$)|"  # <function name without stack frame>               (4 groups)
-            r"(^\s*(;\s*(.*))*$)|" +                         # line comment                                      (3 groups)
-            HighAssemblyInstructions.EOF.to_regex()          # eof                                               (3 groups)
-        )
+            HighAssemblyInstructions.LOAD.to_regex() +       # load <register> <memory|global variable>           (7 and 5 groups)
+            HighAssemblyInstructions.MOV.to_regex() +        # move <register> <constant|register>                (5 and 5 groups)
+            HighAssemblyInstructions.STORE.to_regex() +      # store <memory|global variable> <register>          (7 and 5 groups)
+            HighAssemblyInstructions.ADD.to_regex() +        # add <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.SUB.to_regex() +        # sub <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.MUL.to_regex() +        # mul <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.AND.to_regex() +        # and <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.OR.to_regex() +         # or  <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.XOR.to_regex() +        # xor <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.SHL.to_regex() +        # shl <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.SHR.to_regex() +        # shr <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.ROR.to_regex() +        # ror <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.ROL.to_regex() +        # rol <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.CALL.to_regex() +       # call <function name>                               (4 groups)
+            HighAssemblyInstructions.RET.to_regex() +        # ret [number of cleared parameters from the stack]  (4 or 3 groups)
+            HighAssemblyInstructions.RETI.to_regex() +       # reti [number of cleared parameters from the stack] (4 or 3 groups)
+            HighAssemblyInstructions.JMP.to_regex() +        # jmp <label>                                        (4 groups)
+            HighAssemblyInstructions.JZ.to_regex() +         # je  <register> <label>                             (5 groups)
+            HighAssemblyInstructions.JNZ.to_regex() +        # jne <register> <label>                             (5 groups)
+            HighAssemblyInstructions.EQ.to_regex() +         # eq  <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.NEQ.to_regex() +        # neq <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.LT.to_regex() +         # lt  <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.GT.to_regex() +         # gt  <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.LTE.to_regex() +        # lte <register> <register> <constant|register>      (6 and 6 groups)
+            HighAssemblyInstructions.GTE.to_regex() +        # gte <register> <register> <constant|register>      (6 and 6 groups)
+            r"(^\s*([a-z_][a-z0-9_\.]*):\s*(;\s*(.*))*$)|" + # <label>:                                           (4 groups)
+            HighAssemblyInstructions.NOT.to_regex() +        # not <register> <constant|register>                 (5 and 5 groups)
+            HighAssemblyInstructions.NEG.to_regex() +        # neg <register> <constant|register>                 (5 and 5 groups)
+            HighAssemblyInstructions.IN.to_regex() +         # in  <register> <positive constant>                 (5 groups)
+            HighAssemblyInstructions.OUT.to_regex() +        # out <register> <positive constant>                 (5 groups)
+            HighAssemblyInstructions.ENI.to_regex() +        # eni                                                (3 groups)
+            HighAssemblyInstructions.DEI.to_regex() +        # dsi                                                (3 groups)
+            HighAssemblyInstructions.SISA.to_regex() +       # sisa <function> <interrupt level>                  (5 groups)
+            r"(^\s*&([a-z_][a-z0-9_\.]*):\s*(;\s*(.*))*$)|"  # <function name without stack frame>                (4 groups)
+            r"(^\s*(;\s*(.*))*$)|" +                         # line comment                                       (3 groups)
+            HighAssemblyInstructions.EOF.to_regex()          # eof                                                (3 groups)
+         )
         self.group_dict = { # TODO: refactor
             0: self.handle_global_variable,
             5: self.handle_function_label, 
@@ -93,31 +97,36 @@ class TargetAssemblyGenerator():
             188: self.handle_call, 
             192: self.handle_return, 
             196: self.handle_return_without_value,
-            199: self.handle_jump, 
-            203: self.handle_jump_if_zero, 
-            208: self.handle_jump_if_not_zero, 
-            213: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SEQI), 
-            219: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SEQ), 
-            225: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SNEI), 
-            231: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SNE), 
-            237: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLTI), 
-            243: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLT), 
-            249: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGTI), 
-            255: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGT), 
-            261: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLEI), 
-            267: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLE), 
-            273: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGRI), 
-            279: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGR), 
-            285: self.handle_label, 
-            289: self.handle_constant_not, 
-            294: self.handle_register_not, 
-            299: self.handle_constant_negate, 
-            304: self.handle_register_negate, 
-            309: self.handle_input, 
-            314: self.handle_output, 
-            319: self.handle_function_label_without_stack,
-            323: self.handle_line_comment,
-            326: self.handle_end_of_function,
+            199: self.handle_interrupt_return,
+            203: self.handle_interrupt_return_without_value,
+            206: self.handle_jump, 
+            210: self.handle_jump_if_zero, 
+            215: self.handle_jump_if_not_zero, 
+            220: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SEQI), 
+            226: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SEQ), 
+            232: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SNEI), 
+            238: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SNE), 
+            244: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLTI), 
+            250: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLT), 
+            256: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGTI), 
+            262: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGT), 
+            268: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SLEI), 
+            274: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SLE), 
+            280: lambda x: self._handle_constant_ALU_instruction(x, TargetAssemblyInstructions.SGRI), 
+            286: lambda x: self._handle_register_ALU_instruction(x, TargetAssemblyInstructions.SGR), 
+            292: self.handle_label, 
+            296: self.handle_constant_not, 
+            301: self.handle_register_not, 
+            306: self.handle_constant_negate, 
+            311: self.handle_register_negate, 
+            316: self.handle_input, 
+            321: self.handle_output, 
+            326: self.handle_enable_interrupts,
+            329: self.handle_disable_interrupts,
+            332: self.handle_set_interrupt_routine,
+            337: self.handle_function_label_without_stack,
+            341: self.handle_line_comment,
+            344: self.handle_end_of_function,
         }
         self.register_definitions = register_definitions
 
@@ -231,6 +240,15 @@ idle:
     def handle_return_without_value(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.JREG} {TargetAssemblyRegisters.EDX}", matches[1])
     
+    def handle_interrupt_return(self, matches: tuple[str]):
+        cleared_words = int(matches[0]) + 1
+        self.writer.instruction(f"{TargetAssemblyInstructions.LOAD} {TargetAssemblyRegisters.EDX}, {TargetAssemblyRegisters.ESP}, #0", "return value, load return value from stack")
+        self.writer.instruction(f"{TargetAssemblyInstructions.ADDI} {TargetAssemblyRegisters.ESP}, #{cleared_words}", f"decrease stack size by the number of parameters + the return value")
+        self.writer.instruction(f"{TargetAssemblyInstructions.RETI} {TargetAssemblyRegisters.EDX}", matches[2])
+    
+    def handle_interrupt_return_without_value(self, matches: tuple[str]):
+        self.writer.instruction(f"{TargetAssemblyInstructions.RETI}", matches[1])
+    
     def handle_jump(self, matches: tuple[str]):
         self.writer.instruction(f"{TargetAssemblyInstructions.JMP} #{matches[0].replace('.', '__')}", matches[2])
     
@@ -281,6 +299,15 @@ idle:
     def handle_end_of_function(self, matches: tuple[str]):
         self.writer.raw(f"@}} {matches[0] if matches[0] else ''}\n")
         self.first_function = True
+    
+    def handle_enable_interrupts(self, matches: tuple[str]):
+        self.writer.instruction(f"{TargetAssemblyInstructions.ENI}", matches[1])
+    
+    def handle_disable_interrupts(self, matches: tuple[str]):
+        self.writer.instruction(f"{TargetAssemblyInstructions.DEI}", matches[1])
+
+    def handle_set_interrupt_routine(self, matches: tuple[str]):
+        self.writer.instruction(f"{TargetAssemblyInstructions.SISA} #{matches[0]}, *{matches[1]}", matches[3])
     
     def _handle_constant_ALU_instruction(self, matches: tuple[str], instruction: TargetAssemblyInstructions):
         self.writer.instruction(f"{instruction} {self.register_map[matches[0]]}, {self.register_map[matches[1]]}, #{matches[2]}", matches[4])

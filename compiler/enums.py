@@ -57,7 +57,8 @@ class HighAssemblyInstructions(Enum):
     SUB = "SUB"
     MUL = "MUL"
     CALL = "CALL"
-    RETURN = "RET"
+    RET = "RET"
+    RETI = "RETI"
     OR = "OR"
     AND = "AND"
     XOR = "XOR"
@@ -79,6 +80,9 @@ class HighAssemblyInstructions(Enum):
     IN = "IN"
     OUT = "OUT"
     EOF = "EOF"
+    ENI = "ENI"
+    DEI = "DEI"
+    SISA = "SISA"
 
     def __str__(self) -> str:
         return f"{self.value}"
@@ -116,10 +120,10 @@ class HighAssemblyInstructions(Enum):
             )
         elif self == HighAssemblyInstructions.CALL:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"     # CALL <function label> (4 groups)
-        elif self == HighAssemblyInstructions.RETURN:
+        elif self == HighAssemblyInstructions.RET or self == HighAssemblyInstructions.RETI:
             return (
-                r"(^\s*" + self.value + r"\s+(\d+)\s*(;\s*(.*))*$)|" +    # RETURN <number of cleared parameters from the stack> (4 groups)
-                r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"              # RETURN                                               (3 groups)
+                r"(^\s*" + self.value + r"\s+(\d+)\s*(;\s*(.*))*$)|" +    # RET/RETI <number of cleared parameters from the stack> (4 groups)
+                r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"              # RET/RETI                                               (3 groups)
             )                  
         elif self == HighAssemblyInstructions.JMP:
             return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_\.]*)\s*(;\s*(.*))*$)|"     # JMP <label> (4 groups)
@@ -131,9 +135,13 @@ class HighAssemblyInstructions(Enum):
                 r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"   # NOT/NEG <register> <register> (5 groups)
             )
         elif self == HighAssemblyInstructions.IN or self == HighAssemblyInstructions.OUT:
-            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(\d+)\s*(;\s*(.*))*$)|"     # IN/OUT <register> <positive constant> (5 groups)
+            return r"(^\s*" + self.value + r"\s+([a-z_][a-z0-9_]*)\s+(\d+)\s*(;\s*(.*))*$)|"      # IN/OUT <register> <positive constant> (5 groups)
         elif self == HighAssemblyInstructions.EOF:
             return r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"  # EOF (3 group)
+        elif self == HighAssemblyInstructions.ENI or self == HighAssemblyInstructions.DEI:
+            return r"(^\s*" + self.value + r"\s*(;\s*(.*))*$)|"         # ENI/DEI (3 groups)
+        elif self == HighAssemblyInstructions.SISA:
+            return r"(^\s*" + self.value + r"\s+(1|2|3|4)\s+([a-z_][a-z0-9_]*)\s*(;\s*(.*))*$)|"  # SISA  <1|2|3|4> <identifier>   (5 groups)
         else:
             return self._ALU_instruction_to_regex()
     
@@ -350,6 +358,10 @@ class TargetAssemblyInstructions(Enum):
     SGRI = "SGEI"
     IN = "IN"
     OUT = "OUT"
+    RETI = "RETI"
+    ENI = "ENI"
+    DEI = "DEI"
+    SISA = "SISA"
 
     def __str__(self) -> str:
         return self.value

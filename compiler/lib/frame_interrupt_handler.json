@@ -1,0 +1,10 @@
+{
+    "file_name": "frame_interrupt_handler.asm",
+    "functions": [
+        {
+            "return_type": "int",
+            "name": "init_frame_interrupts",
+            "number_of_parameters": 0
+        }
+    ]
+}
