@@ -139,8 +139,7 @@ class TargetAssemblyGenerator():
 @code __init {
    DEI                                  ; disable interrupts
    DPMA                                 ; set data memory access
-   XOR @eax, @eax, @eax                 ; clear eax
-   OUT @eax, #98                        ; set UART to byte mode and to not generate interrupts
+   OUT r0, #98                          ; set UART to byte mode and to not generate interrupts
    LDI @esp, #0xFFF                     ; init the stack pointer
    JAL @edx, *main                      ; call main
 idle:
@@ -280,7 +279,7 @@ idle:
         self.writer.comment(matches[1])
 
     def handle_end_of_function(self, matches: tuple[str]):
-        self.writer.raw(f"@}} {matches[0]}\n")
+        self.writer.raw(f"@}} {matches[0] if matches[0] else ''}\n")
         self.first_function = True
     
     def _handle_constant_ALU_instruction(self, matches: tuple[str], instruction: TargetAssemblyInstructions):

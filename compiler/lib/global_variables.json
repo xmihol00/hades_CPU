@@ -1,0 +1,82 @@
+[
+    {
+        "name": "BLACK",
+        "value": 0,
+        "type": "int"
+    },
+    {
+        "name": "BLUE",
+        "value": 1,
+        "type": "int"
+    },
+    {
+        "name": "GREEN",
+        "value": 2,
+        "type": "int"
+    },
+    {
+        "name": "CYAN",
+        "value": 3,
+        "type": "int"
+    },
+    {
+        "name": "RED",
+        "value": 4,
+        "type": "int"
+    },
+    {
+        "name": "MAGENTA",
+        "value": 5,
+        "type": "int"
+    },
+    {
+        "name": "BROWN",
+        "value": 6,
+        "type": "int"
+    },
+    {
+        "name": "LIGHT_GRAY",
+        "value": 7,
+        "type": "int"
+    },
+    {
+        "name": "GRAY",
+        "value": 8,
+        "type": "int"
+    },
+    {
+        "name": "LIGHT_BLUE",
+        "value": 9,
+        "type": "int"
+    },
+    {
+        "name": "LIGHT_GREEN",
+        "value": 10,
+        "type": "int"
+    },
+    {
+        "name": "LIGHT_CYAN",
+        "value": 11,
+        "type": "int"
+    },
+    {
+        "name": "LIGHT_RED",
+        "value": 12,
+        "type": "int"
+    },
+    {
+        "name": "LIGHT_MAGENTA",
+        "value": 13,
+        "type": "int"
+    },
+    {
+        "name": "YELLOW",
+        "value": 14,
+        "type": "int"
+    },
+    {
+        "name": "WHITE",
+        "value": 15,
+        "type": "int"
+    }
+]

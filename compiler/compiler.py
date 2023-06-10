@@ -13,7 +13,7 @@ from scanner import Scanner
 from parser import Parser
 from global_expressions import GlobalExpressions
 from writer import Writer
-from constructs import Function
+from constructs import Function, Variable
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file_names", nargs='+', type=str, help="Names of files to be compiled.")
@@ -24,6 +24,7 @@ parser.add_argument("-o", "--output", type=str, help="Name of a file to write co
 parser.add_argument("-c", "--compile", action="store_true", help="Compile to binary.")
 parser.add_argument("-nl", "--no_library", action="store_true", help="Do not include library functions.")
 parser.add_argument("-nb", "--no_build_in", action="store_true", help="Do not include build in functions.")
+parser.add_argument("-g", "--global_variables", type=str, default="global_variables.json", help="Name of a file with global variables.")
 parser.add_argument("-d", "--debug", action="store_true", help="Print debug information to stderr.")
 args = parser.parse_args()
 
@@ -34,9 +35,9 @@ if "__main__" == __name__:
         with open(file_name, "r") as f:
             c_program += f.read()
     
+    path_to_lib = os.path.join(os.path.dirname(__file__), "lib")
     if not args.no_library:
         # include library functions in *.c files in lib directory
-        path_to_lib = os.path.join(os.path.dirname(__file__), "lib")
         for file_name in os.listdir(path_to_lib):
             if file_name.endswith(".c"):
                 with open(os.path.join(path_to_lib, file_name), "r") as f:
@@ -64,6 +65,15 @@ if "__main__" == __name__:
     
     function_declaration_table = FunctionDeclarationTable()
     high_assembly_writer = Writer(in_file=args.intermediate, in_memory=True, output_file=high_assembly_file)
+    variable_table = VariableTable()
+
+    with open(os.path.join(path_to_lib, args.global_variables), "r") as f:
+        global_variables = json.load(f)
+        variable_table.increase_scope()
+        for variable in global_variables:
+            type, name, value = variable["type"], variable["name"], variable["value"]
+            variable_table.add(Variable(type=type, name=name, label=f"@{name}"))
+            high_assembly_writer.raw(f"@{name}: {value}")
 
     if not args.no_build_in:
         # include build in functions in *.asm files in lib directory described by *.json files
@@ -72,6 +82,8 @@ if "__main__" == __name__:
             if file_name.endswith(".json"):
                 with open(os.path.join(path_to_lib, file_name), "r") as f:
                     asm_config = json.load(f)
+                    if isinstance(asm_config, list):
+                        continue
                     file_name = asm_config["file_name"]
                     with open(os.path.join(path_to_lib, file_name), "r") as f:
                         for line in f.readlines():
@@ -93,7 +105,6 @@ if "__main__" == __name__:
                     function_declaration_table.add(Function(name=function["name"], number_of_parameters=function["number_of_parameters"], return_type=function["return_type"]))
 
     function_call_table = FunctionCallTable()
-    variable_table = VariableTable()
     global_expressions = GlobalExpressions()
     scanner = Scanner(program=c_program)
     parser = Parser(function_declaration_table=function_declaration_table, function_call_table=function_call_table, 

@@ -39,7 +39,6 @@ class Parser:
         self.function_declaration_table = function_declaration_table
         self.function_call_table = function_call_table
         self.variable_table = variable_table
-        self.variable_table.increase_scope()
         self.callback_table = { 
             Tokens.KEYWORD: self.keyword,
             Tokens.TYPE: self.type,
@@ -288,7 +287,6 @@ class Parser:
         elif ParserStates.FUNCTION_PARAMETERS_OPENED_BRACKET_OR_GLOBAL_VARIABLE_ASSIGNMENT_OR_SEMICOLON == self.state:
             self.current_variable = Variable(self.global_variable_or_function_type, None, self.global_variable_or_function_name)
             self.variable_table.add(self.current_variable)
-            self.current_function.add_variable(self.current_variable)
             self.global_assignment_mode = True
             return
         elif ParserStates.EXPRESSION == self.state:

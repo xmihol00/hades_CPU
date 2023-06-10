@@ -348,7 +348,7 @@ class HighAssemblyGenerator():
                 self.scope_index -= 1
 
         elif command == InternalAlphabet.FUNCTION_END:
-            self.writer.raw(f"{HighAssemblyInstructions.EOF} ; end of function {function.name}")
+            self.writer.raw(f"{HighAssemblyInstructions.EOF} ; end of function {function.name if function.name else ''}")
 
     def _handle_keyword(self, command: Keywords, function: Function, i: int):
         if command == Keywords.IF or command == Keywords.ELSE_IF or command == Keywords.ELSE or command == Keywords.WHILE or command == Keywords.FOR:

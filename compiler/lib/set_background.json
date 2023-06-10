@@ -1,0 +1,10 @@
+{
+    "file_name": "set_background.asm",
+    "functions": [
+        {
+            "return_type": "int",
+            "name": "set_background",
+            "number_of_parameters": 1
+        }
+    ]
+}

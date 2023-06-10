@@ -1,0 +1,10 @@
+{
+    "file_name": "buttons_status.asm",
+    "functions": [
+        {
+            "return_type": "int",
+            "name": "buttons_status",
+            "number_of_parameters": 0
+        }
+    ]
+}

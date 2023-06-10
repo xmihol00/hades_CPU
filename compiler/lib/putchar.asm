@@ -7,3 +7,4 @@ putchar.buffer_full:                    ; while transmit buffer is full
    POP eax                              ; pop the value from stack
    OUT eax 96                           ; write the value to the UART
    RET                                  ; return
+EOF

@@ -16,7 +16,7 @@ class Variable(Construct):
         self.usage = usage
         self.stack_offset = stack_offset
         self.label = label
-        self.global_scope = False
+        self.global_scope = label != None
         self.stack_size = 1
     
     def set_usage(self, usage: VariableUsage):
