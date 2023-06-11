@@ -123,7 +123,7 @@ class Parser:
             self.current_function.body.append(value)
             self.scope_type_stack.append(ScopeTypes.WHILE)
             self.state = ParserStates.EXPRESSION_BRACKET_START
-        elif Keywords.FOR == value and ParserStates.STATEMENT == self.state:
+        elif Keywords.FOR == value and (ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state):
             self.current_function.body.append(value)
             self.scope_type_stack.append(ScopeTypes.BLOCK) # will be changed to FOR_HEADER for lass expression later
             self.variable_table.increase_scope()

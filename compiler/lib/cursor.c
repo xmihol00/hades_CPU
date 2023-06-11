@@ -1,5 +1,19 @@
 #include "colors.h"
 
+int reset_cursor(int x, int y, int *cursor_buffer)
+{
+    cursor_buffer[0] = 240;
+    cursor_buffer[1] = 320;
+    for (int i = 2; i < 18; i = i + 1)
+    {
+        cursor_buffer[i] = BLACK;
+    }
+
+    draw_cursor(x, y);
+
+    return 0;
+}
+
 int move_cursor(int x, int y, int *overwritten)
 {
     int last_x = overwritten[0];
@@ -53,6 +67,13 @@ int move_cursor(int x, int y, int *overwritten)
     overwritten[16] = get_pixel(x, y + 4);
     overwritten[17] = get_pixel(x, y + 5);
 
+    draw_cursor(x, y);
+
+    return 0;
+}
+
+int draw_cursor(int x, int y)
+{
     draw_pixel(x - 5, y, WHITE);
     draw_pixel(x - 4, y, WHITE);
     draw_pixel(x - 3, y, WHITE);

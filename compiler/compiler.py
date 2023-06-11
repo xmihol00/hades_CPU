@@ -96,8 +96,7 @@ if "__main__" == __name__:
         for assembly_file in args.assembly:
             with open(assembly_file, "r") as f:
                 asm_config = json.load(f)
-                file_name = asm_config["file_name"]
-                with open(file_name, "r") as f:
+                with open(asm_config["file_name"], "r") as f:
                     for line in f.readlines():
                         high_assembly_writer.raw(line.rstrip())
 
