@@ -15,3 +15,4 @@ const int LIGHT_RED = 12;
 const int LIGHT_MAGENTA = 13;
 const int YELLOW = 14;
 const int WHITE = 15;
+const int CURRENT_COLOR = BLACK;

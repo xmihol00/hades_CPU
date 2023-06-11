@@ -215,7 +215,7 @@ class Parser:
         self.variable_table.increase_scope()
 
     def closed_curly_bracket(self, _: str):
-        if len(self.scope_type_stack) == 0 or ParserStates.STATEMENT != self.state:
+        if len(self.scope_type_stack) == 0 or (ParserStates.STATEMENT != self.state and ParserStates.STATEMENT_OR_ELSE != self.state):
             raise Exception()
         
         popped_scope_type = self.scope_type_stack.pop()

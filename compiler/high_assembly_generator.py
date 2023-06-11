@@ -312,11 +312,11 @@ class HighAssemblyGenerator():
                     self.register_file.invalidate()
                     if function.body[i + 1] == Keywords.ELSE_IF or function.body[i + 1] == Keywords.ELSE:
                         self.writer.instruction(f"{HighAssemblyInstructions.JMP} {Keywords.IF.to_label(function.name, self.if_scope_ids, self.scope_index)}_end")
+                        self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_skip")
                     else:
-                        self.if_scope_ids[self.scope_index] += 1
                         self.writer.label(f"{Keywords.IF.to_label(function.name, self.if_scope_ids, self.scope_index)}_end")
-                        self.writer.new_line()
-                    self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_skip")
+                        self.writer.label(f"{self.current_jump_statement.to_label(function.name, self.if_scope_ids, self.scope_index, self.else_if_counter - 1)}_skip")
+                        self.if_scope_ids[self.scope_index] += 1
 
                 elif self.current_jump_statement == Keywords.ELSE:
                     self.register_file.store_written()

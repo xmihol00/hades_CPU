@@ -240,6 +240,8 @@ class Operators(Enum):
             return HighAssemblyInstructions.NEG
         elif self == Operators.DEREFERENCE or self == Operators.ASSIGNMENT_DEREFERENCE:
             return HighAssemblyInstructions.LOAD
+        elif self == Operators.LOGICAL_NOT:
+            return HighAssemblyInstructions.NOT
         else:
             raise Exception(f"Operator {self} does not have a high assembly instruction.")
 

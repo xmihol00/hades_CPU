@@ -1,4 +1,3 @@
-@__switches_state: 0
 
 &init_frame_interrupts:                 ; int init_frame_interrupts()
    MOV eax 15                           ; set bits 0-3 to 1
@@ -12,9 +11,9 @@ EOF
    PUSH edx                             ; save edx
    IN eax 68                            ; read switches
    AND eax eax 15                       ; mask out all but bits 0-3
-   LOAD edx @__switches_state           ; load switches state
-   XOR edx edx eax                      ; update switches state
-   STORE @__switches_state edx          ; store switches state
+   LOAD edx @CURRENT_COLOR              ; load switches state (color)
+   XOR edx edx eax                      ; update switches state (color)
+   STORE @CURRENT_COLOR edx             ; store switches state (color)
    MOV eax 15                           ; set bits 0-3 to 1
    OUT eax 68                           ; reset interrupts from switches 0-3
    PUSH edx                             ; push color

@@ -78,5 +78,10 @@
         "name": "WHITE",
         "value": 15,
         "type": "int"
+    },
+    {
+        "name": "CURRENT_COLOR",
+        "value": 0,
+        "type": "int"
     }
 ]

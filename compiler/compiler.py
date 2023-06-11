@@ -87,7 +87,7 @@ if "__main__" == __name__:
                     file_name = asm_config["file_name"]
                     with open(os.path.join(path_to_lib, file_name), "r") as f:
                         for line in f.readlines():
-                            high_assembly_writer.raw(line[:-1])
+                            high_assembly_writer.raw(line.rstrip())
                     
                     for function in asm_config["functions"]:
                         function_declaration_table.add(Function(name=function["name"], number_of_parameters=function["number_of_parameters"], return_type=function["return_type"]))
@@ -99,7 +99,7 @@ if "__main__" == __name__:
                 file_name = asm_config["file_name"]
                 with open(file_name, "r") as f:
                     for line in f.readlines():
-                        high_assembly_writer.raw(line[:-1])
+                        high_assembly_writer.raw(line.rstrip())
 
                 for function in asm_config["functions"]:
                     function_declaration_table.add(Function(name=function["name"], number_of_parameters=function["number_of_parameters"], return_type=function["return_type"]))
