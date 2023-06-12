@@ -25,7 +25,7 @@ init_mouse.return:
    RET                                  ; return
 EOF
 
-&mouse_status:                          ; int mouse_status(), returns byte 1 of mouse events or 0 if no events
+&mouse_buttons_status:                  ; int mouse_buttons_status()
    PUSH edx                             ; save return address
    IN eax 129                           ; load the status register
    AND eax eax 1                        ; check if data is available

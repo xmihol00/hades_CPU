@@ -1,9 +1,9 @@
 {
-    "file_name": "sample_programs/paint_console_handler.asm",
+    "file_name": "buttons.asm",
     "functions": [
         {
             "return_type": "int",
-            "name": "init_paint_console",
+            "name": "buttons_status",
             "number_of_parameters": 0
         }
     ]

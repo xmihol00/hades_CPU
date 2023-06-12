@@ -1,0 +1,15 @@
+{
+    "file_name": "input_output.asm",
+    "functions": [
+        {
+            "return_type": "int",
+            "name": "putchar",
+            "number_of_parameters": 1
+        },
+        {
+            "return_type": "int",
+            "name": "getchar",
+            "number_of_parameters": 1
+        }
+    ]
+}

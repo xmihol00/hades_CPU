@@ -1,6 +1,142 @@
 #include <stdbool.h>
 #include "colors.h"
-#define CURSOR_SPEED 1
+
+int CURSOR_SPEED = 0;
+int MARK_POINT = 0;
+int DRAW = 0;
+int CLEAR = 0;
+
+// compile:
+// python compiler.py sample_programs/paint.c -s -c -a sample_programs/paint_interrupt_handling.json 
+
+int reset_cursor(int x, int y, int *cursor_buffer)
+{
+    cursor_buffer[0] = 240;
+    cursor_buffer[1] = 320;
+    for (int i = 2; i < 18; i = i + 1)
+    {
+        cursor_buffer[i] = BLACK;
+    }
+
+    draw_cursor(x, y);
+
+    return 0;
+}
+
+int move_cursor(int x, int y, int *overwritten)
+{
+    int last_x = overwritten[0];
+    int last_y = overwritten[1];
+
+    if (last_x == x && last_y == y) // position of the cursor has not changed
+    {
+        return 0;
+    }
+
+    // draw stored pixels over the current cursor
+    draw_pixel(last_x - 5, last_y, overwritten[2]);
+    draw_pixel(last_x - 4, last_y, overwritten[3]);
+    draw_pixel(last_x - 3, last_y, overwritten[4]);
+    draw_pixel(last_x - 2, last_y, overwritten[5]);
+
+    draw_pixel(last_x + 2, last_y, overwritten[6]);
+    draw_pixel(last_x + 3, last_y, overwritten[7]);
+    draw_pixel(last_x + 4, last_y, overwritten[8]);
+    draw_pixel(last_x + 5, last_y, overwritten[9]);
+
+    draw_pixel(last_x, last_y - 5, overwritten[10]);
+    draw_pixel(last_x, last_y - 4, overwritten[11]);
+    draw_pixel(last_x, last_y - 3, overwritten[12]);
+    draw_pixel(last_x, last_y - 2, overwritten[13]);
+
+    draw_pixel(last_x, last_y + 2, overwritten[14]);
+    draw_pixel(last_x, last_y + 3, overwritten[15]);
+    draw_pixel(last_x, last_y + 4, overwritten[16]);
+    draw_pixel(last_x, last_y + 5, overwritten[17]);
+
+    // remember the new cursor position
+    overwritten[0] = x;
+    overwritten[1] = y;
+
+    // remember the pixels that will be overwritten
+    overwritten[2] = get_pixel(x - 5, y);
+    overwritten[3] = get_pixel(x - 4, y);
+    overwritten[4] = get_pixel(x - 3, y);
+    overwritten[5] = get_pixel(x - 2, y);
+
+    overwritten[6] = get_pixel(x + 2, y);
+    overwritten[7] = get_pixel(x + 3, y);
+    overwritten[8] = get_pixel(x + 4, y);
+    overwritten[9] = get_pixel(x + 5, y);
+
+    overwritten[10] = get_pixel(x, y - 5);
+    overwritten[11] = get_pixel(x, y - 4);
+    overwritten[12] = get_pixel(x, y - 3);
+    overwritten[13] = get_pixel(x, y - 2);
+
+    overwritten[14] = get_pixel(x, y + 2);
+    overwritten[15] = get_pixel(x, y + 3);
+    overwritten[16] = get_pixel(x, y + 4);
+    overwritten[17] = get_pixel(x, y + 5);
+
+    draw_cursor(x, y); // draw the cursor at the new position
+
+    return 0;
+}
+
+int draw_cursor(int x, int y)
+{
+    draw_pixel(x - 5, y, WHITE);
+    draw_pixel(x - 4, y, WHITE);
+    draw_pixel(x - 3, y, WHITE);
+    draw_pixel(x - 2, y, WHITE);
+
+    draw_pixel(x + 2, y, WHITE);
+    draw_pixel(x + 3, y, WHITE);
+    draw_pixel(x + 4, y, WHITE);
+    draw_pixel(x + 5, y, WHITE);
+
+    draw_pixel(x, y - 5, WHITE);
+    draw_pixel(x, y - 4, WHITE);
+    draw_pixel(x, y - 3, WHITE);
+    draw_pixel(x, y - 2, WHITE);
+
+    draw_pixel(x, y + 2, WHITE);
+    draw_pixel(x, y + 3, WHITE);
+    draw_pixel(x, y + 4, WHITE);
+    draw_pixel(x, y + 5, WHITE);
+
+    return 0;
+}
+
+int draw_frame(int color)
+{
+    // duplicate the color to all 16 bits
+    color = color | (color << 4);
+    color = color | (color << 8);
+    color = color | (color << 12);
+
+    for (int i = 0; i < 640; i = i + 4) // draw the top and bottom sides
+    {
+        draw_quad_pixel(0, i, color);
+        draw_quad_pixel(1, i, color);
+        draw_quad_pixel(2, i, color);
+        draw_quad_pixel(3, i, color);
+
+        draw_quad_pixel(476, i, color);
+        draw_quad_pixel(477, i, color);
+        draw_quad_pixel(478, i, color);
+        draw_quad_pixel(479, i, color);
+    }
+
+    for (int i = 4; i < 476; i = i + 1) // draw the left and right sides
+    {
+        draw_quad_pixel(i, 0, color);
+        draw_quad_pixel(i, 636, color);
+    }
+
+    return 0;
+}
 
 int abs(int x)
 {
@@ -92,10 +228,11 @@ int main()
     int x_buffer[32];
     int y_buffer[32];
     int coordinate_offset = 0;
-    int set_coordinates = 0;
 
     while (init_mouse()) { }
-    init_paint_console();
+    init_paint_interrupts();
+    init_7segment();
+    display_number(32);
 
     int cursor_buffer[18];
     int x = 320;
@@ -132,9 +269,10 @@ int main()
             x = 635;
         }
 
-        int mouse = mouse_status();
-        if (mouse & 1)
+        int mouse = mouse_buttons_status(); // poll the mouse buttons
+        if ((mouse & 1) || MARK_POINT)
         {
+            MARK_POINT = false;
             for (int i = y -1; i <= y + 1; i = i + 1)
             {
                 for (int j = x - 1; j <= x + 1; j = j + 1)
@@ -143,24 +281,27 @@ int main()
                 }
             }
             
-            x_buffer[coordinate_offset] = x;
-            y_buffer[coordinate_offset] = y;
-            coordinate_offset = coordinate_offset + 1;
-            if (coordinate_offset == 32)
+            if (coordinate_offset < 32)
             {
-                coordinate_offset = 0;
+                x_buffer[coordinate_offset] = x;
+                y_buffer[coordinate_offset] = y;
+                coordinate_offset = coordinate_offset + 1;
+                display_number(32 - coordinate_offset);
+                print(point_marked_message);
             }
-            set_coordinates = set_coordinates + 1;
-            print(point_marked_message);
         }
-        else if (mouse & 2)
+        else if ((mouse & 2) || DRAW)
         {
-            if (set_coordinates > 0)
+            DRAW = false;
+            if (coordinate_offset >= 2)
             {
                 print(drawing_message);
-                draw_line(x_buffer[coordinate_offset - 2], y_buffer[coordinate_offset - 2], 
-                          x_buffer[coordinate_offset - 1], y_buffer[coordinate_offset - 1]);
-                set_coordinates = 0;
+                for (int i = 0; i < coordinate_offset - 1; i = i + 1)
+                {
+                    draw_line(x_buffer[i], y_buffer[i], x_buffer[i + 1], y_buffer[i + 1]);
+                }
+                coordinate_offset = 0;
+                display_number(32);
             }
         }
         else if (mouse & 4)

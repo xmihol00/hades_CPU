@@ -83,10 +83,5 @@
         "name": "CURRENT_COLOR",
         "value": 0,
         "type": "int"
-    },
-    {
-        "name": "CURSOR_SPEED",
-        "value": 0,
-        "type": "int"
     }
 ]

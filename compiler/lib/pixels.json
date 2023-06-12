@@ -1,5 +1,5 @@
 {
-    "file_name": "draw_pixel.asm",
+    "file_name": "pixels.asm",
     "functions": [
         {
             "return_type": "int",
@@ -10,6 +10,11 @@
             "return_type": "int",
             "name": "draw_quad_pixel",
             "number_of_parameters": 3
+        },
+        {
+            "return_type": "int",
+            "name": "get_pixel",
+            "number_of_parameters": 2
         }
     ]
 }
