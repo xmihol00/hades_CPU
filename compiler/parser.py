@@ -104,7 +104,7 @@ class Parser:
 
     def keyword(self, value: str):
         value = Keywords(value)
-        if Keywords.RETURN == value and ParserStates.STATEMENT == self.state:
+        if Keywords.RETURN == value and (ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state):
             self.current_function.body.append(value)
             self.state = ParserStates.EXPRESSION
         elif Keywords.IF == value and (ParserStates.STATEMENT == self.state or ParserStates.STATEMENT_OR_ELSE == self.state):

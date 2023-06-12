@@ -15,6 +15,11 @@
             "return_type": "int",
             "name": "get_pixel",
             "number_of_parameters": 2
+        },
+        {
+            "return_type": "int",
+            "name": "set_background",
+            "number_of_parameters": 1
         }
     ]
 }

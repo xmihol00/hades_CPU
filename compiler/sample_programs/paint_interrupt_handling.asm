@@ -26,12 +26,18 @@ EOF
    PUSH edx                             ; push color
    CALL draw_frame                      ; draw frame
 
-   SHR eax ebp 13                       ; shift switches to 14-16
-   AND edx eax 1                        ; mask out all switch 14
-   STORE @MARK_POINT edx                ; store switches state (cursor on)
-   AND edx eax 2                        ; mask out all switch 15
-   STORE @DRAW edx                      ; store switches state (draw line)
-   AND edx eax 4                        ; mask out all switch 16
+   SHR eax ebp 10                       ; shift switches to 11-16
+   AND edx eax 1                        ; mask out all switch 11
+   STORE @RASTERIZE_TRIANGLE edx        ; store switches state (rasterize triangle)
+   AND edx eax 2                        ; mask out all switch 12
+   STORE @FILL_AREA edx                 ; store switches state (fill area)
+   AND edx eax 4                        ; mask out all switch 13
+   STORE @CONNECT_POINTS edx            ; store switches state (connect points)
+   AND edx eax 8                        ; mask out all switch 14
+   STORE @DRAW_LINES edx                ; store switches state (draw line)
+   AND edx eax 16                        ; mask out all switch 15
+   STORE @MARK_POINT edx                ; store switches state (draw point)
+   AND edx eax 32                       ; mask out all switch 16
    STORE @CLEAR edx                     ; store switches state (clear screen)
 
    MOV eax -1                           ; set bits 0-15 to 1
