@@ -35,7 +35,7 @@ EOF
    STORE @CONNECT_POINTS edx            ; store switches state (connect points)
    AND edx eax 8                        ; mask out all switch 14
    STORE @DRAW_LINES edx                ; store switches state (draw line)
-   AND edx eax 16                        ; mask out all switch 15
+   AND edx eax 16                       ; mask out all switch 15
    STORE @MARK_POINT edx                ; store switches state (draw point)
    AND edx eax 32                       ; mask out all switch 16
    STORE @CLEAR edx                     ; store switches state (clear screen)

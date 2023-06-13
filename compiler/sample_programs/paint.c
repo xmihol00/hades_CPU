@@ -353,6 +353,26 @@ int fill_area(int x, int y, int color, int max_depth)
     {
         fill_area(x + 1, y, color, max_depth);
     }
+    
+    if (get_pixel(x + 1, y + 1) != color)
+    {
+        fill_area(x + 1, y + 1, color, max_depth);
+    }
+
+    if (get_pixel(x - 1, y - 1) != color)
+    {
+        fill_area(x - 1, y - 1, color, max_depth);
+    }
+
+    if (get_pixel(x - 1, y + 1) != color)
+    {
+        fill_area(x - 1, y + 1, color, max_depth);
+    }
+
+    if (get_pixel(x + 1, y - 1) != color)
+    {
+        fill_area(x + 1, y - 1, color, max_depth);
+    }
 
     return 0;
 }
@@ -434,8 +454,8 @@ int main()
 {
     set_background(BLACK);
 
-    int point_marked_message[17];
-    point_marked_message[0] = 'P'; point_marked_message[1] = 'o'; point_marked_message[2] = 'i'; point_marked_message[3] = 'n'; point_marked_message[4] = 't'; point_marked_message[5] = ' '; point_marked_message[6] = 'm'; point_marked_message[7] = 'a'; point_marked_message[8] = 'r'; point_marked_message[9] = 'k'; point_marked_message[10] = 'e'; point_marked_message[11] = 'd'; point_marked_message[12] = '.'; point_marked_message[13] = '.'; point_marked_message[14] = '.'; point_marked_message[15] = '\n'; point_marked_message[16] = '\0';
+    int drawing_point_message[17];
+    drawing_point_message[0] = 'D'; drawing_point_message[1] = 'r'; drawing_point_message[2] = 'a'; drawing_point_message[3] = 'w'; drawing_point_message[4] = 'i'; drawing_point_message[5] = 'n'; drawing_point_message[6] = 'g'; drawing_point_message[7] = ' '; drawing_point_message[8] = 'p'; drawing_point_message[9] = 'o'; drawing_point_message[10] = 'i'; drawing_point_message[11] = 'n'; drawing_point_message[12] = 't'; drawing_point_message[13] = '.'; drawing_point_message[14] = '.'; drawing_point_message[15] = '.'; drawing_point_message[16] = '\n';
     int drawing_message[12];
     drawing_message[0] = 'D'; drawing_message[1] = 'r'; drawing_message[2] = 'a'; drawing_message[3] = 'w'; drawing_message[4] = 'i'; drawing_message[5] = 'n'; drawing_message[6] = 'g'; drawing_message[7] = '.'; drawing_message[8] = '.'; drawing_message[9] = '.'; drawing_message[10] = '\n'; drawing_message[11] = '\0'; 
     int filling_area_message[17];
@@ -504,7 +524,7 @@ int main()
                 y_buffer[coordinate_offset] = y;
                 coordinate_offset = coordinate_offset + 1;
                 display_number(32 - coordinate_offset);
-                print(point_marked_message);
+                print(drawing_point_message);
             }
             MARK_POINT = false;
         }
