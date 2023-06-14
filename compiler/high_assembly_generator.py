@@ -233,7 +233,7 @@ class HighAssemblyGenerator():
                 if command == Operators.ASSIGNMENT and self.array_assignment:
                     self.array_assignment = False
                     self.writer.instruction(f"{HighAssemblyInstructions.STORE} [{self.register_names[0]}] {self.register_names[1]}",
-                                            f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
+                                            f"*{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")
                 else:
                     self.writer.instruction(f"{command.to_high_assembly_instruction()} {self.register_names[0]} {self.register_names[1]}",
                                             f"{function.body[i - 2].comment} {command.value} {function.body[i - 1].comment}")

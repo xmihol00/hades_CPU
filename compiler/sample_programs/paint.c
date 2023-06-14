@@ -3,7 +3,7 @@
 
 int CURSOR_SPEED = 0;
 int MARK_POINT = 0;
-int DRAW_LINES = 0;
+int DRAW_LINE = 0;
 int CONNECT_POINTS = 0;
 int FILL_AREA = 0;
 int RASTERIZE_TRIANGLE = 0;
@@ -11,6 +11,15 @@ int CLEAR = 0;
 
 // compile:
 // python compiler.py sample_programs/paint.c -s -c -a sample_programs/paint_interrupt_handling.json 
+// compile with debug info:
+// python compiler.py sample_programs/paint.c -s -c -a sample_programs/paint_interrupt_handling.json -d 2>debug.txt
+
+// main functionality:
+// 1. marking points with the cursor (up to 32 points)
+// 2. drawing a line between the last two marked points
+// 3. connecting all drawn points into a polygon
+// 4. filling the polygon with a color
+// 5. rasterizing a triangle drawn with the last three marked points
 
 int abs(int x)
 {
@@ -153,69 +162,78 @@ int move_cursor(int x, int y, int *overwritten)
 
 int update_cursor(int *overwritten)
 {
+    // get the current cursor position
     int x = overwritten[0];
     int y = overwritten[1];
 
+    // left wing
     for (int i = 2; i <= 5; i = i + 1)
     {
         int color = get_pixel(x - i, y);
-        if (color != WHITE)
+        if (color != WHITE) // update the pixels of the cursor that were overwritten
         {
             overwritten[i] = color;
         }
     }
     overwritten = overwritten + 4;
 
+    // right wing
     for (int i = 2; i <= 5; i = i + 1)
     {
         int color = get_pixel(x + i, y);
-        if (color != WHITE)
+        if (color != WHITE) // update the pixels of the cursor that were overwritten
         {
             overwritten[i] = color;
         }
     }
     overwritten = overwritten + 4;
 
+    // top wing
     for (int i = 2; i <= 5; i = i + 1)
     {
         int color = get_pixel(x, y - i);
-        if (color != WHITE)
+        if (color != WHITE) // update the pixels of the cursor that were overwritten
         {
             overwritten[i] = color;
         }
     }
     overwritten = overwritten + 4;
 
+    // bottom wing
     for (int i = 2; i <= 5; i = i + 1)
     {
         int color = get_pixel(x, y + i);
-        if (color != WHITE)
+        if (color != WHITE) // update the pixels of the cursor that were overwritten
         {
             overwritten[i] = color;
         }
     }
 
-    draw_cursor(x, y);
+    draw_cursor(x, y); // redraw the cursor
     return 0;
 }
 
 int draw_cursor(int x, int y)
 {
+    // left wing
     draw_pixel(x - 5, y, WHITE);
     draw_pixel(x - 4, y, WHITE);
     draw_pixel(x - 3, y, WHITE);
     draw_pixel(x - 2, y, WHITE);
 
+    // right wing
     draw_pixel(x + 2, y, WHITE);
     draw_pixel(x + 3, y, WHITE);
     draw_pixel(x + 4, y, WHITE);
     draw_pixel(x + 5, y, WHITE);
 
+    // top wing
     draw_pixel(x, y - 5, WHITE);
     draw_pixel(x, y - 4, WHITE);
     draw_pixel(x, y - 3, WHITE);
     draw_pixel(x, y - 2, WHITE);
 
+    // bottom wing
     draw_pixel(x, y + 2, WHITE);
     draw_pixel(x, y + 3, WHITE);
     draw_pixel(x, y + 4, WHITE);
@@ -283,6 +301,7 @@ int draw_line(int x1, int y1, int x2, int y2, int color) // Bresenham's line alg
         y1 = y1 ^ y2;
     }
 
+    // set up predictor
     int dx = x2 - x1;
     int dy = abs(y2 - y1);
     int P1 = 2 * dy;
@@ -290,31 +309,35 @@ int draw_line(int x1, int y1, int x2, int y2, int color) // Bresenham's line alg
     int P = P1 - dx;
     int y = y1;
 
+    // set up step along y axis
     int y_step = 1;
     if (y1 > y2)
     {
         y_step = y_step - 2;
     }
 
-    for (int x = x1; x <= x2; x = x + 1)
+    for (int x = x1; x <= x2; x = x + 1) // move along x axis
     {
         if (steep)
         {
+            // draw line 3 pixels thick
             draw_pixel(y - 1, x, color);
             draw_pixel(y, x, color);
             draw_pixel(y + 1, x, color);
         }
         else
         {
+            // draw line 3 pixels thick
             draw_pixel(x, y - 1, color);
             draw_pixel(x, y, color);
             draw_pixel(x, y + 1, color);
         }
 
+        // update predictor
         if (P >= 0)
         {
             P = P + P2;
-            y = y + y_step;
+            y = y + y_step; // move along y axis
         }
         else
         {
@@ -327,51 +350,52 @@ int draw_line(int x1, int y1, int x2, int y2, int color) // Bresenham's line alg
 
 int fill_area(int x, int y, int color, int max_depth)
 {
-    draw_pixel(x, y, color);
+    draw_pixel(x, y, color); // fill the current pixel
     max_depth = max_depth - 1;
     if (max_depth == 0)
     {
         return 0;
     }
     
-    if (get_pixel(x - 1, y) != color)
+    // move seeds to surrounding pixels if they are not already filled
+    if (get_pixel(x - 1, y) != color) // check left
     {
         fill_area(x - 1, y, color, max_depth);
     }
 
-    if (get_pixel(x, y - 1) != color)
+    if (get_pixel(x, y - 1) != color) // check up
     {
         fill_area(x, y - 1, color, max_depth);
     }
 
-    if (get_pixel(x, y + 1) != color)
+    if (get_pixel(x, y + 1) != color) // check down
     {
         fill_area(x, y + 1, color, max_depth);
     }
 
-    if (get_pixel(x + 1, y) != color)
+    if (get_pixel(x + 1, y) != color) // check right
     {
         fill_area(x + 1, y, color, max_depth);
     }
     
-    if (get_pixel(x + 1, y + 1) != color)
+    if (get_pixel(x + 1, y + 1) != color) // check bottom right
     {
         fill_area(x + 1, y + 1, color, max_depth);
     }
 
-    if (get_pixel(x - 1, y - 1) != color)
+    if (get_pixel(x + 1, y - 1) != color) // check top right
+    {
+        fill_area(x + 1, y - 1, color, max_depth);
+    }
+
+    if (get_pixel(x - 1, y - 1) != color) // check top left
     {
         fill_area(x - 1, y - 1, color, max_depth);
     }
 
-    if (get_pixel(x - 1, y + 1) != color)
+    if (get_pixel(x - 1, y + 1) != color) // check bottom left
     {
         fill_area(x - 1, y + 1, color, max_depth);
-    }
-
-    if (get_pixel(x + 1, y - 1) != color)
-    {
-        fill_area(x + 1, y - 1, color, max_depth);
     }
 
     return 0;
@@ -452,12 +476,14 @@ int rasterize_triangle(int x1, int y1, int x2, int y2, int x3, int y3, int color
 
 int main()
 {
-    set_background(BLACK);
+    set_background(BLACK); // reset the screen
 
-    int drawing_point_message[17];
-    drawing_point_message[0] = 'D'; drawing_point_message[1] = 'r'; drawing_point_message[2] = 'a'; drawing_point_message[3] = 'w'; drawing_point_message[4] = 'i'; drawing_point_message[5] = 'n'; drawing_point_message[6] = 'g'; drawing_point_message[7] = ' '; drawing_point_message[8] = 'p'; drawing_point_message[9] = 'o'; drawing_point_message[10] = 'i'; drawing_point_message[11] = 'n'; drawing_point_message[12] = 't'; drawing_point_message[13] = '.'; drawing_point_message[14] = '.'; drawing_point_message[15] = '.'; drawing_point_message[16] = '\n';
-    int drawing_message[12];
-    drawing_message[0] = 'D'; drawing_message[1] = 'r'; drawing_message[2] = 'a'; drawing_message[3] = 'w'; drawing_message[4] = 'i'; drawing_message[5] = 'n'; drawing_message[6] = 'g'; drawing_message[7] = '.'; drawing_message[8] = '.'; drawing_message[9] = '.'; drawing_message[10] = '\n'; drawing_message[11] = '\0'; 
+    int point_marked_message[17];
+    point_marked_message[0] = 'P'; point_marked_message[1] = 'o'; point_marked_message[2] = 'i'; point_marked_message[3] = 'n'; point_marked_message[4] = 't'; point_marked_message[5] = ' '; point_marked_message[6] = 'm'; point_marked_message[7] = 'a'; point_marked_message[8] = 'r'; point_marked_message[9] = 'k'; point_marked_message[10] = 'e'; point_marked_message[11] = 'd'; point_marked_message[12] = '.'; point_marked_message[13] = '.'; point_marked_message[14] = '.'; point_marked_message[15] = '\n'; point_marked_message[16] = '\0';
+    int drawing_line_message[17];
+    drawing_line_message[0] = 'D'; drawing_line_message[1] = 'r'; drawing_line_message[2] = 'a'; drawing_line_message[3] = 'w'; drawing_line_message[4] = 'i'; drawing_line_message[5] = 'n'; drawing_line_message[6] = 'g'; drawing_line_message[7] = ' '; drawing_line_message[8] = 'l'; drawing_line_message[9] = 'i'; drawing_line_message[10] = 'n'; drawing_line_message[11] = 'e'; drawing_line_message[12] = '.'; drawing_line_message[13] = '.'; drawing_line_message[14] = '.'; drawing_line_message[15] = '\n'; drawing_line_message[16] = '\0';
+    int drawing_shape_message[18];
+    drawing_shape_message[0] = 'D'; drawing_shape_message[1] = 'r'; drawing_shape_message[2] = 'a'; drawing_shape_message[3] = 'w'; drawing_shape_message[4] = 'i'; drawing_shape_message[5] = 'n'; drawing_shape_message[6] = 'g'; drawing_shape_message[7] = ' '; drawing_shape_message[8] = 's'; drawing_shape_message[9] = 'h'; drawing_shape_message[10] = 'a'; drawing_shape_message[11] = 'p'; drawing_shape_message[12] = 'e'; drawing_shape_message[13] = '.'; drawing_shape_message[14] = '.'; drawing_shape_message[15] = '.'; drawing_shape_message[16] = '\n'; drawing_shape_message[17] = '\0';
     int filling_area_message[17];
     filling_area_message[0] = 'F'; filling_area_message[1] = 'i'; filling_area_message[2] = 'l'; filling_area_message[3] = 'l'; filling_area_message[4] = 'i'; filling_area_message[5] = 'n'; filling_area_message[6] = 'g'; filling_area_message[7] = ' '; filling_area_message[8] = 'a'; filling_area_message[9] = 'r'; filling_area_message[10] = 'e'; filling_area_message[11] = 'a'; filling_area_message[12] = '.'; filling_area_message[13] = '.'; filling_area_message[14] = '.'; filling_area_message[15] = '\n'; filling_area_message[16] = '\0';
     int rasterizing_triangle_message[24];
@@ -467,7 +493,7 @@ int main()
     int y_buffer[32];
     int coordinate_offset = 0;
 
-    while (init_mouse()) { }
+    while (init_mouse()) { } // wait for the mouse to be ready
     init_paint_interrupts();
     init_7segment();
     display_number(32);
@@ -477,11 +503,11 @@ int main()
     int y = 240;
     reset_cursor(x, y, cursor_buffer);
 
-    while (true)
+    while (true) // main loop of the program
     {
         move_cursor(x, y, cursor_buffer);
         
-        int buttons = buttons_status();
+        int buttons = buttons_status(); // poll the console buttons
         y = y - (buttons & 1) * CURSOR_SPEED;
         y = y + ((buttons >> 2) & 1) * CURSOR_SPEED;
         x = x + ((buttons >> 1) & 1) * CURSOR_SPEED;
@@ -510,6 +536,7 @@ int main()
         int mouse = mouse_buttons_status(); // poll the mouse buttons
         if ((mouse & 1) || MARK_POINT)
         {
+            // draw a 3x3 square
             for (int i = y -1; i <= y + 1; i = i + 1)
             {
                 for (int j = x - 1; j <= x + 1; j = j + 1)
@@ -518,36 +545,46 @@ int main()
                 }
             }
             
-            if (coordinate_offset < 32)
+            if (coordinate_offset < 32) // ensure that the buffer is not full
             {
                 x_buffer[coordinate_offset] = x;
                 y_buffer[coordinate_offset] = y;
                 coordinate_offset = coordinate_offset + 1;
                 display_number(32 - coordinate_offset);
-                print(drawing_point_message);
+                print(point_marked_message);
             }
             MARK_POINT = false;
         }
-        else if ((mouse & 2) || DRAW_LINES || CONNECT_POINTS)
+        else if ((mouse & 2) || DRAW_LINE)
         {
-            if (coordinate_offset >= 2)
+            if (coordinate_offset >= 2) // ensure that there is something to draw
             {
-                print(drawing_message);
+                print(drawing_line_message);
+                draw_line(x_buffer[coordinate_offset - 2], y_buffer[coordinate_offset - 2], 
+                          x_buffer[coordinate_offset - 1], y_buffer[coordinate_offset - 1], 
+                          CURRENT_COLOR);
+                
+                coordinate_offset = coordinate_offset - 2;
+                update_cursor(cursor_buffer);
+                display_number(32 - coordinate_offset);
+            }
+            DRAW_LINE = false;
+        }
+        else if (CONNECT_POINTS)
+        {
+            if (coordinate_offset >= 2) // ensure that there is something to draw
+            {
+                print(drawing_shape_message);
                 for (int i = 0; i < coordinate_offset - 1; i = i + 1)
                 {
                     draw_line(x_buffer[i], y_buffer[i], x_buffer[i + 1], y_buffer[i + 1], CURRENT_COLOR);
                 }
-
-                if (CONNECT_POINTS)
-                {
-                    draw_line(x_buffer[0], y_buffer[0], x_buffer[coordinate_offset - 1], y_buffer[coordinate_offset - 1], CURRENT_COLOR);
-                }
+                draw_line(x_buffer[0], y_buffer[0], x_buffer[coordinate_offset - 1], y_buffer[coordinate_offset - 1], CURRENT_COLOR);
 
                 coordinate_offset = 0;
                 update_cursor(cursor_buffer);
                 display_number(32);
             }
-            DRAW_LINES = false;
             CONNECT_POINTS = false;
         }
         else if (FILL_AREA)
