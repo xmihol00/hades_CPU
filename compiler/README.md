@@ -32,10 +32,74 @@ The compiler produces several outputs. It can produce in total up to 5 different
 
 ## Support
 The following listing summarizes the supported C language constructs:
-* TODO
+* only integer data type,
+* 1D arrays and pointers with static allocation,
+* integers in decimal numeral system,
+* characters,
+* function calls,
+* `if`, `else if`, `else` statements,
+* `while` loops,
+* `for` loops with all 3 fields of the header filled,
+* arithmetic (excluding division), logic and bitwise operators as well as operators `<<<` and `>>>` for rotation bit shifts,
+* indexation and dereference of pointers/arrays,
+* `true` and `false` values,
+* line comments.
 
 ## Usage
-TODO
+```
+python3 compiler.py [-h] [-a ASSEMBLY [ASSEMBLY ...]] [-s] [-i INTERMEDIATE] [-o OUTPUT] [-c] [-nl] [-nb] [-g GLOBAL_VARIABLES] [-d] file_names [file_names ...]
+
+positional arguments:
+  file_names            Names of files to be compiled.
+
+options:
+  -a ASSEMBLY [ASSEMBLY ...], --assembly ASSEMBLY [ASSEMBLY ...]
+                        Names of configuration files with linkable high level assembly.
+  -s, --same            Use the name of first input file as names for output files.
+  -i INTERMEDIATE, --intermediate INTERMEDIATE
+                        Name of a file to write compiled code to high level assembly.
+  -o OUTPUT, --output OUTPUT
+                        Name of a file to write compiled code to HaDes assembly.
+  -c, --compile         Compile to binary.
+  -nl, --no_library     Do not include library functions.
+  -nb, --no_build_in    Do not include build in functions.
+  -g GLOBAL_VARIABLES, --global_variables GLOBAL_VARIABLES
+                        Name of a file containing global variable definitions.
+  -d, --debug           Print the internal state of the compiler to stderr.
+```
 
 ## Sample programs
-TODO
+There are several sample programs in the `sample_programs/` directory.
+
+### Paint
+Paint is the largest and most interesting program. It uses large variety of the available peripheral devices. Compile the program with:
+```
+python compiler.py sample_programs/paint.c -s -c -a sample_programs/paint_interrupt_handling.json 
+```
+
+### Echo
+Program to echo the input from the UART peripheral device back as an output. Compile the program with:
+```
+python compiler.py sample_programs/echo.c -s -c
+```
+
+### Fibonacci
+Program to compute the Nth value (provided via the UART peripheral device) of the Fibonacci sequence using recursion. Compile the program with:
+```
+python compiler.py sample_programs/fibonacci.c -s -c
+```
+
+### Divide By 10
+Program to divide a given number (provided via the UART peripheral device) by 10 using a software implementation with shifts, additions and multiplication. Compile the program with:
+```
+python compiler.py sample_programs/divide_by_10.c -s -c
+```
+
+### Display number
+Program to display a number (provided via the UART peripheral device) smaller than 10 000 on the 7-segment display. Compile the program with:
+```
+python compiler.py sample_programs/display_number.c -s -c
+```
+
+## Library
+The `lib/` directory contains a library function, which mostly handle access to the peripheral devices. All the functions implemented in multiple files in this directory are automatically linked against the provided input source code of the compiler.

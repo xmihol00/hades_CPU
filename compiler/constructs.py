@@ -5,6 +5,10 @@ class Construct():
         self.comment = comment
         self.line_number = line_number
         self.token_number = token_number
+
+class Comment(Construct):
+    def __init__(self, comment, line_number: int = None, token_number: int = None):
+        super().__init__(comment, line_number, token_number)
     
 class Variable(Construct):
     def __init__(self, type: str = None, stack_offset: int = None, name: str = None, usage: VariableUsage = None, label: str = None):

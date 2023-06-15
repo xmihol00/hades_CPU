@@ -24,8 +24,8 @@ parser.add_argument("-o", "--output", type=str, help="Name of a file to write co
 parser.add_argument("-c", "--compile", action="store_true", help="Compile to binary.")
 parser.add_argument("-nl", "--no_library", action="store_true", help="Do not include library functions.")
 parser.add_argument("-nb", "--no_build_in", action="store_true", help="Do not include build in functions.")
-parser.add_argument("-g", "--global_variables", type=str, default="global_variables.json", help="Name of a file with global variables.")
-parser.add_argument("-d", "--debug", action="store_true", help="Print debug information to stderr.")
+parser.add_argument("-g", "--global_variables", type=str, default="global_variables.json", help="Name of a file containing global variable definitions.")
+parser.add_argument("-d", "--debug", action="store_true", help="Print the internal state of the compiler to stderr.")
 args = parser.parse_args()
 
 if "__main__" == __name__:

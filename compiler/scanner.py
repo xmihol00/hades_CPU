@@ -6,7 +6,8 @@ class Scanner:
     def __init__(self, program: str):
         self.regex = (
             r"(\n)|" +                                                              # new line
-            r"(//.*\n|#.*\n)|" +                                                    # line comment or preprocessor directive
+            r"(#.*\n)|" +                                                           # preprocessor directive
+            r"(//.*\n)|" +                                                          # line comment
             r"(return|if|else|for|while)|" +                                        # keywords
             r"(int)|" +                                                             # types
             r"(true|false)|"                                                        # booleans

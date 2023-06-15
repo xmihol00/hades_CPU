@@ -1,10 +1,11 @@
 from enums import InternalAlphabet
+from constructs import Comment
 
 class GlobalExpressions():
     def __init__(self) -> None:
         self.expressions = []
     
-    def add(self, expression: list|InternalAlphabet):
+    def add(self, expression: list|InternalAlphabet|Comment):
         if isinstance(expression, list):
             self.expressions += expression
         else:

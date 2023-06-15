@@ -1,7 +1,7 @@
 from global_expressions import GlobalExpressions
 from writer import Writer
 from enums import InternalAlphabet, Keywords, Operators, HighAssemblyInstructions, Types
-from constructs import Function, IntermediateResult, ReturnValue, Variable, Constant
+from constructs import Comment, Function, IntermediateResult, ReturnValue, Variable, Constant
 from registers import Register, RegisterFile
 from function_declaration_table import FunctionDeclarationTable
 from variable_table import VariableTable
@@ -111,6 +111,8 @@ class HighAssemblyGenerator():
                 variable = global_command
             elif isinstance(global_command, Constant):
                 self.writer.raw(f"{variable.label}: {global_command.value}", f"global constant {variable.name}")
+            elif isinstance(global_command, Comment):
+                self.writer.comment(global_command.comment)
         self.writer.new_line()
 
         for function in self.function_declaration_table.functions.values():
@@ -165,6 +167,8 @@ class HighAssemblyGenerator():
                 self._handle_internal_alphabet(command, function, i)
             elif isinstance(command, Keywords):
                 self._handle_keyword(command, function, i)
+            elif isinstance(command, Comment):
+                self._handle_comment(command)
 
     def _handle_variable_or_intermediate_result(self, command: Variable|IntermediateResult, function: Function, i: int):
         self.registers[self.register_index] = self.register_file.load_operand(command, function.body[i + 2] != Operators.ASSIGNMENT)
@@ -398,6 +402,9 @@ class HighAssemblyGenerator():
                 self._handle_internal_alphabet(command, function, i)
             elif isinstance(command, Keywords):
                 self._handle_keyword(command, function, i)
+    
+    def _handle_comment(self, comment: Comment):
+        self.writer.comment(comment.comment)
 
 # functions to print better comments
     def _set_intermediate_result_comment(self, function: Function, function_index: int, comment: str, bracket: bool = True):

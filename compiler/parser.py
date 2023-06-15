@@ -4,7 +4,7 @@ from function_call_table import FunctionCallTable
 from function_declaration_table import FunctionDeclarationTable
 from variable_table import VariableTable
 from utils import ordinal
-from constructs import Constant, Function, Variable
+from constructs import Constant, Function, Variable, Comment
 from enums import Operators, Types, VariableUsage, Tokens, InternalAlphabet, Keywords, ScopeTypes
 from expression_parser import ExpressionParser
 import ast
@@ -40,6 +40,7 @@ class Parser:
         self.function_call_table = function_call_table
         self.variable_table = variable_table
         self.callback_table = { 
+            Tokens.COMMENT: self.comment,
             Tokens.KEYWORD: self.keyword,
             Tokens.TYPE: self.type,
             Tokens.BOOLEAN: self.boolean,
@@ -348,6 +349,12 @@ class Parser:
             self.expression_parser.add_comma()
         else:
             raise Exception()
+    
+    def comment(self, value: str):
+        if self.current_function is not None:
+            self.current_function.body.append(Comment(value[:-1]))
+        else:
+            self.global_expressions.add(Comment(value[:-1]))
         
     def _resolve_global_assignment(self, token: Tokens, value: str):
         if Tokens.SEMICOLON == token:

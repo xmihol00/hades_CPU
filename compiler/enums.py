@@ -1,22 +1,23 @@
 from enum import Enum
 
 class Tokens(Enum):
-    KEYWORD = 1
-    TYPE = 2
-    BOOLEAN = 3
-    IDENTIFIER = 4
-    OPENED_BRACKET = 5
-    CLOSED_BRACKET = 6
-    OPENED_CURLY_BRACKET = 7
-    CLOSED_CURLY_BRACKET = 8
-    OPENED_SQUARE_BRACKET = 9
-    CLOSED_SQUARE_BRACKET = 10
-    INTEGER = 11
-    OPERATOR = 12
-    ASSIGNMENT = 13
-    SEMICOLON = 14
-    COMMA = 15
-    CHARACTER = 16
+    COMMENT = 1
+    KEYWORD = 2
+    TYPE = 3
+    BOOLEAN = 4
+    IDENTIFIER = 5
+    OPENED_BRACKET = 6
+    CLOSED_BRACKET = 7
+    OPENED_CURLY_BRACKET = 8
+    CLOSED_CURLY_BRACKET = 9
+    OPENED_SQUARE_BRACKET = 10
+    CLOSED_SQUARE_BRACKET = 11
+    INTEGER = 12
+    OPERATOR = 13
+    ASSIGNMENT = 14
+    SEMICOLON = 15
+    COMMA = 16
+    CHARACTER = 17
 
 class Keywords(Enum):
     def __init__(self, value) -> None:
