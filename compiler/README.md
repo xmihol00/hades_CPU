@@ -103,3 +103,8 @@ python compiler.py sample_programs/display_number.c -s -c
 
 ## Library
 The `lib/` directory contains a library function, which mostly handle access to the peripheral devices. All the functions implemented in multiple files in this directory are automatically linked against the provided input source code of the compiler.
+
+## Demo
+The following video captures the functionality of the Paint program:  
+<video src="fast_demo.mp4" controls="controls">
+</video>

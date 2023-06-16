@@ -85,6 +85,16 @@ int max(int x, int y, int z)
     }
 }
 
+int clear_console()
+{
+    for (int i = 0; i < 20; i = i + 1)
+    {
+        putchar('\n');
+    }
+
+    return 0;
+}
+
 int reset_cursor(int x, int y, int *cursor_buffer)
 {
     cursor_buffer[0] = 320;
@@ -476,6 +486,7 @@ int rasterize_triangle(int x1, int y1, int x2, int y2, int x3, int y3, int color
 
 int main()
 {
+    clear_console();
     set_background(BLACK); // reset the screen
 
     int point_marked_message[17];
@@ -610,12 +621,14 @@ int main()
             }
             RASTERIZE_TRIANGLE = false;
         }
-        else if (mouse & 4 || CLEAR)
+        else if ((mouse & 4) || CLEAR)
         {
             set_background(BLACK);
             draw_frame(CURRENT_COLOR);
             update_cursor(cursor_buffer);
             coordinate_offset = 0;
+            display_number(32);
+            clear_console();
             CLEAR = false;
         }
     }
