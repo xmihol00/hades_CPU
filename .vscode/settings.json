@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "colors.h": "c"
+        "colors.h": "c",
+        "__locale": "c",
+        "locale": "c"
     }
 }
