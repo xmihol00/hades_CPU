@@ -9,7 +9,7 @@
         {
             "return_type": "int",
             "name": "getchar",
-            "number_of_parameters": 1
+            "number_of_parameters": 0
         }
     ]
 }
