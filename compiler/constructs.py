@@ -10,6 +10,9 @@ class Comment(Construct):
     def __init__(self, comment, line_number: int = None, token_number: int = None):
         super().__init__(comment, line_number, token_number)
     
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}.[{self.comment}]"
+
 class Variable(Construct):
     def __init__(self, type: str = None, stack_offset: int = None, name: str = None, usage: VariableUsage = None, label: str = None):
         super().__init__(name)
