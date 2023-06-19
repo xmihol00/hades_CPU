@@ -47,6 +47,7 @@ The following listing summarizes the supported C language constructs:
 * line comments.
 
 ## Usage
+First, make sure you have installed all required Python packages from the `requirements.txt` file and then use the following command:
 ```
 python3 compiler.py [-h] [-a ASSEMBLY [ASSEMBLY ...]] [-s] [-i INTERMEDIATE] [-o OUTPUT] [-c] [-nl] [-nb] [-g GLOBAL_VARIABLES] [-d] file_names [file_names ...]
 
